@@ -137,3 +137,15 @@ export function applyStoreEvent(record: EntitlementRecord, event: StoreEvent): E
       return { ...base, status: 'expired', willRenew: false };
   }
 }
+
+/**
+ * Access policy (D-026, Proposed): after the free week ends without a
+ * subscription, the current plan and grocery list stay readable, but making a
+ * new week, swapping meals, and rebuilding need a subscription. Enforced by
+ * the API and mirrored in the app.
+ */
+export function canChangePlan(view: EntitlementView): boolean {
+  if (view.state === 'expired') return false;
+  if (view.state === 'none' && !view.trialEligible) return false;
+  return true;
+}
