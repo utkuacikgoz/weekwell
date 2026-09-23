@@ -27,7 +27,7 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | 6 | System dark mode (resolved at launch) | merged (see PR) |
 | 7a | API service: auth, plans, generation jobs, prices, entitlements + webhooks, export, deletion | merged (see PR) |
 | 7b | App API client, sign-in, sync (only when an API URL is configured) | merged (see PR) |
-| 8 | Release pack (App Store metadata placeholders, privacy, review notes) and final QA | planned |
+| 8 | Release pack (App Store draft, privacy policy draft, store screenshots), icon/splash, final QA | merged (see PR) |
 
 ## Decisions taken without product-owner input
 
@@ -51,3 +51,4 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | R-16 | The access policy (`canChangePlan`) moved to the domain package and is enforced by the API | "Payment entitlement must be verified server-side" (stop condition) | Client-only gating |
 | R-17 | The app talks to the API only when built with `EXPO_PUBLIC_API_URL`; otherwise it stays fully on-device | Keeps the pilot usable with no backend while making the connected mode real and tested | Always require the API |
 | R-18 | Sign-in is asked for once, right before the first plan ("Save your week") | Doesn't block setup; the plan needs an account to be saved | Sign in first |
+| R-19 | App icon and splash drawn from the meal illustration system (D-034); Face ID usage string disabled | Template placeholders can't ship; the app doesn't use Face ID | Commissioned icon |

@@ -7,13 +7,13 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "usesNonExemptEncryption": false
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#F7F4EE",
+        "backgroundColor": "#EFE4CF",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
@@ -24,9 +24,27 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-secure-store"
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#F5F0E6",
+          "dark": {
+            "backgroundColor": "#171511",
+            "image": "./assets/splash-icon.png"
+          }
+        }
+      ]
     ],
     "scheme": "weekwell",
-    "backgroundColor": "#F7F4EE"
+    "backgroundColor": "#F5F0E6"
   }
 }
