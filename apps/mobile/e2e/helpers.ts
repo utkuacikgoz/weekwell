@@ -9,22 +9,22 @@ export async function onboard(
 ) {
   await page.goto(`/onboarding${opts.query ? `?${opts.query}` : ''}`);
   await $(page, 'start').click();
+  // Step 1: store and budget
   await $(page, `store-${opts.store ?? 'trader_joes'}`).click();
-  await $(page, 'continue').click();
   if (opts.budget) {
     const input = $(page, 'budget-input');
     await input.fill(String(opts.budget));
     await input.blur();
   }
   await $(page, 'continue').click();
-  await $(page, 'continue').click(); // goal: default High protein
+  // Step 2: goal (default High protein), time, people
   if (opts.time) await $(page, `time-${opts.time}`).click();
-  await $(page, 'continue').click();
   if (opts.household) await $(page, `household-${opts.household}`).click();
   await $(page, 'continue').click();
+  // Step 3: foods to leave out
   for (const e of opts.exclusions ?? []) await $(page, `exclusion-${e}`).click();
   await $(page, 'continue').click();
-  await expect(page.getByText('Check your choices').filter({ visible: true })).toBeVisible();
+  await expect($(page, 'generate')).toBeVisible();
 }
 
 export async function buildWeek(page: Page, opts: Parameters<typeof onboard>[1] = {}) {

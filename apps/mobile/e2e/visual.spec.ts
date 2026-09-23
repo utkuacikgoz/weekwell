@@ -34,21 +34,15 @@ for (const width of WIDTHS) {
         await page.goto(`/onboarding?${q}`);
         await audit(page, name('01-welcome'), { primary: 'start' });
         await $(page, 'start').click();
-        await audit(page, name('02-store-empty'), { primary: 'continue' });
+        await audit(page, name('02-store-budget-empty'), { primary: 'continue' });
         await $(page, 'store-trader_joes').click();
-        await audit(page, name('03-store-selected'), { primary: 'continue' });
+        await audit(page, name('03-store-budget-selected'), { primary: 'continue' });
         await $(page, 'continue').click();
-        await audit(page, name('04-budget'), { primary: 'continue' });
+        await audit(page, name('04-your-week'), { primary: 'continue' });
         await $(page, 'continue').click();
-        await audit(page, name('05-goal'), { primary: 'continue' });
+        await audit(page, name('05-foods-to-leave-out'), { primary: 'continue' });
         await $(page, 'continue').click();
-        await audit(page, name('06-time'), { primary: 'continue' });
-        await $(page, 'continue').click();
-        await audit(page, name('07-household'), { primary: 'continue' });
-        await $(page, 'continue').click();
-        await audit(page, name('08-exclusions'), { primary: 'continue' });
-        await $(page, 'continue').click();
-        await audit(page, name('09-review'), { primary: 'generate' });
+        await audit(page, name('06-review'), { primary: 'generate' });
       });
 
       test('week, meal, grocery', async ({ page }) => {
