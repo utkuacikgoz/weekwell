@@ -28,14 +28,17 @@ jobs:
       - name: API boot smoke test
         working-directory: apps/api
         run: |
-          ALLOW_DEV_CODES=1 PORT=8799 npx tsx src/server.ts &
-          for i in $(seq 1 30); do curl -sf localhost:8799/v1/health && break; sleep 1; done
-          curl -sf localhost:8799/v1/health
+          # Own port, stopped afterwards: the E2E suite starts its own API on 8799.
+          ALLOW_DEV_CODES=1 PORT=8798 npx tsx src/server.ts &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do curl -sf localhost:8798/v1/health && break; sleep 1; done
+          curl -sf localhost:8798/v1/health
+          kill $SERVER_PID
       - name: Dependency audit (production deps, high+)
         run: npm audit --omit=dev --audit-level=high
-      - name: Web export for E2E
+      - name: Web exports for E2E (on-device build and API-connected build)
         working-directory: apps/mobile
-        run: npx expo export --platform web --output-dir dist
+        run: npm run export:web
       - name: Install Chromium
         working-directory: apps/mobile
         run: npx playwright install --with-deps chromium

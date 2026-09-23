@@ -24,6 +24,7 @@ import {
   generateFixturePlan,
   generateUnderBudgetPlan,
   getRecipe,
+  previewPreferenceChange,
   priceGroceryList,
   recipeFitsTime,
   recipeIsAllowed,
@@ -308,6 +309,30 @@ export function createApp(deps: Deps) {
     if (!res.ok) throw new ApiError(422, 'exclusion_conflict');
     db.saveCurrentPlan(userId, res.plan);
     return c.json({ plan: res.plan, checked: [], skipped: [], estimatedCents: res.estimatedCents }, 201);
+  });
+
+  /** Apply new preferences with the minimal-change rules (same domain function the app previews with). */
+  authed.post('/plans/:id/preferences', async (c) => {
+    const userId = c.get('userId');
+    const { preferences } = await body(c, z.object({ preferences: UserPreferencesSchema }).strict());
+    const stored = ownedPlan(userId, c.req.param('id'));
+    const preview = previewPreferenceChange(stored.plan, preferences, { ownerId: userId, planId: stored.plan.id, now: now() });
+    if (preview.blocked) throw new ApiError(422, 'preferences_blocked', { message: preview.blocked });
+    if (preview.mealsChanged.length > 0) requirePlanChanges(userId);
+    const next = { ...preview.plan, id: `plan_${randomBytes(8).toString('hex')}`, createdAt: now().toISOString() };
+    const r = reconcileChecks(new Set(stored.checked), preview.diff, listItems(next, []));
+    db.setPreferences(userId, preferences, now());
+    db.saveCurrentPlan(userId, next);
+    db.setListState(userId, next.id, [...r.checked], []);
+    return c.json({ plan: next, checked: [...r.checked], skipped: [], summary: preview.summary, mealsChanged: preview.mealsChanged.length }, 201);
+  });
+
+  /** Undo a whole-plan change: make an earlier plan (the caller's own) current again. */
+  authed.post('/plans/:id/make-current', (c) => {
+    const userId = c.get('userId');
+    const stored = ownedPlan(userId, c.req.param('id'));
+    db.makeCurrent(userId, stored.plan.id);
+    return c.json(stored);
   });
 
   authed.get('/plans/:id/prices', async (c) => {

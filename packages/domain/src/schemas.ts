@@ -353,6 +353,8 @@ export const GenerationErrorCodeSchema = z.enum([
   'exclusion_conflict',
   'rate_limited',
   'provider_error',
+  'unauthorized',
+  'subscription_required',
 ]);
 export type GenerationErrorCode = z.infer<typeof GenerationErrorCodeSchema>;
 

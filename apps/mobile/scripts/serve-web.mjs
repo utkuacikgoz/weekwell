@@ -3,7 +3,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 
-const root = join(process.cwd(), 'dist');
+const root = join(process.cwd(), process.env.DIST ?? 'dist');
 const port = Number(process.env.PORT ?? 8081);
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json', '.ttf': 'font/ttf' };
 

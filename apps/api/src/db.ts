@@ -98,6 +98,18 @@ export class Db {
     }
   }
 
+  makeCurrent(ownerId: string, planId: string): void {
+    this.db.exec('BEGIN');
+    try {
+      this.db.prepare('UPDATE plans SET is_current = 0 WHERE owner_id = ?').run(ownerId);
+      this.db.prepare('UPDATE plans SET is_current = 1 WHERE owner_id = ? AND id = ?').run(ownerId, planId);
+      this.db.exec('COMMIT');
+    } catch (e) {
+      this.db.exec('ROLLBACK');
+      throw e;
+    }
+  }
+
   plan(ownerId: string, planId: string): StoredPlan | undefined {
     const row = this.db.prepare('SELECT json, checked, skipped FROM plans WHERE id = ? AND owner_id = ?').get(planId, ownerId) as { json: string; checked: string; skipped: string } | undefined;
     return row ? { plan: PlanSchema.parse(JSON.parse(row.json)), checked: JSON.parse(row.checked), skipped: JSON.parse(row.skipped) } : undefined;
