@@ -65,12 +65,14 @@ test('paywall: nothing preselected, exact prices, truthful yearly saving', async
     await expect($(page, id)).toHaveAttribute('aria-checked', 'false');
   }
   const text = await visibleText(page);
-  expect(text).toContain('$4.99 per week');
-  expect(text).toContain('$9.99 per month');
-  expect(text).toContain('$49.99 per year');
-  expect(text).toContain('$69.89 less than paying monthly');
+  expect(text).toContain('$4.99 a week');
+  expect(text).toContain('$9.99 a month');
+  expect(text).toContain('$49.99 a year');
+  expect(text).toContain('$69.89 less than 12 months of monthly');
+  expect(text).toContain('About $2.31 a week, billed monthly');
+  expect(text).toContain('About $0.96 a week');
   await $(page, 'product-monthly').click();
-  await expect($(page, 'charge-line')).toHaveText('Free for 7 days, then $9.99 per month unless you cancel.');
+  await expect($(page, 'charge-line')).toContainText('Free for 7 days, then $9.99 a month.');
   await $(page, 'start-trial').click();
   await expect($(page, 'trial-active')).toContainText('7 days left');
 });
@@ -83,4 +85,37 @@ test('restore purchases: nothing to restore, and a recoverable failure', async (
   await page.goto('/trial?restore=error');
   await $(page, 'restore').click();
   await expect($(page, 'restore-failed')).toBeVisible();
+});
+
+test('after the free week: plan stays readable, changes ask for a subscription', async ({ page }) => {
+  await buildWeek(page, { query: 'entitlement=expired' });
+  await expect($(page, 'tonight-card')).toBeVisible();
+  await $(page, 'plan-new-week').click();
+  await expect($(page, 'locked-sheet')).toContainText('Your current plan and grocery list are still here');
+  await $(page, 'locked-see-plans').click();
+  await expect($(page, 'trial-ended')).toBeVisible();
+  await $(page, 'product-yearly').click();
+  await expect($(page, 'start-trial')).toHaveText(/Subscribe/u);
+  await $(page, 'start-trial').click();
+  await expect($(page, 'plan-active')).toContainText('Yearly plan');
+});
+
+test('swapping a meal is locked after the free week', async ({ page }) => {
+  await buildWeek(page, { query: 'entitlement=expired' });
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'repair-swap').click();
+  await expect($(page, 'locked-sheet')).toBeVisible();
+  await expect($(page, 'swap-pending')).toHaveCount(0);
+});
+
+test('plan a new week from the week screen', async ({ page }) => {
+  await buildWeek(page);
+  await $(page, 'meal-dinner_mon').click();
+  await $(page, 'toggle-on-list').click();
+  await page.goBack();
+  await $(page, 'plan-new-week').click();
+  await expect($(page, 'generate')).toBeVisible();
+  await $(page, 'generate').click();
+  await expect($(page, 'tonight-card')).toBeVisible({ timeout: 15_000 });
+  await expect($(page, 'meal-dinner_mon')).not.toContainText('Not on grocery list');
 });

@@ -221,6 +221,7 @@ Everything below was decided provisionally by the mobile agent to complete the f
 - Workstream: mobile
 - Question: Once the trial ends and the user has not subscribed, can they still view their last plan and list? Can they generate new weeks or swap meals?
 - Current behavior: nothing is gated. The paywall only describes the free week, prices, and cancellation, and makes no claim about post-trial limits.
+- Update 2026-09-24: implemented the M1 review's recommendation as a single policy (`apps/mobile/src/services/access.ts`). After the free week, the current plan and list stay readable; new weeks, swaps, rebuilds, and meal-replacing preference changes need a subscription. Still Proposed.
 - Owner: Product owner
 
 ### D-027 — Light appearance only for the pilot
