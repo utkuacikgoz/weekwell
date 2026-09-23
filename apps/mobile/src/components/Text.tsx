@@ -1,0 +1,28 @@
+import { createContext, useContext, type ReactNode } from 'react';
+import { Platform, Text as RNText, type TextProps } from 'react-native';
+import { color, type as typeScale, type TypeVariant } from '../theme/tokens';
+
+/**
+ * Native platforms apply the user's Dynamic Type / font size automatically.
+ * On the web preview only, `fontScale` simulates 125% / 150% for visual QA.
+ */
+const FontScaleContext = createContext(1);
+export function FontScaleProvider({ scale, children }: { scale: number; children: ReactNode }) {
+  return <FontScaleContext.Provider value={Platform.OS === 'web' ? scale : 1}>{children}</FontScaleContext.Provider>;
+}
+
+type Props = TextProps & { variant?: TypeVariant; tone?: 'ink' | 'muted' | 'accent' | 'warning' | 'onAccent' };
+
+const toneColor = { ink: color.ink, muted: color.inkMuted, accent: color.accent, warning: color.warning, onAccent: color.onAccent };
+
+export function Text({ variant = 'body', tone = 'ink', style, ...rest }: Props) {
+  const scale = useContext(FontScaleContext);
+  const t = typeScale[variant];
+  return (
+    <RNText
+      {...rest}
+      maxFontSizeMultiplier={variant === 'display' || variant === 'total' ? 1.6 : 2.2}
+      style={[t, { color: toneColor[tone], fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale }, style]}
+    />
+  );
+}
