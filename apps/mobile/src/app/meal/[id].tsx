@@ -6,17 +6,19 @@ import {
   type Meal,
   type RepairAction,
 } from '@weekwell/domain';
-import { Redirect, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Banner } from '../../components/Banner';
+import { Redirect, router, useLocalSearchParams, type Href } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button } from '../../components/Button';
-import { ChoiceRow } from '../../components/ChoiceRow';
-import { Screen, SectionLabel, TopBar } from '../../components/Layout';
-import { MealThumb, mealWhen } from '../../components/MealRow';
+import { Icon } from '../../components/Icon';
+import { Screen } from '../../components/Layout';
+import { MealArt } from '../../components/MealArt';
+import { mealWhen } from '../../components/MealRow';
+import { NavBar } from '../../components/NavBar';
 import { Text } from '../../components/Text';
+import { Toast } from '../../components/Toast';
 import { useStore } from '../../state/store';
-import { color, space } from '../../theme/tokens';
+import { MIN_TOUCH, color, radius, space } from '../../theme/tokens';
 
 const ALLERGEN_LABEL: Record<string, string> = {
   dairy: 'dairy',
@@ -37,11 +39,28 @@ const UNAVAILABLE: Record<RepairAction, string> = {
   faster: 'This is already the quickest option that fits.',
 };
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Fact({ value, label }: { value: string; label: string }) {
   return (
-    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}`}>
-      <Text variant="meta" tone="muted">{label}</Text>
+    <View style={styles.fact} accessible accessibilityLabel={`${label}: ${value}`}>
       <Text variant="bodyStrong">{value}</Text>
+      <Text variant="caption" tone="muted">{label}</Text>
+    </View>
+  );
+}
+
+function Disclosure({ title, summary, open, onToggle, children, testID }: { title: string; summary: string; open: boolean; onToggle: () => void; children: React.ReactNode; testID?: string }) {
+  return (
+    <View style={styles.disclosureWrap}>
+      <Pressable accessibilityRole="button" aria-expanded={open} onPress={onToggle} style={({ pressed }) => [styles.disclosure, pressed && { backgroundColor: color.placeholder }]} testID={testID}>
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyStrong">{title}</Text>
+          <Text variant="meta" tone="muted">{summary}</Text>
+        </View>
+        <View style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}>
+          <Icon name="chevron-right" size={20} color={color.inkMuted} />
+        </View>
+      </Pressable>
+      {open ? <View style={{ gap: space.s, paddingBottom: space.s }}>{children}</View> : null}
     </View>
   );
 }
@@ -49,9 +68,19 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default function MealDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, analytics, repairMeal, undoSwap, lastSwap, dismissSwap, toggleMealOnList } = useStore();
+  const { width } = useWindowDimensions();
   const plan = data.plan;
   const meals = useMemo(() => (plan ? [...plan.dinners, ...plan.lunches] : []), [plan]);
   const meal = meals.find((m) => m.id === id);
+  const [nutritionOpen, setNutritionOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; tone: 'ink' | 'warning' } | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     if (meal) analytics?.track('meal_opened', { slot: meal.slot, day: meal.day });
@@ -59,8 +88,8 @@ export default function MealDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // A banner from another meal's swap should not show here.
-  const swap = lastSwap && lastSwap.next.id === id ? lastSwap : null;
+  // A pending swap belongs to the meal it changed.
+  const pending = lastSwap && lastSwap.next.id === id ? lastSwap : null;
 
   const options = useMemo(() => {
     if (!plan || !meal) return null;
@@ -70,115 +99,147 @@ export default function MealDetail() {
   if (!plan) return <Redirect href="/onboarding" />;
   if (!meal) return <Redirect href="/week" />;
 
+  const showToast = (message: string, tone: 'ink' | 'warning' = 'ink') => setToast({ message, tone });
+  const repair = (action: RepairAction) => {
+    const res = repairMeal(meal.id, action);
+    if (!res) showToast(UNAVAILABLE[action], 'warning');
+    else setToast(null);
+  };
   const onList = !data.skippedMealIds.includes(meal.id);
   const usedElsewhere = (ingredientId: string): Meal[] => meals.filter((m) => m.id !== meal.id && m.ingredients.some((i) => i.ingredientId === ingredientId));
+  const heroWidth = Math.min(width, 560) - 2 * (space.m + 4);
+  const changedItems = pending ? pending.diff.added.length + pending.diff.removed.length + pending.diff.changed.length : 0;
+  const swapOption = options?.find((o) => o.action === 'swap');
 
   return (
-    <Screen testID="meal-detail" scrollToTopKey={swap ?? undefined}>
-      <TopBar backLabel="Week" />
-      {swap ? (
-        <Banner tone="info" title={`Swapped to ${swap.next.name}`} testID="swap-banner">
-          <Text>
-            Was: {swap.previous.name}. {swap.diff.added.length + swap.diff.removed.length + swap.diff.changed.length} grocery items changed.
-            {swap.removedChecked > 0 ? ` ${swap.removedChecked} item${swap.removedChecked === 1 ? '' : 's'} you’d checked ${swap.removedChecked === 1 ? 'is' : 'are'} no longer needed.` : ''}
-            {swap.changedChecked > 0 ? ` ${swap.changedChecked} checked item${swap.changedChecked === 1 ? '' : 's'} now need${swap.changedChecked === 1 ? 's' : ''} a different amount.` : ''}
-          </Text>
-          <View style={styles.bannerActions}>
-            <Button label="Undo" kind="secondary" onPress={undoSwap} testID="undo-swap" />
-            <Button label="Keep" kind="quiet" onPress={dismissSwap} />
+    <Screen
+      testID="meal-detail"
+      scrollToTopKey={pending ?? undefined}
+      overlay={toast ? <Toast message={toast.message} tone={toast.tone} testID="meal-toast" /> : null}
+      footer={
+        pending ? (
+          <View style={{ gap: space.s }} testID="swap-pending">
+            <View accessibilityLiveRegion="polite">
+              <Text variant="bodyStrong">Swapped to {pending.next.name}</Text>
+              <Text variant="meta" tone="muted">
+                {changedItems} grocery item{changedItems === 1 ? '' : 's'} changed · was {pending.previous.name}
+                {pending.removedChecked > 0 ? ` · ${pending.removedChecked} checked item${pending.removedChecked === 1 ? '' : 's'} no longer needed` : ''}
+              </Text>
+            </View>
+            <Button
+              label="Keep swap"
+              onPress={() => {
+                dismissSwap();
+                showToast('Swap kept · grocery list updated');
+              }}
+              testID="keep-swap"
+            />
+            <Button
+              label="Undo"
+              kind="secondary"
+              onPress={() => {
+                undoSwap();
+                showToast('Swap undone');
+              }}
+              testID="undo-swap"
+            />
           </View>
-        </Banner>
-      ) : null}
-
-      <View style={styles.hero}>
-        <MealThumb size={88} />
-        <View style={{ flex: 1 }}>
-          <Text variant="label" tone="muted">{mealWhen(meal)}</Text>
-          <Text variant="title" accessibilityRole="header" testID="meal-name">
-            {meal.name}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.stats}>
-        <Stat label="Total time" value={`${meal.totalMinutes} min`} />
-        <Stat label="Hands-on" value={`${meal.activeMinutes} min`} />
-        <Stat label="Protein (est.)" value={`${meal.protein.value}g / serving`} />
-        <Stat label={meal.slot === 'lunch' ? 'Makes' : 'Serves'} value={meal.slot === 'lunch' ? `${meal.servings} lunches` : String(meal.servings)} />
-      </View>
-      <Text variant="meta" tone="muted">
-        Protein is estimated from typical ingredient values, not lab-tested. This is not medical or dietary advice.
+        ) : (
+          <Button label="Start cooking" onPress={() => router.push(`/cook/${meal.id}` as Href)} testID="start-cooking" />
+        )
+      }
+    >
+      <NavBar backLabel="Week" />
+      <MealArt recipeId={meal.recipeId} ingredientIds={meal.ingredients.map((i) => i.ingredientId)} width={heroWidth} height={Math.round(heroWidth * 0.5)} radius={radius.card} />
+      <Text variant="label" tone="accent" style={{ marginTop: space.m }}>{mealWhen(meal)}</Text>
+      <Text variant="title" accessibilityRole="header" testID="meal-name">
+        {meal.name}
       </Text>
-      {meal.allergens.length ? (
-        <Text variant="meta" style={{ marginTop: space.s }}>
-          Contains {meal.allergens.map((a) => ALLERGEN_LABEL[a] ?? a).join(', ')}. Always check package labels.
-        </Text>
-      ) : (
-        <Text variant="meta" tone="muted" style={{ marginTop: space.s }}>
-          No common allergens in our ingredient list. Always check package labels.
-        </Text>
-      )}
 
-      <ChoiceRow
+      <View style={styles.facts}>
+        <Fact value={`${meal.totalMinutes} min`} label="total" />
+        <Fact value={`${meal.activeMinutes} min`} label="hands-on" />
+        <Fact value={`${meal.protein.value}g`} label="protein, est." />
+        <Fact value={meal.slot === 'lunch' ? `${meal.servings}` : `${meal.servings}`} label={meal.slot === 'lunch' ? 'lunches' : meal.servings === 1 ? 'serving' : 'servings'} />
+      </View>
+
+      <Pressable
         testID="toggle-on-list"
-        mode="checkbox"
-        label={onList ? 'On your grocery list' : 'Not on your grocery list'}
-        detail={onList ? 'Untick to leave this meal’s ingredients off the list.' : 'Tick to add this meal’s ingredients back.'}
-        selected={onList}
+        accessibilityRole="checkbox"
+        aria-checked={onList}
+        accessibilityLabel={onList ? 'On your grocery list' : 'Add to grocery list'}
         onPress={() => toggleMealOnList(meal.id)}
-      />
+        style={({ pressed }) => [styles.listToggle, pressed && { backgroundColor: color.placeholder }]}
+      >
+        <View style={[styles.box, onList && styles.boxOn]}>{onList ? <Icon name="check" size={16} color={color.onAccent} strokeWidth={2.6} /> : null}</View>
+        <Text variant="bodyStrong" style={{ flex: 1 }}>{onList ? 'On your grocery list' : 'Add to grocery list'}</Text>
+        {!onList ? <Text variant="caption" tone="warning">Not on list</Text> : null}
+      </Pressable>
 
-      <SectionLabel>Ingredients</SectionLabel>
+      <Text variant="heading" accessibilityRole="header" style={styles.section}>Ingredients</Text>
       {meal.ingredients.map((q) => {
         const ing = getIngredient(q.ingredientId);
         const others = ing.staple ? [] : usedElsewhere(q.ingredientId);
         return (
-          <View key={q.ingredientId} style={styles.ingredient} accessible accessibilityLabel={`${formatQuantity(q.amount, q.unit)} ${ing.name}${others.length ? `. Also used in ${others.map(mealWhen).join(', ')}` : ''}`}>
+          <View key={q.ingredientId} style={styles.ingredient} accessible accessibilityLabel={`${formatQuantity(q.amount, q.unit)} ${ing.name}${others.length ? `. Also in ${others.length} other meal${others.length === 1 ? '' : 's'}` : ''}`}>
             <Text variant="bodyStrong" style={styles.qty}>{formatQuantity(q.amount, q.unit)}</Text>
             <View style={{ flex: 1 }}>
               <Text>{ing.name}</Text>
-              {others.length ? <Text variant="meta" tone="accent">Also in {others.map(mealWhen).join(', ')}</Text> : null}
-              {ing.staple ? <Text variant="meta" tone="muted">Pantry staple, not on the list</Text> : null}
+              {others.length ? <Text variant="caption" tone="accent">Also in {others.length === 1 ? mealWhen(others[0]!) : `${others.length} other meals`}</Text> : null}
+              {ing.staple ? <Text variant="caption" tone="muted">Assumed at home</Text> : null}
             </View>
           </View>
         );
       })}
 
-      <SectionLabel>Steps</SectionLabel>
+      <Text variant="heading" accessibilityRole="header" style={styles.section}>Steps</Text>
       {meal.steps.map((s, i) => (
         <View key={i} style={styles.step}>
-          <Text variant="bodyStrong" style={styles.stepNo}>{i + 1}</Text>
+          <View style={styles.stepNo}><Text variant="label">{i + 1}</Text></View>
           <Text style={{ flex: 1 }}>{s}</Text>
         </View>
       ))}
 
-      <SectionLabel>Change this meal</SectionLabel>
-      <Text variant="meta" tone="muted" style={{ marginBottom: space.s }}>
-        Only this meal changes. Everything else in your week stays the same, and you can undo.
-      </Text>
-      {options?.map(({ action, available }) => (
-        <View key={action} style={{ marginBottom: space.s }}>
-          <Button
-            label={REPAIR_ACTION_LABEL[action]}
-            kind={action === 'swap' ? 'primary' : 'secondary'}
-            disabled={!available}
-            onPress={() => repairMeal(meal.id, action)}
-            testID={`repair-${action}`}
-          />
-          {!available ? <Text variant="meta" tone="muted">{UNAVAILABLE[action]}</Text> : null}
-        </View>
-      ))}
+      <Disclosure
+        title="Nutrition and allergens"
+        summary={`Protein estimate${meal.allergens.length ? ` · contains ${meal.allergens.map((a) => ALLERGEN_LABEL[a] ?? a).join(', ')}` : ''} · check package labels`}
+        open={nutritionOpen}
+        onToggle={() => setNutritionOpen((v) => !v)}
+        testID="nutrition-toggle"
+      >
+        <Text tone="muted">About {meal.protein.value}g protein per serving, worked out from typical values for each ingredient. It isn’t lab-tested, and it isn’t medical or dietary advice.</Text>
+        <Text tone="muted">{meal.allergens.length ? `Contains ${meal.allergens.map((a) => ALLERGEN_LABEL[a] ?? a).join(', ')}.` : 'No common allergens in our ingredient list.'} Brands differ, so check package labels.</Text>
+      </Disclosure>
+
+      <Text variant="heading" accessibilityRole="header" style={styles.section}>Not feeling it?</Text>
+      <Text variant="meta" tone="muted" style={{ marginBottom: space.s }}>Only this meal changes, and you can undo.</Text>
+      <Button label={REPAIR_ACTION_LABEL.swap} kind="secondary" disabled={!swapOption?.available || !!pending} onPress={() => repair('swap')} testID="repair-swap" />
+      {!swapOption?.available ? <Text variant="meta" tone="muted">{UNAVAILABLE.swap}</Text> : null}
+      <Disclosure title="More changes" summary="Cheaper, more protein, or quicker" open={moreOpen} onToggle={() => setMoreOpen((v) => !v)} testID="more-changes">
+        {options
+          ?.filter((o) => o.action !== 'swap')
+          .map(({ action, available }) => (
+            <View key={action}>
+              <Button label={REPAIR_ACTION_LABEL[action]} kind="secondary" disabled={!available || !!pending} onPress={() => repair(action)} testID={`repair-${action}`} />
+              {!available ? <Text variant="meta" tone="muted">{UNAVAILABLE[action]}</Text> : null}
+            </View>
+          ))}
+      </Disclosure>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { flexDirection: 'row', alignItems: 'center', gap: space.m, marginTop: space.s },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', marginVertical: space.m, borderTopWidth: 1, borderBottomWidth: 1, borderColor: color.divider, paddingVertical: space.s },
-  stat: { width: '50%', paddingVertical: space.xs },
-  ingredient: { flexDirection: 'row', paddingVertical: space.s, borderBottomWidth: 1, borderBottomColor: color.divider, gap: space.m },
-  qty: { width: 88 },
-  step: { flexDirection: 'row', gap: space.m, paddingVertical: space.s },
-  stepNo: { width: 24 },
-  bannerActions: { flexDirection: 'row', gap: space.m, alignItems: 'center', marginTop: space.s },
+  facts: { flexDirection: 'row', marginTop: space.m, marginBottom: space.s, gap: space.s },
+  fact: { flex: 1 },
+  listToggle: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, minHeight: MIN_TOUCH + 8, marginTop: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
+  box: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: color.control, alignItems: 'center', justifyContent: 'center' },
+  boxOn: { backgroundColor: color.accent, borderColor: color.accent },
+  section: { marginTop: space.l + 4, marginBottom: space.s },
+  ingredient: { flexDirection: 'row', paddingVertical: space.s, gap: space.m },
+  qty: { width: 80 },
+  step: { flexDirection: 'row', gap: space.m - 4, paddingVertical: space.s },
+  stepNo: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.raised, alignItems: 'center', justifyContent: 'center' },
+  disclosureWrap: { marginTop: space.l },
+  disclosure: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
 });
