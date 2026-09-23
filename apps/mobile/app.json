@@ -23,7 +23,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "scheme": "weekwell",
     "backgroundColor": "#F7F4EE"

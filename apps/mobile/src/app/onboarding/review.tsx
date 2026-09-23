@@ -13,7 +13,7 @@ import { isCompleteDraft, useStore } from '../../state/store';
 import { MIN_TOUCH, color, radius, space } from '../../theme/tokens';
 
 export default function Review() {
-  const { data } = useStore();
+  const { data, remote, signedIn } = useStore();
   const d = data.draft;
   const feasibility = checkFeasibility(d);
   const ready = isCompleteDraft(d) && feasibility.ok;
@@ -25,7 +25,7 @@ export default function Review() {
   ];
 
   return (
-    <Screen footer={<Button label="Plan my five dinners" onPress={() => router.push('/generating')} disabled={!ready} testID="generate" />}>
+    <Screen footer={<Button label="Plan my five dinners" onPress={() => router.push(remote && !signedIn ? '/sign-in' : '/generating')} disabled={!ready} testID="generate" />}>
       <NavBar backLabel={STEP_NAME.exclusions} />
       <StepProgress step="review" />
       <Text variant="title" accessibilityRole="header">Ready to plan your week</Text>

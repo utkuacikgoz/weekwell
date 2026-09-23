@@ -163,6 +163,22 @@ describe('plans', () => {
     expect(undone.plan.dinners[2].recipeId).toBe(created.plan.dinners[2].recipeId);
   });
 
+  it('applies preferences with minimal changes, and an earlier plan can be made current again', async () => {
+    const created = await (await t.call('POST', '/v1/plans', { token, body: { preferences: PREFS, weekOf: '2026-09-28' } })).json();
+    const res = await t.call('POST', `/v1/plans/${created.plan.id}/preferences`, { token, body: { preferences: { ...PREFS, retailer: 'walmart' } } });
+    expect(res.status).toBe(201);
+    const changed = await res.json();
+    expect(changed.mealsChanged).toBe(0);
+    expect(changed.plan.preferences.retailer).toBe('walmart');
+    expect((await (await t.call('GET', '/v1/plans/current', { token })).json()).plan.id).toBe(changed.plan.id);
+    await t.call('POST', `/v1/plans/${created.plan.id}/make-current`, { token });
+    expect((await (await t.call('GET', '/v1/plans/current', { token })).json()).plan.id).toBe(created.plan.id);
+    const blocked = await t.call('POST', `/v1/plans/${created.plan.id}/preferences`, { token, body: { preferences: { ...PREFS, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'fish'] } } });
+    expect(blocked.status).toBe(422);
+    const other = (await t.signIn('b@example.com')).token;
+    expect((await t.call('POST', `/v1/plans/${created.plan.id}/make-current`, { token: other })).status).toBe(404);
+  });
+
   it('refuses a recipe that breaks exclusions or time', async () => {
     const created = await (await t.call('POST', '/v1/plans', { token, body: { preferences: { ...PREFS, exclusions: ['dairy'] }, weekOf: '2026-09-28' } })).json();
     const res = await t.call('PUT', `/v1/plans/${created.plan.id}/meals/dinner_mon`, { token, body: { recipeId: 'd_greek_chicken_salad' } });

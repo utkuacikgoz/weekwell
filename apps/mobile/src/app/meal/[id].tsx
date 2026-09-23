@@ -103,12 +103,12 @@ export default function MealDetail() {
   if (!meal) return <Redirect href="/week" />;
 
   const showToast = (message: string, tone: 'ink' | 'warning' = 'ink') => setToast({ message, tone });
-  const repair = (action: RepairAction) => {
+  const repair = async (action: RepairAction) => {
     if (!canChangePlan(entitlementView)) {
       setLocked(true);
       return;
     }
-    const res = repairMeal(meal.id, action);
+    const res = await repairMeal(meal.id, action);
     if (!res) showToast(UNAVAILABLE[action], 'warning');
     else setToast(null);
   };
@@ -144,8 +144,8 @@ export default function MealDetail() {
             <Button
               label="Undo"
               kind="secondary"
-              onPress={() => {
-                undoSwap();
+              onPress={async () => {
+                await undoSwap();
                 showToast('Swap undone');
               }}
               testID="undo-swap"
