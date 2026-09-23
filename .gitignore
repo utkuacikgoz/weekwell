@@ -1,0 +1,27 @@
+node_modules/
+.expo/
+dist/
+web-build/
+coverage/
+*.log
+.DS_Store
+
+# Secrets never enter Git (master brief: security baseline)
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.key
+*.pem
+*.jks
+*.keystore
+
+# Generated native projects (Expo CNG)
+apps/mobile/ios/
+apps/mobile/android/
+
+# QA artifacts are regenerated; approved captures are committed under mobile/docs/review/
+qa-artifacts/tmp/

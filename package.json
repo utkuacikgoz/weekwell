@@ -1,0 +1,18 @@
+{
+  "name": "weekwell",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "e2e": "npm run e2e:build --workspace @weekwell/mobile",
+    "check": "npm run typecheck && npm run lint && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
