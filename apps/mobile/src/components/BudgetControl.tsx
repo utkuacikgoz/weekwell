@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   stepper: { width: MIN_TOUCH + 12, height: MIN_TOUCH + 12, borderRadius: radius.control, borderWidth: 1.5, borderColor: color.ink, alignItems: 'center', justifyContent: 'center' },
   inputWrap: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginHorizontal: space.m, borderBottomWidth: 2, borderBottomColor: color.ink },
   dollar: { fontSize: 32, lineHeight: 44 },
-  input: { ...typeScale.total, color: color.ink, flex: 1, minWidth: 0, width: '100%', minHeight: MIN_TOUCH + 8, textAlign: 'center', paddingVertical: space.xs },
+  input: { ...typeScale.total, color: color.ink, width: 88, minWidth: 0, minHeight: MIN_TOUCH + 8, textAlign: 'left', paddingVertical: space.xs, paddingLeft: space.xs },
   slider: { width: '100%', height: MIN_TOUCH, marginTop: space.l },
   bounds: { flexDirection: 'row', justifyContent: 'space-between' },
 });
