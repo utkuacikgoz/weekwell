@@ -21,7 +21,7 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 |---|---|---|
 | 1 | Design tokens v2, ingredient illustrations, price-status component, week plan screen, rebuild under budget | merged (see PR) |
 | 2 | Grocery list | merged (see PR) |
-| 3 | Meal detail, cooking steps, swap (Keep swap / Undo), "More changes" | planned |
+| 3 | Meal detail, cooking steps, swap (Keep swap / Undo), "More changes" | merged (see PR) |
 | 4 | Onboarding in 4 steps, welcome, generating | planned |
 | 5 | Preferences, paywall, read-only after trial, delete data | planned |
 | 6 | System dark mode | planned |
@@ -39,3 +39,5 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | R-5 | "Rebuild under budget" picks the lowest sample-cost week that fits exclusions and time, with preview and undo (D-031) | The review recommended the action; it should never silently change meals | Swap only the most expensive meal; raise-budget prompt |
 | R-6 | On short screens or at large text, the bottom bar shows only the price headline and the hero image is shorter | At 320px/150% the bar took 40% of the screen | Hide price entirely at large text |
 | R-7 | Grocery: the price column doubles as the "Used in N meals" button; checked items stay in place; 4-second undo toast after checking | Keeps rows about 64px tall and in shopping order | Second-line meal link; move checked to bottom |
+| R-8 | New cooking mode (`/cook/[id]`): one step at a time, large text, no timers | The review made "Start cooking" the primary action, so it has to lead somewhere useful | Scroll to steps; inline timers |
+| R-9 | The swap decision (Keep swap / Undo) lives in the meal screen's bottom bar | Can't be missed, and sits in the thumb zone | Top banner; pre-swap confirmation sheet |
