@@ -8,9 +8,9 @@ import { FIXTURE_PRICE_SCENARIOS, type FixturePriceScenario } from '@weekwell/do
 
 export type GenerationScenario = 'ok' | 'invalid_output' | 'timeout';
 export type RestoreScenario = 'ok' | 'error';
-export type Scenarios = { prices: FixturePriceScenario; generation: GenerationScenario; restore: RestoreScenario; fontScale: number };
+export type Scenarios = { prices: FixturePriceScenario; generation: GenerationScenario; restore: RestoreScenario; fontScale: number; priceDelayMs: number; today?: number };
 
-export const DEFAULT_SCENARIOS: Scenarios = { prices: 'sample', generation: 'ok', restore: 'ok', fontScale: 1 };
+export const DEFAULT_SCENARIOS: Scenarios = { prices: 'sample', generation: 'ok', restore: 'ok', fontScale: 1, priceDelayMs: 0 };
 
 export function scenariosFromUrl(): Partial<Scenarios> {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return {};
@@ -24,5 +24,11 @@ export function scenariosFromUrl(): Partial<Scenarios> {
   if (restore === 'ok' || restore === 'error') out.restore = restore;
   const fontScale = Number(q.get('fontScale'));
   if (fontScale >= 1 && fontScale <= 2) out.fontScale = fontScale;
+  // Review captures pin the weekday so "Tonight" is stable (0 = Sunday … 6 = Saturday).
+  const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const today = days.indexOf(q.get('today') ?? '');
+  if (today >= 0) out.today = today;
+  const delay = Number(q.get('priceDelay'));
+  if (delay > 0 && delay <= 30_000) out.priceDelayMs = delay;
   return out;
 }

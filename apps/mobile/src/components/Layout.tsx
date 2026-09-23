@@ -60,7 +60,7 @@ export function Divider({ spaced }: { spaced?: boolean }) {
 export function SectionLabel({ children }: { children: string }) {
   return (
     <Text variant="label" tone="muted" accessibilityRole="header" style={styles.section}>
-      {children.toUpperCase()}
+      {children}
     </Text>
   );
 }

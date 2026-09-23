@@ -61,6 +61,8 @@ export type StoredPrices = {
   total: ShopTotal;
 };
 
+export type PlanUndo = { previous: Plan; previousChecked: string[]; previousSkipped: string[]; message: string };
+
 export type SwapRecord = { previous: Meal; next: Meal; action: RepairAction; diff: GroceryDiff; changedChecked: number; removedChecked: number };
 
 type Persisted = {
@@ -110,7 +112,10 @@ type Ctx = {
   repairMeal: (mealId: string, action: RepairAction) => SwapRecord | null;
   undoSwap: () => void;
   dismissSwap: () => void;
-  applyPlan: (plan: Plan) => void;
+  applyPlan: (plan: Plan, undoMessage?: string) => void;
+  planUndo: PlanUndo | null;
+  undoPlanChange: () => void;
+  dismissPlanUndo: () => void;
   setHaptics: (on: boolean) => void;
   refreshEntitlement: () => Promise<void>;
   startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'failed'>;
@@ -146,6 +151,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [generation, setGeneration] = useState<GenerationState>({ status: 'idle' });
   const [entitlementView, setEntitlementView] = useState<EntitlementView>({ state: 'loading' });
   const [lastSwap, setLastSwap] = useState<SwapRecord | null>(null);
+  const [planUndo, setPlanUndo] = useState<PlanUndo | null>(null);
   const server = useRef<MockEntitlementServer | null>(null);
 
   // Hydrate from device storage.
@@ -208,13 +214,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       lastPricedKey.current = listKeyOf(items);
       setPriceCheck((prev) => ({ status: 'loading', previous: prev.status === 'done' ? prev.prices : undefined }));
       const provider = new FixtureRetailerProvider(plan.preferences.retailer, scenarios.prices);
+      if (scenarios.priceDelayMs > 0) await new Promise((r) => setTimeout(r, scenarios.priceDelayMs));
       const result = await priceGroceryList(provider, items);
       const stored = toStored(result);
       setPriceCheck({ status: 'done', prices: stored });
       setData((d) => ({ ...d, prices: stored }));
       return stored;
     },
-    [scenarios.prices],
+    [scenarios.prices, scenarios.priceDelayMs],
   );
 
   const refreshPrices = useCallback(async () => {
@@ -343,7 +350,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [listKey, hydrated]);
 
   const applyPlan = useCallback(
-    (plan: Plan) => {
+    (plan: Plan, undoMessage?: string) => {
+      if (undoMessage && data.plan) setPlanUndo({ previous: data.plan, previousChecked: data.checked, previousSkipped: data.skippedMealIds, message: undoMessage });
+      else setPlanUndo(null);
       const before = groceryItems;
       const after = buildGroceryList([...plan.dinners, ...plan.lunches]);
       const beforeIds = new Set(before.map((i) => i.id));
@@ -358,8 +367,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLastSwap(null);
       void runPriceCheck(plan, after);
     },
-    [data.checked, groceryItems, runPriceCheck],
+    [data.checked, data.plan, data.skippedMealIds, groceryItems, runPriceCheck],
   );
+
+  /** Undo the last whole-plan change (e.g. "Rebuild under budget"). */
+  const undoPlanChange = useCallback(() => {
+    if (!planUndo) return;
+    const { previous, previousChecked, previousSkipped } = planUndo;
+    setData((d) => ({ ...d, plan: previous, draft: previous.preferences, checked: previousChecked, skippedMealIds: previousSkipped }));
+    setPlanUndo(null);
+    const meals = [...previous.dinners, ...previous.lunches].filter((m) => !previousSkipped.includes(m.id));
+    void runPriceCheck(previous, buildGroceryList(meals));
+  }, [planUndo, runPriceCheck]);
 
   const setHaptics = useCallback((on: boolean) => {
     setHapticsEnabled(on);
@@ -422,6 +441,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     undoSwap,
     dismissSwap: () => setLastSwap(null),
     applyPlan,
+    planUndo,
+    undoPlanChange,
+    dismissPlanUndo: () => setPlanUndo(null),
     setHaptics,
     refreshEntitlement,
     startTrial,

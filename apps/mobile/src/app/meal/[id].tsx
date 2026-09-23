@@ -93,7 +93,7 @@ export default function MealDetail() {
       <View style={styles.hero}>
         <MealThumb size={88} />
         <View style={{ flex: 1 }}>
-          <Text variant="label" tone="muted">{mealWhen(meal).toUpperCase()}</Text>
+          <Text variant="label" tone="muted">{mealWhen(meal)}</Text>
           <Text variant="title" accessibilityRole="header" testID="meal-name">
             {meal.name}
           </Text>
