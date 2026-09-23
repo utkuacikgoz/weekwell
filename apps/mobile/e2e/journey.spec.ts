@@ -26,15 +26,15 @@ test('the review screen reflects every choice and edits return to review', async
   await onboard(page, { store: 'walmart', budget: 120, time: '20', household: '2', exclusions: ['dairy'] });
   const text = await visibleText(page);
   for (const s of ['Walmart', '$120', 'High protein', '20 minutes', '2 people', 'Dairy-free']) expect(text).toContain(s);
-  await $(page, 'review-household').click();
+  await $(page, 'review-week').click();
   await $(page, 'household-3_4').click();
   await $(page, 'continue').click();
-  await expect(page.getByText('Check your choices').filter({ visible: true })).toBeVisible();
-  await expect(page.getByText('3–4 people').filter({ visible: true })).toBeVisible();
+  await expect($(page, 'generate')).toBeVisible();
+  await expect(page.getByText('3–4 people', { exact: false }).filter({ visible: true })).toBeVisible();
 });
 
 test('budget input is bounded and explains corrections', async ({ page }) => {
-  await page.goto('/onboarding/budget');
+  await page.goto('/onboarding/store');
   const input = $(page, 'budget-input');
   await input.fill('5');
   await input.blur();

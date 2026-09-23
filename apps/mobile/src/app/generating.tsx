@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Banner } from '../components/Banner';
 import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { Screen } from '../components/Layout';
 import { Text } from '../components/Text';
 import { timeCopy } from '../copy';
@@ -101,7 +102,7 @@ export default function Generating() {
         return (
           <View key={label} style={styles.step} accessible accessibilityLabel={`${label}. ${state === 'done' ? 'Done' : state === 'active' ? 'In progress' : 'Waiting'}`}>
             <View style={styles.marker}>
-              {state === 'done' ? <Text tone="accent" variant="bodyStrong">✓</Text> : state === 'active' ? <ActivityIndicator color={color.ink} /> : <View style={styles.dot} />}
+              {state === 'done' ? <Icon name="check" size={20} color={color.accent} strokeWidth={2.6} /> : state === 'active' ? <ActivityIndicator color={color.accent} /> : <View style={styles.dot} />}
             </View>
             <Text tone={state === 'waiting' ? 'muted' : 'ink'} variant={state === 'active' ? 'bodyStrong' : 'body'} style={{ flex: 1 }}>
               {label}
@@ -115,7 +116,7 @@ export default function Generating() {
 
 const styles = StyleSheet.create({
   head: { paddingTop: space.xxl, paddingBottom: space.l },
-  step: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: 1, borderBottomColor: color.divider },
+  step: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
   marker: { width: 32, alignItems: 'flex-start' },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.control },
 });
