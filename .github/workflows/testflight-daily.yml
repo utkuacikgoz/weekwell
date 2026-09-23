@@ -1,0 +1,45 @@
+# Daily TestFlight build (D-017). Disabled until release engineering sets:
+#   repo variable  TESTFLIGHT_ENABLED = true
+#   repo secret    EXPO_TOKEN   (EAS robot token, least privilege)
+# and configures EAS credentials (Apple team, ASC API key) in EAS, never in Git.
+# Prerequisites still open: bundle identifier, Apple team, App Store Connect app (D-030).
+# UNVERIFIED: written without access to current Expo/EAS docs; verify flags before enabling.
+name: TestFlight daily
+
+on:
+  schedule:
+    - cron: '0 10 * * 1-5' # 10:00 UTC weekdays
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: vars.TESTFLIGHT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Never upload a build that fails the gate.
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build and submit to TestFlight
+        working-directory: apps/mobile
+        run: >
+          eas build --platform ios --profile production --non-interactive --auto-submit
+          --message "daily ${{ github.sha }}"
