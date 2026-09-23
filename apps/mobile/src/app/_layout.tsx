@@ -4,15 +4,23 @@ import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, Appearance, Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { FontScaleProvider } from '../components/Text';
 import { useReducedMotion } from '../services/motion';
 import { StoreProvider, useStore } from '../state/store';
-import { color } from '../theme/tokens';
+import { color, scheme } from '../theme/tokens';
 
 function Navigator() {
   const reduced = useReducedMotion();
+  // Colors are resolved at launch. On web, reload so a system change applies immediately.
+  useEffect(() => {
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      if (Platform.OS === 'web' && (colorScheme === 'dark' ? 'dark' : 'light') !== scheme && typeof window !== 'undefined') window.location.reload();
+    });
+    return () => sub.remove();
+  }, []);
   const { scenarios, hydrated } = useStore();
   const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
   // If fonts fail to load, continue with system fonts rather than blocking the app.
@@ -27,7 +35,7 @@ function Navigator() {
   }
   return (
     <FontScaleProvider scale={scenarios.fontScale}>
-      <StatusBar style="dark" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
