@@ -171,7 +171,7 @@ export default function Week() {
         plan={plan}
         onApply={(next, changed) => {
           setSheet(null);
-          applyPlan(next, `Week rebuilt under budget · ${changed} meal${changed === 1 ? '' : 's'} changed`);
+          void applyPlan({ kind: 'rebuild', localPlan: next }, `Week rebuilt under budget · ${changed} meal${changed === 1 ? '' : 's'} changed`);
         }}
       />
     </Screen>

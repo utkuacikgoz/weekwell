@@ -37,10 +37,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function Preferences() {
-  const { data, applyPlan, setHaptics, deleteAllData, entitlementView } = useStore();
+  const { data, applyPlan, setHaptics, deleteAllData, entitlementView, remote, signedIn, signOut } = useStore();
   const plan = data.plan;
   const [edit, setEdit] = useState<UserPreferences | null>(plan?.preferences ?? null);
   const [sheet, setSheet] = useState<'delete' | 'locked' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const changed = !!plan && !!edit && JSON.stringify(edit) !== JSON.stringify(plan.preferences);
   const preview = useMemo(
@@ -50,14 +53,17 @@ export default function Preferences() {
 
   if (!plan || !edit) return <Redirect href="/onboarding" />;
   const set = (patch: Partial<UserPreferences>) => setEdit({ ...edit, ...patch });
-  const apply = () => {
+  const apply = async () => {
     if (!preview || preview.blocked) return;
     if (preview.mealsChanged.length > 0 && !canChangePlan(entitlementView)) {
       setSheet('locked');
       return;
     }
-    applyPlan(preview.plan, preview.mealsChanged.length > 0 ? `Preferences updated · ${preview.summary}` : undefined);
-    router.back();
+    setBusy(true);
+    const res = await applyPlan({ kind: 'preferences', prefs: edit, localPlan: preview.plan }, preview.mealsChanged.length > 0 ? `Preferences updated · ${preview.summary}` : undefined);
+    setBusy(false);
+    if (res === 'ok') router.back();
+    else setError('We couldn’t save your changes. Check your connection and try again.');
   };
 
   return (
@@ -73,7 +79,8 @@ export default function Preferences() {
                 <Text variant="meta" tone="muted">Checked items that are still needed stay checked.</Text>
               ) : null}
             </View>
-            <Button label="Apply changes" disabled={!!preview.blocked} onPress={apply} testID="apply-preferences" />
+            {error ? <Text variant="meta" tone="warning" accessibilityLiveRegion="polite">{error}</Text> : null}
+            <Button label="Apply changes" disabled={!!preview.blocked} busy={busy} onPress={() => void apply()} testID="apply-preferences" />
             <Button label="Keep my current plan" kind="secondary" onPress={() => setEdit(plan.preferences)} testID="discard-preferences" />
           </>
         ) : undefined
@@ -137,10 +144,26 @@ export default function Preferences() {
       </Section>
 
       <Section title="Your data">
-        <Text variant="meta" tone="muted">Your plan, preferences, and foods you leave out are stored on this device only.</Text>
+        <Text variant="meta" tone="muted">
+          {remote ? 'Your plan, preferences, and foods you leave out are saved to your Weekwell account so they sync between devices.' : 'Your plan, preferences, and foods you leave out are stored on this device only.'}
+        </Text>
+        {remote && signedIn ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={async () => {
+              await signOut();
+              router.replace('/onboarding');
+            }}
+            style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.placeholder }]}
+            testID="sign-out"
+          >
+            <Text variant="bodyStrong">Sign out</Text>
+          </Pressable>
+        ) : null}
         <Pressable accessibilityRole="button" onPress={() => setSheet('delete')} style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.placeholder }]} testID="delete-data">
-          <Text variant="bodyStrong" tone="warning">Delete my data</Text>
+          <Text variant="bodyStrong" tone="warning">{remote ? 'Delete my account' : 'Delete my data'}</Text>
         </Pressable>
+        {deleteError ? <Text variant="meta" tone="warning" accessibilityLiveRegion="polite" testID="delete-error">{deleteError}</Text> : null}
       </Section>
 
       <Sheet
@@ -153,9 +176,10 @@ export default function Preferences() {
             <Pressable
               accessibilityRole="button"
               onPress={async () => {
+                const res = await deleteAllData();
                 setSheet(null);
-                await deleteAllData();
-                router.replace('/onboarding');
+                if (res === 'ok') router.replace('/onboarding');
+                else setDeleteError('We couldn’t delete your account right now. Nothing was removed. Check your connection and try again.');
               }}
               style={({ pressed }) => [styles.destructive, pressed && { opacity: 0.85 }]}
               testID="confirm-delete"
@@ -166,7 +190,11 @@ export default function Preferences() {
           </>
         }
       >
-        <Text>This removes your plan, grocery checks, preferences, and foods you leave out from this device. It can’t be undone.</Text>
+        <Text>
+          {remote
+            ? 'This deletes your Weekwell account with its plans, grocery checks, preferences, and foods you leave out, on every device. It can’t be undone.'
+            : 'This removes your plan, grocery checks, preferences, and foods you leave out from this device. It can’t be undone.'}
+        </Text>
       </Sheet>
       <LockedSheet visible={sheet === 'locked'} onClose={() => setSheet(null)} action="change the meals in your plan" />
     </Screen>

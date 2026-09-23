@@ -28,6 +28,14 @@ const FAILURE_COPY = {
     title: 'Something went wrong on our side',
     body: 'Your choices are saved. Try again in a moment.',
   },
+  unauthorized: {
+    title: 'Please sign in again',
+    body: 'Your session ended. Your choices are saved.',
+  },
+  subscription_required: {
+    title: 'Your free week has ended',
+    body: 'Your last plan is still available. Start a subscription to plan a new week.',
+  },
 } as const;
 
 export default function Generating() {
