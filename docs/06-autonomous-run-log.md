@@ -25,7 +25,8 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | 4 | Onboarding in 4 steps, welcome, generating | merged (see PR) |
 | 5 | Preferences, paywall, read-only after trial, delete data, Plan a new week | merged (see PR) |
 | 6 | System dark mode (resolved at launch) | merged (see PR) |
-| 7 | Backend service (auth placeholder, plans, generation jobs, prices, entitlements, deletion) and API client | planned |
+| 7a | API service: auth, plans, generation jobs, prices, entitlements + webhooks, export, deletion | merged (see PR) |
+| 7b | App API client, sign-in, sync (only when an API URL is configured) | planned |
 | 8 | Release pack (App Store metadata placeholders, privacy, review notes) and final QA | planned |
 
 ## Decisions taken without product-owner input
@@ -45,3 +46,6 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | R-11 | Read-only after the free week, per the review's recommendation for D-026; one policy module | The recommendation was explicit; one place to change | Fully gated; free pilot |
 | R-12 | Added "Plan a new week" (week screen → setup review → generate) and a mock "Subscribe" purchase path | Without them there was no way to start next week or recover from an expired trial | — |
 | R-13 | Dark mode is resolved at launch rather than switching live | Live switching needs every stylesheet to read the theme at render time; too wide a refactor overnight | Full theme-hook refactor |
+| R-14 | API on Hono + Node 22; pilot storage SQLite (`node:sqlite`); Postgres + RLS migration written for later | D-013 undecided; SQLite needs no native build; the same method signatures map to Postgres | Supabase now; Fastify |
+| R-15 | Passwordless email codes with opaque session tokens; emails, codes, and tokens stored only as HMACs | No auth provider chosen (D-013); keeps PII minimal | Magic links; Sign in with Apple |
+| R-16 | The access policy (`canChangePlan`) moved to the domain package and is enforced by the API | "Payment entitlement must be verified server-side" (stop condition) | Client-only gating |
