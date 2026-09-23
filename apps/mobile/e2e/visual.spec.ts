@@ -57,7 +57,7 @@ for (const width of WIDTHS) {
         await $(page, 'meal-dinner_wed').click();
         await audit(page, name('12-meal-detail'));
         await $(page, 'repair-swap').click();
-        await expect($(page, 'swap-banner')).toBeVisible();
+        await expect($(page, 'swap-pending')).toBeVisible();
         await audit(page, name('13-meal-swapped'));
         await page.goBack();
         await $(page, 'open-grocery').click();
