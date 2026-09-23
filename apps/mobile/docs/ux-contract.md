@@ -1,5 +1,7 @@
 # Mobile UX contract (A0)
 
+> **Partly superseded (2026-09-24):** screens, copy, and the price table were revised after the design review. The current behavior is described in the v2 review packs (`review/v2/*/README.md`) and D-031 to D-034. The state and accessibility principles below still apply.
+
 Status: **design_pending**. Nothing here is final until the product owner approves it (D-016).
 Reference viewport: 390 × 844. Verified at 320, 375, 390, and 430 px wide and at 100/125/150% text.
 
