@@ -1,3 +1,10 @@
+# Product-owner design review
+
+- **Current:** [v2/week](v2/week/README.md), wave 1 (week plan). Later waves add their own folders under `v2/`.
+- **Rejected (kept for reference only):** the M1 inventory below and `screens/`. Rejected 2026-09-24 in the design correction brief.
+
+---
+
 # Product-owner design review pack: M1 (first slice)
 
 **Every screen below is `design_pending`.** Nothing is approved until the product owner records `approved`, `approved with changes`, or `rejected` for it in `docs/05-decision-log.md` (D-016). Any visible change after approval returns the screen to `design_pending`.

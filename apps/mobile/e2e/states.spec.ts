@@ -3,23 +3,22 @@ import { $, buildWeek, onboard, visibleText } from './helpers';
 
 test('a failed price check never shows a total', async ({ page }) => {
   await buildWeek(page, { query: 'prices=unavailable' });
-  await expect($(page, 'price-summary')).toContainText('Total hidden');
-  await expect($(page, 'price-summary')).toContainText('We could not verify prices for Trader Joe’s right now');
+  await expect($(page, 'price-status')).toContainText('Price unavailable right now');
   expect(await $(page, 'price-headline').innerText()).not.toMatch(/\$\d/u);
-  await expect($(page, 'budget-line')).toContainText('once prices are available');
+  await expect($(page, 'price-action-refresh')).toBeVisible();
 });
 
 test('partial prices withhold the total and mark missing items', async ({ page }) => {
   await buildWeek(page, { query: 'prices=partial' });
-  await expect($(page, 'price-summary')).toContainText('Total hidden');
+  await expect($(page, 'price-status')).toContainText('Total unavailable');
   await $(page, 'open-grocery').click();
   await expect(page.getByText('No price').filter({ visible: true }).first()).toBeVisible();
 });
 
 test('stale prices are labelled as older estimates', async ({ page }) => {
   await buildWeek(page, { query: 'prices=stale' });
-  await expect($(page, 'price-summary')).toContainText('OLDER ESTIMATE');
-  await expect($(page, 'price-summary')).toContainText('Checked 3 days ago');
+  await expect($(page, 'price-status')).toContainText('last checked 3 days ago');
+  await expect($(page, 'price-action-refresh')).toBeVisible();
 });
 
 test('a user can inspect pricing caveats in the list', async ({ page }) => {
@@ -29,9 +28,18 @@ test('a user can inspect pricing caveats in the list', async ({ page }) => {
   await expect($(page, 'price-summary')).toContainText('Checked 2 hours ago');
 });
 
-test('over budget is stated, not hidden', async ({ page }) => {
+test('over budget is stated, can be rebuilt, and the rebuild can be undone', async ({ page }) => {
   await buildWeek(page, { store: 'walmart', budget: 40, household: '3_4' });
-  await expect($(page, 'budget-line')).toContainText('over your $40 budget');
+  await expect($(page, 'price-status')).toContainText('over your $40 budget');
+  const before = await page.locator('[data-testid^="meal-"]:visible').allInnerTexts();
+  await $(page, 'price-action-rebuild').click();
+  await expect($(page, 'rebuild-sheet')).toContainText('lowest-cost meals');
+  await $(page, 'rebuild-apply').click();
+  await expect($(page, 'plan-undo')).toContainText('Week rebuilt under budget');
+  expect(await page.locator('[data-testid^="meal-"]:visible').allInnerTexts()).not.toEqual(before);
+  await $(page, 'plan-undo-button').click();
+  await expect($(page, 'plan-undo')).toHaveCount(0);
+  expect(await page.locator('[data-testid^="meal-"]:visible').allInnerTexts()).toEqual(before);
 });
 
 test('malformed model output shows a recoverable error', async ({ page }) => {

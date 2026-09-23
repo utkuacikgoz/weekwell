@@ -167,7 +167,7 @@ function key(parts: readonly Scaled[]): string {
 
 type Choice = { dinners: Recipe[]; lunches: Recipe[] };
 
-function chooseWeek(prefs: UserPreferences, dinnerPool: Recipe[], lunchPool: Recipe[]): Choice {
+function chooseWeek(prefs: UserPreferences, dinnerPool: Recipe[], lunchPool: Recipe[], mode: 'balanced' | 'cheapest' = 'balanced'): Choice {
   const servings = servingsFor(prefs.householdSize);
   const dinnersScaled = dinnerPool.map((r) => scale(r, servings));
   const lunchScaled = lunchPool.map((r) => scale(r, servings * 2.5)); // avg of 3- and 2-day blocks, for ranking only
@@ -175,7 +175,8 @@ function chooseWeek(prefs: UserPreferences, dinnerPool: Recipe[], lunchPool: Rec
   const lunchCombos = combinations(lunchScaled, LUNCH_BLOCKS.length);
   for (const d of combinations(dinnersScaled, DINNERS_PER_WEEK)) {
     for (const l of lunchCombos) {
-      const score = scoreWeek(prefs, d, l);
+      // Cheapest mode ranks by cost first (1 point per cent), then by the normal score.
+      const score = mode === 'cheapest' ? -sampleWeekCostCents(prefs.retailer, [...d, ...l]) * 1000 + scoreWeek(prefs, d, l) : scoreWeek(prefs, d, l);
       const k = `${key(d)}#${key(l)}`;
       // Deterministic tie-break on recipe ids.
       if (!best || score > best.score + 1e-9 || (Math.abs(score - best.score) <= 1e-9 && k < best.key)) {
@@ -242,4 +243,21 @@ export function rescalePlan(plan: Plan, prefs: UserPreferences, rebuild: (recipe
   const lunches = plan.lunches.map((m, i) => placeLunch(rebuild(m.recipeId), i, prefs));
   const meals = withReuse([...dinners, ...lunches]);
   return PlanSchema.parse({ ...plan, preferences: prefs, dinners: meals.slice(0, 5), lunches: meals.slice(5) });
+}
+
+/**
+ * "Rebuild under budget": the lowest sample-cost week that still fits the
+ * exclusions and time limit. Returns the estimated cost so the UI can say
+ * honestly when even the cheapest week is over budget.
+ */
+export function generateUnderBudgetPlan(prefs: UserPreferences, ctx: PlanContext): GenerateResult & { estimatedCents?: number } {
+  const feasibility = checkFeasibility(prefs);
+  if (!feasibility.ok) return { ok: false, code: 'exclusion_conflict', feasibility };
+  const choice = chooseWeek(prefs, eligibleRecipes(prefs, 'dinner'), eligibleRecipes(prefs, 'lunch'), 'cheapest');
+  const plan = assemblePlan(prefs, choice.dinners, choice.lunches, ctx);
+  const estimatedCents = sampleWeekCostCents(
+    prefs.retailer,
+    [...plan.dinners, ...plan.lunches].map((m) => ({ recipe: choice.dinners.concat(choice.lunches).find((r) => r.id === m.recipeId) as Recipe, amounts: new Map(m.ingredients.map((i) => [i.ingredientId, i.amount])), mainProtein: '' })),
+  );
+  return { ok: true, plan, estimatedCents };
 }

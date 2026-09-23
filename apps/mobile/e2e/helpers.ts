@@ -30,7 +30,7 @@ export async function onboard(
 export async function buildWeek(page: Page, opts: Parameters<typeof onboard>[1] = {}) {
   await onboard(page, opts);
   await $(page, 'generate').click();
-  await expect(page.getByText('Your week is ready.').filter({ visible: true })).toBeVisible({ timeout: 15_000 });
+  await expect($(page, 'tonight-card')).toBeVisible({ timeout: 15_000 });
 }
 
 export async function visibleText(page: Page): Promise<string> {
