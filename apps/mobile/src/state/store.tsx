@@ -119,6 +119,7 @@ type Ctx = {
   setHaptics: (on: boolean) => void;
   refreshEntitlement: () => Promise<void>;
   startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'failed'>;
+  purchase: (productId: ProductId) => Promise<'ok' | 'failed'>;
   restorePurchases: () => Promise<'restored' | 'nothing_to_restore' | 'failed'>;
   deleteAllData: () => Promise<void>;
 };
@@ -169,7 +170,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Never render a stored plan that no longer passes validation (e.g. after a schema change).
       if (loaded.plan && !PlanSchema.safeParse(loaded.plan).success) loaded = { ...loaded, plan: null, prices: null, checked: [] };
       if (cancelled) return;
-      server.current = loaded.entitlement ? new MockEntitlementServer(loaded.entitlement) : MockEntitlementServer.fresh('local_user');
+      server.current = scenarios.entitlement
+        ? MockEntitlementServer.seeded('local_user', scenarios.entitlement)
+        : loaded.entitlement
+          ? new MockEntitlementServer(loaded.entitlement)
+          : MockEntitlementServer.fresh('local_user');
       setHapticsEnabled(loaded.hapticsEnabled);
       setData(loaded);
       if (loaded.prices) setPriceCheck({ status: 'done', prices: loaded.prices });
@@ -178,6 +183,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+    // Hydrate once on mount; scenarios are fixed for the session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Persist on change.
@@ -402,6 +409,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [analytics],
   );
 
+  const purchase = useCallback(
+    async (productId: ProductId) => {
+      if (!server.current) return 'failed' as const;
+      const res = await server.current.purchase(productId);
+      if (!res.ok) {
+        haptic.warning();
+        return 'failed' as const;
+      }
+      setEntitlementView(res.view);
+      setData((d) => ({ ...d, entitlement: server.current?.snapshot() ?? null }));
+      analytics?.track('subscription_started', { productId });
+      haptic.success();
+      return 'ok' as const;
+    },
+    [analytics],
+  );
+
   const restorePurchases = useCallback(async () => {
     if (!server.current) return 'failed' as const;
     const result = await server.current.restore(scenarios.restore);
@@ -447,6 +471,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setHaptics,
     refreshEntitlement,
     startTrial,
+    purchase,
     restorePurchases,
     deleteAllData,
   };
