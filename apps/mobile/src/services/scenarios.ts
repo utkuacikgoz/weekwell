@@ -1,0 +1,28 @@
+/**
+ * Test scenarios for QA and design-review captures. Never exposed in release
+ * builds: only read in development or from a web preview URL
+ * (e.g. `?prices=stale&generation=timeout&fontScale=1.5`).
+ */
+import { Platform } from 'react-native';
+import { FIXTURE_PRICE_SCENARIOS, type FixturePriceScenario } from '@weekwell/domain';
+
+export type GenerationScenario = 'ok' | 'invalid_output' | 'timeout';
+export type RestoreScenario = 'ok' | 'error';
+export type Scenarios = { prices: FixturePriceScenario; generation: GenerationScenario; restore: RestoreScenario; fontScale: number };
+
+export const DEFAULT_SCENARIOS: Scenarios = { prices: 'sample', generation: 'ok', restore: 'ok', fontScale: 1 };
+
+export function scenariosFromUrl(): Partial<Scenarios> {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return {};
+  const q = new URLSearchParams(window.location.search);
+  const out: Partial<Scenarios> = {};
+  const prices = q.get('prices');
+  if (prices && (FIXTURE_PRICE_SCENARIOS as readonly string[]).includes(prices)) out.prices = prices as FixturePriceScenario;
+  const generation = q.get('generation');
+  if (generation === 'ok' || generation === 'invalid_output' || generation === 'timeout') out.generation = generation;
+  const restore = q.get('restore');
+  if (restore === 'ok' || restore === 'error') out.restore = restore;
+  const fontScale = Number(q.get('fontScale'));
+  if (fontScale >= 1 && fontScale <= 2) out.fontScale = fontScale;
+  return out;
+}
