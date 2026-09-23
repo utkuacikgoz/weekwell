@@ -1,31 +1,45 @@
+import { Platform } from 'react-native';
 /**
  * Weekwell design tokens (A2). Status: design_pending until product-owner
  * approval (D-016). One warm background, one ink, one green utility accent,
  * one restrained warning accent. No gradients, no decorative color.
  */
-import { Platform } from 'react-native';
-
 export { color } from './palette';
 
 /** 4px baseline, 8px scale. */
 export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 32, xxl: 48 } as const;
 
 export const MIN_TOUCH = 44;
-export const radius = { control: 6, pill: 999 } as const;
+export const radius = { control: 12, card: 16, thumb: 12, pill: 999 } as const;
 
-const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' });
-const sans = Platform.select({ ios: 'System', android: 'sans-serif', default: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' });
+/**
+ * UI sans: Inter (OFL, bundled, loaded in the root layout) so phone and review
+ * captures match. Serif: the platform serif, per product-owner guidance
+ * (2026-09-24): no licensed display face until the layout is approved.
+ */
+export const fonts = {
+  sans: 'Inter_400Regular',
+  sansMedium: 'Inter_500Medium',
+  sansSemiBold: 'Inter_600SemiBold',
+  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' }) as string,
+} as const;
 
-/** Serif only for short headings; body copy is sans. Line heights sit on the 4px grid. */
+/**
+ * Type scale from the design correction brief (2026-09-24):
+ * 28/32 page title · 20/24 section title · 16/22 body · 13/18 secondary · 12/16 metadata.
+ * Serif only for the page title and dish names. Sentence case everywhere.
+ */
 export const type = {
-  display: { fontFamily: serif, fontSize: 30, lineHeight: 36, fontWeight: '400' as const },
-  title: { fontFamily: serif, fontSize: 22, lineHeight: 28, fontWeight: '400' as const },
-  heading: { fontFamily: sans, fontSize: 17, lineHeight: 24, fontWeight: '600' as const },
-  body: { fontFamily: sans, fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
-  bodyStrong: { fontFamily: sans, fontSize: 16, lineHeight: 24, fontWeight: '600' as const },
-  meta: { fontFamily: sans, fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
-  label: { fontFamily: sans, fontSize: 13, lineHeight: 16, fontWeight: '600' as const, letterSpacing: 0.4 },
-  total: { fontFamily: serif, fontSize: 40, lineHeight: 44, fontWeight: '400' as const },
+  display: { fontFamily: fonts.serif, fontSize: 32, lineHeight: 38 },
+  title: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 32 },
+  dish: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 24 },
+  heading: { fontFamily: fonts.sansSemiBold, fontSize: 20, lineHeight: 24 },
+  body: { fontFamily: fonts.sans, fontSize: 16, lineHeight: 22 },
+  bodyStrong: { fontFamily: fonts.sansSemiBold, fontSize: 16, lineHeight: 22 },
+  meta: { fontFamily: fonts.sans, fontSize: 13, lineHeight: 18 },
+  label: { fontFamily: fonts.sansSemiBold, fontSize: 13, lineHeight: 18 },
+  caption: { fontFamily: fonts.sansMedium, fontSize: 12, lineHeight: 16 },
+  total: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 32 },
 } as const;
 export type TypeVariant = keyof typeof type;
 

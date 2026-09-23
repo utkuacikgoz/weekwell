@@ -1,3 +1,7 @@
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
@@ -10,8 +14,11 @@ import { color } from '../theme/tokens';
 function Navigator() {
   const reduced = useReducedMotion();
   const { scenarios, hydrated } = useStore();
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
+  // If fonts fail to load, continue with system fonts rather than blocking the app.
+  const fontsReady = fontsLoaded || !!fontError;
   // Screens read stored state; rendering them before it loads would redirect deep links to onboarding.
-  if (!hydrated) {
+  if (!hydrated || !fontsReady) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color.background }}>
         <ActivityIndicator accessibilityLabel="Loading your week" color={color.ink} />

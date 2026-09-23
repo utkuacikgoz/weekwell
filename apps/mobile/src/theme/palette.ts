@@ -1,18 +1,19 @@
 /**
  * Color palette (no React Native imports so it can be contrast-tested in Node).
- * One warm background, one ink, one green utility accent, one warning accent.
+ * Warm paper, deep ink, one leaf green for actions and status, one citrus
+ * accent for price attention. Dividers are rare.
  */
 export const color = {
-  background: '#F7F4EE', // warm off-white, the only page surface
-  raised: '#FFFDF9', // bottom action bar and inputs only
-  ink: '#1D1B18',
-  inkMuted: '#58534B', // 6.9:1 on background
-  divider: '#DCD5C8',
-  control: '#8A8378', // unselected control outlines, 3.4:1 (non-text UI minimum 3:1)
-  accent: '#2F6B45', // green utility accent: primary buttons, checks, "fits budget"
+  background: '#F5F0E6', // warm paper, the page
+  raised: '#FFFCF5', // the one content surface (tonight card, sheet, bottom bar)
+  ink: '#1E1A15',
+  inkMuted: '#5A5349',
+  divider: '#E3DACB',
+  control: '#8A8276', // unselected control outlines (non-text UI, 3:1 minimum)
+  accent: '#2E6A48', // leaf green: primary actions, "within budget"
   onAccent: '#FFFFFF',
-  accentTint: '#E3EDE5',
-  warning: '#9A4A12', // restrained warning: stale prices, over budget, errors
-  warningTint: '#F5E6D6',
-  placeholder: '#E8E1D5',
+  accentTint: '#E2ECE2',
+  warning: '#A4481A', // citrus: price attention only (stale, missing, over budget)
+  warningTint: '#F6E4D4',
+  placeholder: '#EAE2D4', // pressed rows, skeletons
 } as const;

@@ -36,7 +36,7 @@ export function MealRow({ meal, label, onList = true, emphasis }: { meal: Meal; 
     >
       <MealThumb size={emphasis ? 72 : 56} />
       <View style={styles.text}>
-        <Text variant="label" tone="muted">{label.toUpperCase()}</Text>
+        <Text variant="label" tone="muted">{label}</Text>
         <Text variant={emphasis ? 'title' : 'heading'}>{meal.name}</Text>
         <Text variant="meta" tone="muted">{meta}</Text>
         {!onList ? <Text variant="meta" tone="warning">Not on grocery list</Text> : null}

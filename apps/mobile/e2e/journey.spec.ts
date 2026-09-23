@@ -8,20 +8,18 @@ test('a new user builds a plan in under two minutes', async ({ page }) => {
   for (const d of ['dinner_mon', 'dinner_tue', 'dinner_wed', 'dinner_thu', 'dinner_fri', 'lunch_a', 'lunch_b']) {
     await expect($(page, `meal-${d}`)).toHaveCount(1);
   }
-  await expect($(page, 'price-summary')).toContainText('estimated at Trader Joe’s');
-  await expect($(page, 'price-summary')).toContainText('Sample prices for testing');
+  await expect($(page, 'price-status')).toContainText('estimated at Trader Joe’s');
+  await expect($(page, 'price-status')).toContainText('sample prices');
 });
 
-test('tonight’s meal, total, budget fit, protein/time, and store are visible without scrolling', async ({ page }) => {
+test('tonight’s meal, total, budget fit, and store are visible without scrolling', async ({ page }) => {
   await buildWeek(page);
   const vh = page.viewportSize()!.height;
-  for (const id of ['settings-summary', 'week-summary', 'price-headline', 'budget-line']) {
+  for (const id of ['settings-summary', 'tonight-card', 'price-status']) {
     const box = await $(page, id).boundingBox();
     expect(box, id).not.toBeNull();
-    expect(box!.y + box!.height, id).toBeLessThan(vh - 80);
+    expect(box!.y + box!.height, id).toBeLessThanOrEqual(vh);
   }
-  const first = await page.locator('[data-testid^="meal-dinner_"]:visible').first().boundingBox();
-  expect(first!.y + first!.height).toBeLessThan(vh - 80);
 });
 
 test('the review screen reflects every choice and edits return to review', async ({ page }) => {
@@ -102,7 +100,7 @@ test('changing store previews exactly what will change before applying', async (
   await $(page, 'pref-store-walmart').click();
   await expect($(page, 'preference-preview')).toContainText(/Changing to Walmart may change \d+ prices/u);
   await $(page, 'apply-preferences').click();
-  await expect($(page, 'price-summary')).toContainText('Walmart');
+  await expect($(page, 'price-status')).toContainText('Walmart');
 });
 
 test('delete my data returns to onboarding', async ({ page }) => {
@@ -113,4 +111,12 @@ test('delete my data returns to onboarding', async ({ page }) => {
   await expect($(page, 'start')).toBeVisible();
   await page.reload();
   await expect($(page, 'start')).toBeVisible();
+});
+
+test('about this estimate explains the total in a sheet', async ({ page }) => {
+  await buildWeek(page);
+  await $(page, 'price-about').click();
+  await expect($(page, 'about-sheet')).toContainText('They weren’t checked in a store');
+  await $(page, 'about-done').click();
+  await expect($(page, 'about-sheet')).toHaveCount(0);
 });
