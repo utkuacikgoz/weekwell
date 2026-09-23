@@ -255,6 +255,36 @@ Everything below was decided provisionally by the mobile agent to complete the f
 - Decision: `ios.supportsTablet: false` for the pilot. The bundle identifier, Apple team, and App Store Connect app record are not set; they are needed before the first TestFlight build (D-017).
 - Owner: Product owner + release engineering
 
+## Overnight autonomous-run decisions (2026-09-24)
+
+The product owner asked for waves to be built and merged overnight. Every item below is **Proposed**, and the full list with alternatives is in `06-autonomous-run-log.md`.
+
+### D-031 — Rebuild under budget
+
+- Status: Proposed
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: When the week is over budget, the price status offers "Rebuild under budget". A sheet previews how many meals change and the new estimate, says honestly if even the cheapest week is still over, and the change can be undone. Generation never refuses an over-budget plan (per the M1 review recommendation).
+- Contracts affected: `generateUnderBudgetPlan` (domain).
+- Owner: Product owner
+
+### D-032 — One price status component and copy
+
+- Status: Proposed
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: One component with a fixed layout (headline, one detail line, info button, one action only when needed) replaces the per-state warnings. Copy follows the M1 review recommendations, except sample data says "sample prices, Sep 20" instead of "price checked" (truth policy). Full caveats live in the "About this estimate" sheet.
+- Supersedes: the price table in `apps/mobile/docs/ux-contract.md`.
+- Owner: Product owner
+
+### D-033 — Meal visuals are ingredient illustrations for the pilot
+
+- Status: Proposed (updates D-028)
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: Each meal shows a top-down plate illustration generated from its real ingredients, in one style (flat colour, top-left light, no text). Photography can replace the component later without layout changes.
+- Owner: Product owner + design lead
+
 ## Decision entry template
 
 ```md
