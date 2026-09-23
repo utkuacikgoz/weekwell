@@ -34,7 +34,7 @@ export function Sheet({ visible, title, onClose, children, footer, testID }: { v
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(30, 26, 21, 0.4)' },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: color.scrim },
   sheet: { backgroundColor: color.raised, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, paddingHorizontal: space.l - 4, paddingTop: space.s, width: '100%', maxWidth: 560, alignSelf: 'center' },
   grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: color.divider, marginBottom: space.m },
   footer: { gap: space.s, paddingTop: space.m },

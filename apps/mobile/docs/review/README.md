@@ -1,6 +1,6 @@
 # Product-owner design review
 
-- **Current:** [v2/week](v2/week/README.md) (wave 1), [v2/grocery](v2/grocery/README.md) (wave 2), [v2/meal](v2/meal/README.md) (wave 3), [v2/onboarding](v2/onboarding/README.md) (wave 4), [v2/account](v2/account/README.md) (wave 5). Later waves add their own folders under `v2/`.
+- **Current:** [v2/week](v2/week/README.md) (wave 1), [v2/grocery](v2/grocery/README.md) (wave 2), [v2/meal](v2/meal/README.md) (wave 3), [v2/onboarding](v2/onboarding/README.md) (wave 4), [v2/account](v2/account/README.md) (wave 5), [v2/dark](v2/dark/README.md) (wave 6). Later waves add their own folders under `v2/`.
 - **Rejected (kept for reference only):** the M1 inventory below and `screens/`. Rejected 2026-09-24 in the design correction brief.
 
 ---

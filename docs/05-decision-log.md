@@ -230,6 +230,7 @@ Everything below was decided provisionally by the mobile agent to complete the f
 - Date: 2026-09-23
 - Workstream: mobile
 - Decision: `userInterfaceStyle: light`. The app ignores system dark mode on purpose until a dark palette is designed and approved.
+- Update 2026-09-24 (supersedes the above, still Proposed): the review asked for dark mode before public release. The app now follows the system appearance, resolved at launch (`automatic`). A change while the app is open applies on the next launch. Both palettes pass contrast tests.
 - Owner: Product owner + design lead
 
 ### D-028 — Meal imagery placeholder
