@@ -8,7 +8,8 @@ import { FIXTURE_PRICE_SCENARIOS, type FixturePriceScenario } from '@weekwell/do
 
 export type GenerationScenario = 'ok' | 'invalid_output' | 'timeout';
 export type RestoreScenario = 'ok' | 'error';
-export type Scenarios = { prices: FixturePriceScenario; generation: GenerationScenario; restore: RestoreScenario; fontScale: number; priceDelayMs: number; today?: number };
+export type EntitlementScenario = 'none' | 'trial' | 'active' | 'expired';
+export type Scenarios = { prices: FixturePriceScenario; generation: GenerationScenario; restore: RestoreScenario; fontScale: number; priceDelayMs: number; today?: number; entitlement?: EntitlementScenario };
 
 export const DEFAULT_SCENARIOS: Scenarios = { prices: 'sample', generation: 'ok', restore: 'ok', fontScale: 1, priceDelayMs: 0 };
 
@@ -28,6 +29,8 @@ export function scenariosFromUrl(): Partial<Scenarios> {
   const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const today = days.indexOf(q.get('today') ?? '');
   if (today >= 0) out.today = today;
+  const ent = q.get('entitlement');
+  if (ent === 'none' || ent === 'trial' || ent === 'active' || ent === 'expired') out.entitlement = ent;
   const delay = Number(q.get('priceDelay'));
   if (delay > 0 && delay <= 30_000) out.priceDelayMs = delay;
   return out;

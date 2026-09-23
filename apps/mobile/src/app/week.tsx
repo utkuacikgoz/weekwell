@@ -5,11 +5,13 @@ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Layout';
+import { LockedSheet } from '../components/LockedSheet';
 import { AboutEstimateSheet, RebuildSheet } from '../components/PriceSheets';
 import { PriceStatus } from '../components/PriceStatus';
 import { Text } from '../components/Text';
 import { TonightCard, WeekRow } from '../components/WeekParts';
 import { GOAL_COPY, householdCopy, timeCopy } from '../copy';
+import { canChangePlan } from '../services/access';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
 
@@ -29,11 +31,12 @@ function subscriptionLine(view: EntitlementView): string | null {
 }
 
 export default function Week() {
-  const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo } = useStore();
+  const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo, setDraft } = useStore();
   const { width, height, fontScale } = useWindowDimensions();
   // Short screens or large text: keep the bottom bar small so tonight's meal stays in view.
   const compactFooter = height < 700 || fontScale * scenarios.fontScale > 1.2;
-  const [sheet, setSheet] = useState<'about' | 'rebuild' | null>(null);
+  const [sheet, setSheet] = useState<'about' | 'rebuild' | 'locked' | null>(null);
+  const [lockedAction, setLockedAction] = useState('');
   const plan = data.plan;
   if (!plan) return <Redirect href="/onboarding" />;
 
@@ -57,7 +60,13 @@ export default function Week() {
             priceCheck={priceCheck}
             budget={p.weeklyBudget}
             compact={compactFooter}
-            onAction={(a) => (a === 'refresh' ? void refreshPrices() : setSheet(a))}
+            onAction={(a) => {
+              if (a === 'refresh') void refreshPrices();
+              else if (a === 'rebuild' && !canChangePlan(entitlementView)) {
+                setLockedAction('rebuild your week');
+                setSheet('locked');
+              } else setSheet(a);
+            }}
           />
           <Button
             label={checkedCount > 0 ? `Open grocery list · ${checkedCount} of ${groceryItems.length} checked` : 'Open grocery list'}
@@ -115,9 +124,24 @@ export default function Week() {
         <WeekRow key={l.id} meal={l} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} />
       ))}
 
-      <Text variant="meta" tone="muted" style={{ marginTop: space.l }}>
+      <Text variant="meta" tone="muted" style={{ marginTop: space.l, marginBottom: space.l }}>
         Protein estimate · check package labels for exact values
       </Text>
+
+      <Button
+        kind="secondary"
+        label="Plan a new week"
+        testID="plan-new-week"
+        onPress={() => {
+          if (!canChangePlan(entitlementView)) {
+            setLockedAction('plan a new week');
+            setSheet('locked');
+            return;
+          }
+          setDraft(p);
+          router.push('/onboarding/review');
+        }}
+      />
 
       <View style={styles.sub}>
         {sub ? <Text variant="meta" tone="muted" testID="subscription-status" style={{ flex: 1 }}>{sub}</Text> : <View style={{ flex: 1 }} />}
@@ -140,6 +164,7 @@ export default function Week() {
           void refreshPrices();
         }}
       />
+      <LockedSheet visible={sheet === 'locked'} onClose={() => setSheet(null)} action={lockedAction} />
       <RebuildSheet
         visible={sheet === 'rebuild'}
         onClose={() => setSheet(null)}

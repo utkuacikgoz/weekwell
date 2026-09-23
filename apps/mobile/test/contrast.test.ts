@@ -25,6 +25,9 @@ const TEXT_PAIRS: Array<[string, string, string]> = [
   ['ink on pressed row', color.ink, color.placeholder],
   ['muted on pressed row', color.inkMuted, color.placeholder],
   ['ink on disabled button', color.ink, color.divider],
+  ['white on destructive button', color.onAccent, color.warning],
+  ['accent on selected choice tint', color.accent, color.accentTint],
+  ['ink on raised surface', color.ink, color.raised],
 ];
 
 for (const [name, fg, bg] of TEXT_PAIRS) {

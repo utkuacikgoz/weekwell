@@ -23,7 +23,7 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | 2 | Grocery list | merged (see PR) |
 | 3 | Meal detail, cooking steps, swap (Keep swap / Undo), "More changes" | merged (see PR) |
 | 4 | Onboarding in 4 steps, welcome, generating | merged (see PR) |
-| 5 | Preferences, paywall, read-only after trial, delete data | planned |
+| 5 | Preferences, paywall, read-only after trial, delete data, Plan a new week | merged (see PR) |
 | 6 | System dark mode | planned |
 | 7 | Backend service (auth placeholder, plans, generation jobs, prices, entitlements, deletion) and API client | planned |
 | 8 | Release pack (App Store metadata placeholders, privacy, review notes) and final QA | planned |
@@ -42,3 +42,5 @@ Started 2026-09-24. The product owner asked the mobile agent to keep building an
 | R-8 | New cooking mode (`/cook/[id]`): one step at a time, large text, no timers | The review made "Start cooking" the primary action, so it has to lead somewhere useful | Scroll to steps; inline timers |
 | R-9 | The swap decision (Keep swap / Undo) lives in the meal screen's bottom bar | Can't be missed, and sits in the thumb zone | Top banner; pre-swap confirmation sheet |
 | R-10 | Setup is 4 steps (Store and budget / Your week / Foods to leave out / Review) with button-group choices | Implements the review's recommended sequence | Keep one question per screen |
+| R-11 | Read-only after the free week, per the review's recommendation for D-026; one policy module | The recommendation was explicit; one place to change | Fully gated; free pilot |
+| R-12 | Added "Plan a new week" (week screen → setup review → generate) and a mock "Subscribe" purchase path | Without them there was no way to start next week or recover from an expired trial | — |
