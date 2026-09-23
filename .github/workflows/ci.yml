@@ -33,9 +33,9 @@ jobs:
           curl -sf localhost:8799/v1/health
       - name: Dependency audit (production deps, high+)
         run: npm audit --omit=dev --audit-level=high
-      - name: Web export for E2E
+      - name: Web exports for E2E (on-device build and API-connected build)
         working-directory: apps/mobile
-        run: npx expo export --platform web --output-dir dist
+        run: npm run export:web
       - name: Install Chromium
         working-directory: apps/mobile
         run: npx playwright install --with-deps chromium
