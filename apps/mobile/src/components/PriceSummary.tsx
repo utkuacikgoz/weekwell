@@ -24,7 +24,7 @@ export function PriceSummary({ priceCheck, budget, compact }: { priceCheck: Pric
   const b = budgetLine(budgetStatus(prices.total, budget), budget);
   return (
     <View testID="price-summary" accessible accessibilityLabel={`${h.headline}. ${h.kindLabel}. ${h.detail} ${b.text}`}>
-      <Text variant="label" tone={h.tone === 'warning' ? 'warning' : 'muted'}>{h.kindLabel.toUpperCase()}</Text>
+      <Text variant="label" tone={h.tone === 'warning' ? 'warning' : 'muted'}>{h.kindLabel}</Text>
       <Text variant={h.amount ? (compact ? 'title' : 'total') : 'title'} testID="price-headline">
         {h.amount ? (
           <>

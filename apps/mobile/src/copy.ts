@@ -116,3 +116,69 @@ export function weekSummary(dinners: readonly { totalMinutes: number; protein: {
   const range = lo === hi ? `${lo}` : `${lo}–${hi}`;
   return `Dinners take ${range} minutes · about ${avgProtein}g protein each (estimated)`;
 }
+
+// ---------------------------------------------------------------------------
+// Price status (design correction 2026-09-24): one component, one layout,
+// variants differ only in words, tone, and the single next action.
+// ---------------------------------------------------------------------------
+
+export type PriceAction = 'about' | 'refresh' | 'rebuild';
+export type PriceStatusModel = {
+  variant: 'sample' | 'estimate' | 'verified' | 'stale' | 'unavailable' | 'partial' | 'over_budget';
+  headline: string;
+  detail: string;
+  tone: 'ok' | 'attention';
+  action: { kind: PriceAction; label: string };
+};
+
+function checkedPhrase(iso: string, now: Date): string {
+  const age = now.getTime() - Date.parse(iso);
+  const sameDay = new Date(iso).toDateString() === now.toDateString();
+  if (age < 60 * 60_000) return 'price checked just now';
+  if (sameDay) return 'price checked today';
+  return `price checked ${formatRelativeTime(iso, now)}`;
+}
+
+export function priceStatus(total: ShopTotal, retailer: Retailer, budget: number, now: Date): PriceStatusModel {
+  const store = RETAILER_LABEL[retailer];
+  const about = { kind: 'about' as const, label: 'About this estimate' };
+  const refresh = { kind: 'refresh' as const, label: 'Check prices again' };
+  if (total.status === 'withheld') {
+    if (total.reason === 'provider_unavailable') {
+      return { variant: 'unavailable', headline: 'Price unavailable right now', detail: 'Your plan and grocery list still work without a total.', tone: 'attention', action: refresh };
+    }
+    return {
+      variant: 'partial',
+      headline: 'Total unavailable',
+      detail: `${total.missingItemIds.length} of ${total.itemCount} items have no price yet.`,
+      tone: 'attention',
+      action: refresh,
+    };
+  }
+  const amount = formatMoney(total.totalCents, { whole: true });
+  const source = total.isSample ? `sample prices, ${formatShortDate(total.oldestObservedAt).replace(' ', '\u00a0')}` : total.kind === 'verified' ? `verified, ${checkedPhrase(total.oldestObservedAt, now)}` : checkedPhrase(total.oldestObservedAt, now);
+  const over = total.totalCents - budget * 100;
+  if (total.staleItemIds.length > 0) {
+    return {
+      variant: 'stale',
+      headline: `${amount} last checked ${formatRelativeTime(total.oldestObservedAt, now)}`,
+      detail: 'Prices may have changed since then.',
+      tone: 'attention',
+      action: refresh,
+    };
+  }
+  if (over > 0) {
+    return {
+      variant: 'over_budget',
+      headline: `${formatMoney(over, { whole: true })} over your $${budget} budget`,
+      detail: `${amount} estimated at ${store} · ${source}`,
+      tone: 'attention',
+      action: { kind: 'rebuild', label: 'Rebuild under budget' },
+    };
+  }
+  const fit = `Within your $${budget} budget`;
+  if (total.kind === 'verified' && !total.isSample) {
+    return { variant: 'verified', headline: `${amount} at ${store}`, detail: `${fit} · ${source}`, tone: 'ok', action: about };
+  }
+  return { variant: total.isSample ? 'sample' : 'estimate', headline: `${amount} estimated at ${store}`, detail: `${fit} · ${source}`, tone: 'ok', action: about };
+}
