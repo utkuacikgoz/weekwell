@@ -4,11 +4,10 @@ import {
   formatQuantity,
   type GroceryItem,
   type ItemPrice,
-  type Meal,
   type StoreSection,
 } from '@weekwell/domain';
 import { Redirect, router, type Href } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Animated, Pressable, Share, StyleSheet, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
@@ -107,28 +106,25 @@ export default function Grocery() {
   const [sheet, setSheet] = useState<{ kind: 'about' } | { kind: 'meals'; item: GroceryItem } | null>(null);
   const [showStaples, setShowStaples] = useState(false);
   const [toast, setToast] = useState<{ id: string; name: string } | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     analytics?.track('grocery_list_opened', { itemCount: groceryItems.length });
-    return () => {
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Each toast hides itself after 4 seconds; a newer toast restarts the timer.
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   if (!plan) return <Redirect href="/onboarding" />;
 
   const toggle = (item: GroceryItem) => {
     const wasChecked = checked.has(item.id);
     toggleChecked(item.id);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    if (!wasChecked) {
-      setToast({ id: item.id, name: item.name });
-      toastTimer.current = setTimeout(() => setToast(null), 4000);
-    } else {
-      setToast(null);
-    }
+    setToast(wasChecked ? null : { id: item.id, name: item.name });
   };
 
   const sections = new Map<StoreSection, GroceryItem[]>();
