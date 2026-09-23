@@ -99,13 +99,36 @@ test('swap one meal, then undo it', async ({ page }) => {
   await $(page, 'meal-dinner_wed').click();
   const original = await $(page, 'meal-name').innerText();
   await $(page, 'repair-swap').click();
-  await expect($(page, 'swap-banner')).toBeVisible();
-  const swapped = await $(page, 'meal-name').innerText();
-  expect(swapped).not.toBe(original);
+  await expect($(page, 'swap-pending')).toContainText('Swapped to');
+  expect(await $(page, 'meal-name').innerText()).not.toBe(original);
   await $(page, 'undo-swap').click();
   await expect($(page, 'meal-name')).toHaveText(original);
+  await expect($(page, 'swap-pending')).toHaveCount(0);
   await page.goBack();
   expect(await page.locator('[data-testid^="meal-"]:visible').allInnerTexts()).toEqual(before);
+});
+
+test('keep a swap: the week shows the new meal', async ({ page }) => {
+  await buildWeek(page);
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'repair-swap').click();
+  const swapped = await $(page, 'meal-name').innerText();
+  await $(page, 'keep-swap').click();
+  await expect($(page, 'meal-toast')).toContainText('Swap kept');
+  await expect($(page, 'start-cooking')).toBeVisible();
+  await page.goBack();
+  await expect($(page, 'meal-dinner_wed')).toContainText(swapped);
+});
+
+test('cooking mode walks through the steps', async ({ page }) => {
+  await buildWeek(page);
+  await $(page, 'meal-dinner_mon').click();
+  await $(page, 'start-cooking').click();
+  await expect($(page, 'cook-step-count')).toHaveText(/Step 1 of \d/u);
+  await $(page, 'cook-next').click();
+  await expect($(page, 'cook-step-count')).toHaveText(/Step 2 of \d/u);
+  await $(page, 'cook-prev').click();
+  await expect($(page, 'cook-step-count')).toHaveText(/Step 1 of \d/u);
 });
 
 test('changing store previews exactly what will change before applying', async ({ page }) => {
