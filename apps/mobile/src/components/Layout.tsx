@@ -9,7 +9,7 @@ import { Text } from './Text';
  * Page scaffold: one background surface, scrollable content, and an optional
  * bottom action bar that stays reachable at any text size.
  */
-export function Screen({ children, footer, testID, scrollToTopKey }: { children: ReactNode; footer?: ReactNode; testID?: string; scrollToTopKey?: unknown }) {
+export function Screen({ children, footer, overlay, testID, scrollToTopKey }: { children: ReactNode; footer?: ReactNode; overlay?: ReactNode; testID?: string; scrollToTopKey?: unknown }) {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollView>(null);
   // Bring a result (e.g. a swap confirmation at the top) into view after an action lower on the page.
@@ -25,7 +25,13 @@ export function Screen({ children, footer, testID, scrollToTopKey }: { children:
       <ScrollView ref={scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
-      {footer ? <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.m) }]}>{footer}</View> : null}
+      {footer ? (
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.m) }]}>
+          {/* Transient messages (e.g. undo toasts) float just above the action bar. */}
+          {overlay ? <View style={styles.overlay} pointerEvents="box-none">{overlay}</View> : null}
+          {footer}
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -76,6 +82,7 @@ const styles = StyleSheet.create({
     paddingTop: space.m - 4,
     gap: space.s,
   },
+  overlay: { position: 'absolute', left: space.m, right: space.m, bottom: '100%', marginBottom: space.s },
   topBar: { minHeight: MIN_TOUCH + 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' },
   back: { minHeight: MIN_TOUCH, justifyContent: 'center', paddingRight: space.m },
   divider: { height: StyleSheet.hairlineWidth * 2, backgroundColor: color.divider },

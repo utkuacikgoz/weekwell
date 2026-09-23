@@ -72,11 +72,25 @@ test('check off and undo a grocery item; state survives a reload', async ({ page
 test('grocery items map back to their meals', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'open-grocery').click();
-  const link = page.getByRole('link').filter({ visible: true }).first();
-  const label = await link.getAttribute('aria-label');
-  await link.click();
+  await page.locator('[data-testid^="used-in-"]:visible').first().click();
+  const sheet = $(page, 'used-in-sheet');
+  await expect(sheet).toBeVisible();
+  const row = sheet.locator('[data-testid^="meal-"]').first();
+  const label = await row.getAttribute('aria-label');
+  await row.click();
   await expect($(page, 'meal-name')).toBeVisible();
   expect(label).toContain(await $(page, 'meal-name').innerText());
+});
+
+test('checking an item offers a quick undo', async ({ page }) => {
+  await buildWeek(page);
+  await $(page, 'open-grocery').click();
+  const item = page.locator('[data-testid^="item-"]:visible').first();
+  await item.click();
+  await expect($(page, 'check-toast')).toBeVisible();
+  await $(page, 'undo-check').click();
+  await expect(item).toHaveAttribute('aria-checked', 'false');
+  await expect($(page, 'checked-count')).toContainText('0 of');
 });
 
 test('swap one meal, then undo it', async ({ page }) => {

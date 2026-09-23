@@ -24,8 +24,9 @@ test('stale prices are labelled as older estimates', async ({ page }) => {
 test('a user can inspect pricing caveats in the list', async ({ page }) => {
   await buildWeek(page, { query: 'prices=fresh' });
   await $(page, 'open-grocery').click();
-  await expect($(page, 'price-summary')).toContainText('Prices can change in store');
-  await expect($(page, 'price-summary')).toContainText('Checked 2 hours ago');
+  await expect($(page, 'price-status')).toContainText(/price checked (today|2 hours ago)/u);
+  await $(page, 'price-about').click();
+  await expect($(page, 'about-sheet')).toContainText('Prices can change in store');
 });
 
 test('over budget is stated, can be rebuilt, and the rebuild can be undone', async ({ page }) => {
