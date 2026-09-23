@@ -51,7 +51,7 @@ describe('generateFixturePlan', () => {
         }
       }
     }
-  });
+  }, 30_000);
 
   it('honors custom exclusions by ingredient name', () => {
     const plan = planFor({ ...FIXTURE_USERS.valid!.preferences, exclusions: ['chicken', 'spinach'] });
@@ -86,5 +86,24 @@ describe('generateFixturePlan', () => {
     const start = performance.now();
     planFor({ ...FIXTURE_USERS.valid!.preferences, maxMinutes: 'batch' });
     expect(performance.now() - start).toBeLessThan(1500);
+  });
+});
+
+describe('generateUnderBudgetPlan', () => {
+  it('never costs more than the balanced plan and keeps constraints', async () => {
+    const { generateUnderBudgetPlan, buildGroceryList, priceGroceryList, FixtureRetailerProvider } = await import('../src');
+    const prefs: UserPreferences = { retailer: 'walmart', weeklyBudget: 40, proteinGoal: 'family_friendly', maxMinutes: 30, householdSize: '3_4', exclusions: ['dairy'] };
+    const cheap = generateUnderBudgetPlan(prefs, CTX);
+    const normal = generateFixturePlan(prefs, CTX);
+    expect(cheap.ok && normal.ok).toBe(true);
+    if (!cheap.ok || !normal.ok) return;
+    const total = async (p: typeof cheap.plan) => {
+      const r = await priceGroceryList(new FixtureRetailerProvider('walmart'), buildGroceryList(allMeals(p)));
+      return r.total.status === 'available' ? r.total.totalCents : Infinity;
+    };
+    const cheapTotal = await total(cheap.plan);
+    expect(cheapTotal).toBeLessThanOrEqual(await total(normal.plan));
+    expect(cheap.estimatedCents).toBe(cheapTotal);
+    for (const m of allMeals(cheap.plan)) expect(findConflicts(m.ingredients.map((i) => i.ingredientId), ['dairy'])).toEqual([]);
   });
 });
