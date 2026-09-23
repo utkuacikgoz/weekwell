@@ -7,6 +7,7 @@
 import { memo, type ReactElement } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
+import { scheme } from '../theme/tokens';
 
 type Shape =
   | 'chunks' | 'crumbles' | 'slices' | 'fillet' | 'shrimp' | 'coins' | 'rolls' | 'cubes' | 'eggs' | 'flakes' | 'beans' | 'dollop'
@@ -69,12 +70,10 @@ const ART: Record<string, Art> = {
 };
 
 /** Soft tile tints, chosen by the main protein family so a week reads as varied but coherent. */
-const TILE: Record<string, string> = {
-  poultry: '#EFE4CF',
-  red: '#EFDDD1',
-  sea: '#DDE7E1',
-  plant: '#E9E9D2',
-};
+const TILE: Record<string, string> =
+  scheme === 'dark'
+    ? { poultry: '#3A3226', red: '#3C2B25', sea: '#243431', plant: '#2F3225' }
+    : { poultry: '#EFE4CF', red: '#EFDDD1', sea: '#DDE7E1', plant: '#E9E9D2' };
 const FAMILY: Record<string, keyof typeof TILE> = {
   chicken_breast: 'poultry', chicken_thigh: 'poultry', ground_turkey: 'poultry', chicken_sausage: 'poultry', deli_turkey: 'poultry',
   ground_beef: 'red', sirloin: 'red',

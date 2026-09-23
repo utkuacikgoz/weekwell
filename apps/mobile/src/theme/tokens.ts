@@ -1,10 +1,16 @@
-import { Platform } from 'react-native';
+import { Appearance, Platform } from 'react-native';
+import { dark, light } from './palette';
 /**
  * Weekwell design tokens (A2). Status: design_pending until product-owner
  * approval (D-016). One warm background, one ink, one green utility accent,
  * one restrained warning accent. No gradients, no decorative color.
  */
-export { color } from './palette';
+/**
+ * Appearance follows the system setting at launch (D-027 update). A change
+ * while the app is open applies on the next launch; the web preview reloads.
+ */
+export const scheme: 'light' | 'dark' = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+export const color = scheme === 'dark' ? dark : light;
 
 /** 4px baseline, 8px scale. */
 export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 32, xxl: 48 } as const;
