@@ -98,3 +98,14 @@ describe('analytics', () => {
     expect(isActivated([...funnel, e('grocery_item_checked', { checked: true })])).toBe(true);
   });
 });
+
+describe('canChangePlan', () => {
+  it('is read-only after the free week and open otherwise', async () => {
+    const { canChangePlan } = await import('../src');
+    expect(canChangePlan({ state: 'none', trialEligible: true })).toBe(true);
+    expect(canChangePlan({ state: 'trial', productId: 'monthly', endsAt: '', daysLeft: 3, willRenew: true })).toBe(true);
+    expect(canChangePlan({ state: 'active', productId: 'yearly', periodEndsAt: '', willRenew: true })).toBe(true);
+    expect(canChangePlan({ state: 'expired' })).toBe(false);
+    expect(canChangePlan({ state: 'none', trialEligible: false })).toBe(false);
+  });
+});

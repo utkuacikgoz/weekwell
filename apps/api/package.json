@@ -1,0 +1,25 @@
+{
+  "name": "@weekwell/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Weekwell pilot API: auth, plans, generation jobs, prices, entitlements, deletion (mobile workstream A4-A6).",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "ALLOW_DEV_CODES=1 tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@weekwell/domain": "*",
+    "hono": "4.13.8",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
+  }
+}
