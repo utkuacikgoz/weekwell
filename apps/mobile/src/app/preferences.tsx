@@ -1,6 +1,7 @@
 import {
   PROTEIN_GOALS,
   RETAILERS,
+  RETAILER_LABEL,
   previewPreferenceChange,
   type HouseholdSize,
   type MaxMinutes,
@@ -8,27 +9,38 @@ import {
 } from '@weekwell/domain';
 import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
-import { Banner } from '../components/Banner';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { BudgetControl } from '../components/BudgetControl';
 import { Button } from '../components/Button';
-import { ChoiceRow } from '../components/ChoiceRow';
 import { ExclusionsEditor } from '../components/ExclusionsEditor';
-import { Divider, Screen, SectionLabel, TopBar } from '../components/Layout';
-import { mealWhen } from '../components/MealRow';
+import { Screen } from '../components/Layout';
+import { LockedSheet } from '../components/LockedSheet';
+import { NavBar } from '../components/NavBar';
+import { ChoiceGroup } from '../components/Segmented';
+import { Sheet } from '../components/Sheet';
 import { Text } from '../components/Text';
-import { GOAL_COPY, STORE_COPY, householdCopy, timeCopy } from '../copy';
+import { GOAL_COPY, householdCopy, timeCopy } from '../copy';
+import { canChangePlan } from '../services/access';
 import { useStore } from '../state/store';
-import { color, space } from '../theme/tokens';
+import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
 
 const TIMES: MaxMinutes[] = [20, 30, 'batch'];
-const HOUSEHOLDS: HouseholdSize[] = [1, 2, '3_4'];
+const PEOPLE: HouseholdSize[] = [1, 2, '3_4'];
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text variant="heading" accessibilityRole="header" style={{ marginBottom: space.m }}>{title}</Text>
+      {children}
+    </View>
+  );
+}
 
 export default function Preferences() {
-  const { data, applyPlan, setHaptics, deleteAllData } = useStore();
+  const { data, applyPlan, setHaptics, deleteAllData, entitlementView } = useStore();
   const plan = data.plan;
   const [edit, setEdit] = useState<UserPreferences | null>(plan?.preferences ?? null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [sheet, setSheet] = useState<'delete' | 'locked' | null>(null);
 
   const changed = !!plan && !!edit && JSON.stringify(edit) !== JSON.stringify(plan.preferences);
   const preview = useMemo(
@@ -38,118 +50,131 @@ export default function Preferences() {
 
   if (!plan || !edit) return <Redirect href="/onboarding" />;
   const set = (patch: Partial<UserPreferences>) => setEdit({ ...edit, ...patch });
+  const apply = () => {
+    if (!preview || preview.blocked) return;
+    if (preview.mealsChanged.length > 0 && !canChangePlan(entitlementView)) {
+      setSheet('locked');
+      return;
+    }
+    applyPlan(preview.plan, preview.mealsChanged.length > 0 ? `Preferences updated · ${preview.summary}` : undefined);
+    router.back();
+  };
 
   return (
     <Screen
+      testID="preferences-screen"
       footer={
-        changed ? (
+        changed && preview ? (
           <>
-            <Button
-              label="Apply changes"
-              disabled={!preview || !!preview.blocked}
-              onPress={() => {
-                if (preview && !preview.blocked) {
-                  applyPlan(preview.plan);
-                  router.back();
-                }
-              }}
-              testID="apply-preferences"
-            />
+            <View testID="preference-preview" accessibilityLiveRegion="polite">
+              <Text variant="bodyStrong" tone={preview.blocked ? 'warning' : 'ink'}>{preview.blocked ? 'This change doesn’t fit a full week' : 'What will change'}</Text>
+              <Text variant="meta" tone="muted">{preview.summary}</Text>
+              {!preview.blocked && preview.mealsChanged.length === 0 && preview.diff.removed.length === 0 ? null : !preview.blocked ? (
+                <Text variant="meta" tone="muted">Checked items that are still needed stay checked.</Text>
+              ) : null}
+            </View>
+            <Button label="Apply changes" disabled={!!preview.blocked} onPress={apply} testID="apply-preferences" />
             <Button label="Keep my current plan" kind="secondary" onPress={() => setEdit(plan.preferences)} testID="discard-preferences" />
           </>
         ) : undefined
       }
     >
-      <TopBar backLabel="Week" />
+      <NavBar backLabel="Week" />
       <Text variant="title" accessibilityRole="header">Preferences</Text>
       <Text tone="muted" style={{ marginTop: space.s }}>
-        Change anything. We’ll show exactly what changes before your plan is updated.
+        Change anything. You’ll see what changes before your plan is updated.
       </Text>
 
-      {preview ? (
-        <Banner tone={preview.blocked ? 'warning' : 'info'} title={preview.blocked ? 'This change doesn’t fit a full week' : 'What will change'} testID="preference-preview">
-          <Text>{preview.summary}</Text>
-          {preview.mealsChanged.map((m) => (
-            <Text key={m.id} variant="meta">• {mealWhen(m)}: {m.name}</Text>
-          ))}
-          {preview.diff.removed.filter((i) => data.checked.includes(i.id)).length > 0 ? (
-            <Text variant="meta">Some checked items will no longer be needed.</Text>
-          ) : null}
-          {!preview.blocked ? <Text variant="meta">Checked items that are still needed stay checked.</Text> : null}
-        </Banner>
-      ) : null}
+      <Section title="Store and budget">
+        <ChoiceGroup
+          label="Store"
+          columns={2}
+          value={edit.retailer}
+          onChange={(retailer) => set({ retailer })}
+          options={RETAILERS.map((r) => ({ value: r, label: RETAILER_LABEL[r], testID: `pref-store-${r}` }))}
+        />
+        <Text variant="label">Weekly grocery budget</Text>
+        <BudgetControl value={edit.weeklyBudget} householdSize={edit.householdSize} onChange={(weeklyBudget) => set({ weeklyBudget })} />
+      </Section>
 
-      <SectionLabel>Store</SectionLabel>
-      {RETAILERS.map((r) => (
-        <ChoiceRow key={r} label={STORE_COPY[r].label} selected={edit.retailer === r} onPress={() => set({ retailer: r })} testID={`pref-store-${r}`} />
-      ))}
+      <Section title="Your week">
+        <ChoiceGroup label="Main goal" columns={2} value={edit.proteinGoal} onChange={(proteinGoal) => set({ proteinGoal })} options={PROTEIN_GOALS.map((g) => ({ value: g, label: GOAL_COPY[g].label }))} />
+        <ChoiceGroup
+          label="Time for dinner"
+          value={String(edit.maxMinutes)}
+          onChange={(v) => set({ maxMinutes: v === 'batch' ? 'batch' : (Number(v) as 20 | 30) })}
+          options={TIMES.map((m) => ({ value: String(m), label: m === 'batch' ? 'Batch cook' : timeCopy(m).short, testID: `pref-time-${m}` }))}
+        />
+        <ChoiceGroup
+          label="People eating"
+          value={String(edit.householdSize)}
+          onChange={(v) => set({ householdSize: v === '3_4' ? '3_4' : (Number(v) as 1 | 2) })}
+          options={PEOPLE.map((h) => ({ value: String(h), label: householdCopy(h).label, testID: `pref-household-${h}` }))}
+        />
+      </Section>
 
-      <SectionLabel>Weekly budget</SectionLabel>
-      <BudgetControl value={edit.weeklyBudget} householdSize={edit.householdSize} onChange={(weeklyBudget) => set({ weeklyBudget })} />
+      <Section title="Foods to leave out">
+        <ExclusionsEditor value={edit.exclusions} maxMinutes={edit.maxMinutes} onChange={(exclusions) => set({ exclusions })} />
+      </Section>
 
-      <SectionLabel>Main goal</SectionLabel>
-      {PROTEIN_GOALS.map((g) => (
-        <ChoiceRow key={g} label={GOAL_COPY[g].label} selected={edit.proteinGoal === g} onPress={() => set({ proteinGoal: g })} />
-      ))}
+      <Section title="Feedback">
+        <Pressable
+          accessibilityRole="switch"
+          aria-checked={data.hapticsEnabled}
+          accessibilityLabel="Vibration feedback"
+          onPress={() => setHaptics(!data.hapticsEnabled)}
+          style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.placeholder }]}
+          testID="haptics-toggle"
+        >
+          <View style={{ flex: 1 }}>
+            <Text variant="bodyStrong">Vibration</Text>
+            <Text variant="meta" tone="muted">A light tap when you check an item or a plan is ready. Weekwell never plays sounds.</Text>
+          </View>
+          <View pointerEvents="none" aria-hidden importantForAccessibility="no-hide-descendants">
+            <Switch value={data.hapticsEnabled} trackColor={{ true: color.accent, false: color.control }} />
+          </View>
+        </Pressable>
+      </Section>
 
-      <SectionLabel>Cooking time</SectionLabel>
-      {TIMES.map((m) => (
-        <ChoiceRow key={String(m)} label={timeCopy(m).label} selected={edit.maxMinutes === m} onPress={() => set({ maxMinutes: m })} testID={`pref-time-${m}`} />
-      ))}
+      <Section title="Your data">
+        <Text variant="meta" tone="muted">Your plan, preferences, and foods you leave out are stored on this device only.</Text>
+        <Pressable accessibilityRole="button" onPress={() => setSheet('delete')} style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.placeholder }]} testID="delete-data">
+          <Text variant="bodyStrong" tone="warning">Delete my data</Text>
+        </Pressable>
+      </Section>
 
-      <SectionLabel>Household</SectionLabel>
-      {HOUSEHOLDS.map((h) => (
-        <ChoiceRow key={String(h)} label={householdCopy(h).label} selected={edit.householdSize === h} onPress={() => set({ householdSize: h })} testID={`pref-household-${h}`} />
-      ))}
-
-      <SectionLabel>Leave out</SectionLabel>
-      <ExclusionsEditor value={edit.exclusions} maxMinutes={edit.maxMinutes} onChange={(exclusions) => set({ exclusions })} />
-
-      <Divider spaced />
-      <SectionLabel>Feedback</SectionLabel>
-      <Pressable
-        accessibilityRole="switch"
-        aria-checked={data.hapticsEnabled}
-        accessibilityLabel="Vibration feedback"
-        onPress={() => setHaptics(!data.hapticsEnabled)}
-        style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: space.m }}
-        testID="haptics-toggle"
+      <Sheet
+        visible={sheet === 'delete'}
+        onClose={() => setSheet(null)}
+        title="Delete your plan and preferences?"
+        testID="delete-sheet"
+        footer={
+          <>
+            <Pressable
+              accessibilityRole="button"
+              onPress={async () => {
+                setSheet(null);
+                await deleteAllData();
+                router.replace('/onboarding');
+              }}
+              style={({ pressed }) => [styles.destructive, pressed && { opacity: 0.85 }]}
+              testID="confirm-delete"
+            >
+              <Text variant="bodyStrong" tone="onAccent">Delete everything</Text>
+            </Pressable>
+            <Button label="Cancel" kind="secondary" onPress={() => setSheet(null)} />
+          </>
+        }
       >
-        <View style={{ flex: 1 }}>
-          <Text variant="bodyStrong">Vibration</Text>
-          <Text variant="meta" tone="muted">A light tap when you check an item or a plan is ready. Weekwell never plays sounds.</Text>
-        </View>
-        {/* Visual only: the whole row is the control. */}
-        <View pointerEvents="none" aria-hidden importantForAccessibility="no-hide-descendants">
-          <Switch value={data.hapticsEnabled} trackColor={{ true: color.accent, false: color.control }} />
-        </View>
-      </Pressable>
-
-      <SectionLabel>Your data</SectionLabel>
-      <Text variant="meta" tone="muted">
-        Your plan, preferences, and exclusions are stored on this device only. Deleting removes them and starts over.
-      </Text>
-      <View style={{ marginTop: space.s }}>
-        {confirmDelete ? (
-          <Banner tone="warning" title="Delete your plan and preferences?">
-            <Text>This can’t be undone.</Text>
-            <View style={{ flexDirection: 'row', gap: space.m, marginTop: space.s }}>
-              <Button
-                label="Delete"
-                kind="secondary"
-                onPress={async () => {
-                  await deleteAllData();
-                  router.replace('/onboarding');
-                }}
-                testID="confirm-delete"
-              />
-              <Button label="Cancel" kind="quiet" onPress={() => setConfirmDelete(false)} />
-            </View>
-          </Banner>
-        ) : (
-          <Button label="Delete my data" kind="quiet" onPress={() => setConfirmDelete(true)} testID="delete-data" />
-        )}
-      </View>
+        <Text>This removes your plan, grocery checks, preferences, and foods you leave out from this device. It can’t be undone.</Text>
+      </Sheet>
+      <LockedSheet visible={sheet === 'locked'} onClose={() => setSheet(null)} action="change the meals in your plan" />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  section: { marginTop: space.xl },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.m, minHeight: MIN_TOUCH + 12, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
+  destructive: { minHeight: MIN_TOUCH + 8, borderRadius: radius.control, backgroundColor: color.warning, alignItems: 'center', justifyContent: 'center' },
+});

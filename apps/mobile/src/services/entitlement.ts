@@ -12,7 +12,7 @@ import {
   type EntitlementView,
   type ProductId,
 } from '@weekwell/domain';
-import type { RestoreScenario } from './scenarios';
+import type { EntitlementScenario, RestoreScenario } from './scenarios';
 
 const LATENCY_MS = 400;
 const wait = () => new Promise((r) => setTimeout(r, LATENCY_MS));
@@ -24,6 +24,17 @@ export class MockEntitlementServer {
 
   static fresh(ownerId: string) {
     return new MockEntitlementServer(emptyEntitlement(ownerId, serverNow()));
+  }
+
+  /** Test/review builds only: start in a given subscription state. */
+  static seeded(ownerId: string, state: EntitlementScenario) {
+    const now = serverNow().getTime();
+    const at = (daysAgo: number) => new Date(now - daysAgo * 86_400_000).toISOString();
+    let r = emptyEntitlement(ownerId, new Date(now));
+    if (state === 'trial' || state === 'expired') r = applyStoreEvent(r, { type: 'trial_started', productId: 'monthly', at: at(state === 'trial' ? 2 : 9) });
+    if (state === 'expired') r = applyStoreEvent(r, { type: 'expired', at: at(2) });
+    if (state === 'active') r = applyStoreEvent(r, { type: 'purchased', productId: 'yearly', at: at(30), periodEndsAt: new Date(now + 335 * 86_400_000).toISOString() });
+    return new MockEntitlementServer(r);
   }
 
   snapshot(): EntitlementRecord {
@@ -44,6 +55,14 @@ export class MockEntitlementServer {
       if (e instanceof EntitlementTransitionError && e.code === 'trial_already_used') return { ok: false, reason: 'trial_already_used' };
       return { ok: false, reason: 'failed' };
     }
+  }
+
+  async purchase(productId: ProductId): Promise<{ ok: true; view: EntitlementView } | { ok: false }> {
+    await wait();
+    const now = serverNow();
+    const days = productId === 'weekly' ? 7 : productId === 'monthly' ? 30 : 365;
+    this.record = applyStoreEvent(this.record, { type: 'purchased', productId, at: now.toISOString(), periodEndsAt: new Date(now.getTime() + days * 86_400_000).toISOString() });
+    return { ok: true, view: deriveEntitlement(this.record, now) };
   }
 
   async restore(scenario: RestoreScenario): Promise<'restored' | 'nothing_to_restore' | 'failed'> {

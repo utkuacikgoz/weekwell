@@ -16,7 +16,9 @@ import { MealArt } from '../../components/MealArt';
 import { mealWhen } from '../../components/MealRow';
 import { NavBar } from '../../components/NavBar';
 import { Text } from '../../components/Text';
+import { LockedSheet } from '../../components/LockedSheet';
 import { Toast } from '../../components/Toast';
+import { canChangePlan } from '../../services/access';
 import { useStore } from '../../state/store';
 import { MIN_TOUCH, color, radius, space } from '../../theme/tokens';
 
@@ -67,7 +69,8 @@ function Disclosure({ title, summary, open, onToggle, children, testID }: { titl
 
 export default function MealDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, analytics, repairMeal, undoSwap, lastSwap, dismissSwap, toggleMealOnList } = useStore();
+  const { data, analytics, repairMeal, undoSwap, lastSwap, dismissSwap, toggleMealOnList, entitlementView } = useStore();
+  const [locked, setLocked] = useState(false);
   const { width } = useWindowDimensions();
   const plan = data.plan;
   const meals = useMemo(() => (plan ? [...plan.dinners, ...plan.lunches] : []), [plan]);
@@ -101,6 +104,10 @@ export default function MealDetail() {
 
   const showToast = (message: string, tone: 'ink' | 'warning' = 'ink') => setToast({ message, tone });
   const repair = (action: RepairAction) => {
+    if (!canChangePlan(entitlementView)) {
+      setLocked(true);
+      return;
+    }
     const res = repairMeal(meal.id, action);
     if (!res) showToast(UNAVAILABLE[action], 'warning');
     else setToast(null);
@@ -225,6 +232,7 @@ export default function MealDetail() {
             </View>
           ))}
       </Disclosure>
+      <LockedSheet visible={locked} onClose={() => setLocked(false)} action="swap meals" />
     </Screen>
   );
 }
