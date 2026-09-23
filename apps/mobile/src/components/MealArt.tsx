@@ -377,7 +377,7 @@ function Plate({ recipeId, ingredientIds }: { recipeId: string; ingredientIds: r
   );
 }
 
-export type MealArtProps = { recipeId: string; ingredientIds: readonly string[]; width: number; height?: number; radius?: number };
+export type MealArtProps = { recipeId: string; ingredientIds: readonly string[]; width: number; height?: number; radius?: number; /** false: no tile colour (icon foreground, splash). */ tile?: boolean };
 
 function tileFor(ingredientIds: readonly string[]): string {
   for (const id of ingredientIds) {
@@ -388,11 +388,11 @@ function tileFor(ingredientIds: readonly string[]): string {
 }
 
 /** Square thumbnail, or a wide banner when `height` is smaller than `width`. */
-export const MealArt = memo(function MealArt({ recipeId, ingredientIds, width, height = width, radius = 12 }: MealArtProps) {
+export const MealArt = memo(function MealArt({ recipeId, ingredientIds, width, height = width, radius = 12, tile = true }: MealArtProps) {
   const wide = width > height;
   return (
     <View
-      style={{ width, height, borderRadius: radius, overflow: 'hidden', backgroundColor: tileFor(ingredientIds) }}
+      style={{ width, height, borderRadius: radius, overflow: 'hidden', backgroundColor: tile ? tileFor(ingredientIds) : 'transparent' }}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >

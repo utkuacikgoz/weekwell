@@ -2,7 +2,23 @@
 
 Plan my five dinners, plus practical work lunches, around the store I use, my budget, and my time.
 
-This repository holds the **mobile workstream**. The TikTok carousel workstream is a separate program (D-009) and has nothing in this repository.
+This repository holds the **mobile workstream**: the app, its shared domain package, and the pilot API. The TikTok carousel workstream is a separate program (D-009) and has nothing here.
+
+## Status (2026-09-24, after the overnight build)
+
+The app is built end to end, **but nothing is approved and it is not ready to submit.**
+
+- **Design:** every screen was rebuilt after the 2026-09-24 review and is `design_pending`. Start with [the review index](apps/mobile/docs/review/README.md).
+- **Decisions:** D-019 to D-033 in [the decision log](docs/05-decision-log.md) are Proposed, and so is every item in [the overnight run log](docs/06-autonomous-run-log.md).
+- **Release:** go/no-go and the remaining blockers are in [the release evidence](apps/mobile/docs/qa/release-evidence-overnight.md) and [the App Store pack](apps/mobile/docs/release/app-store-pack.md).
+
+| Area | State |
+|---|---|
+| Setup (4 steps), week, meal, cooking mode, grocery list, swap/undo, preferences, paywall, read-only after trial, dark mode | built, `design_pending` |
+| Pricing | sample prices, clearly labelled (D-011 open) |
+| Accounts and sync | built into the pilot API; the app uses it only when built with `EXPO_PUBLIC_API_URL` |
+| Purchases | mock (D-014 open) |
+| TestFlight | workflow ready but disabled (D-030: bundle id, Apple team, EAS credentials) |
 
 ## Source of truth
 
@@ -10,37 +26,23 @@ This repository holds the **mobile workstream**. The TikTok carousel workstream 
 |---|---|
 | [docs/00-master-brief.md](docs/00-master-brief.md) | Shared product facts. Wins on conflicts. |
 | [docs/01-mobile-app-brief.md](docs/01-mobile-app-brief.md) | Mobile build brief |
-| [docs/03-agent-task-packets.md](docs/03-agent-task-packets.md) | Agent assignments A0–A8 (mobile), B0–B5 (TikTok) |
+| [docs/03-agent-task-packets.md](docs/03-agent-task-packets.md) | Agent assignments |
 | [docs/04-qa-red-team-checklist.md](docs/04-qa-red-team-checklist.md) | QA and red-team gates |
-| [docs/05-decision-log.md](docs/05-decision-log.md) | Decisions. **D-019 to D-030 are Proposed and need product-owner review.** |
-| [apps/mobile/docs/ux-contract.md](apps/mobile/docs/ux-contract.md) | Screen/state contract, copy glossary, a11y labels (A0) |
-| [apps/mobile/docs/sensory.md](apps/mobile/docs/sensory.md) | Motion, sound, and haptics spec and approval matrix |
-| [apps/mobile/docs/review/README.md](apps/mobile/docs/review/README.md) | Product-owner design review pack (all `design_pending`) |
-| [apps/mobile/docs/qa/m1-release-evidence.md](apps/mobile/docs/qa/m1-release-evidence.md) | M0/M1 QA evidence and go/no-go |
-
-`docs/02-*` (the TikTok brief) belongs to the TikTok workstream and is not stored here.
+| [docs/05-decision-log.md](docs/05-decision-log.md) | Decisions |
+| [docs/06-autonomous-run-log.md](docs/06-autonomous-run-log.md) | What the overnight run decided without the product owner |
+| [apps/mobile/docs/review/README.md](apps/mobile/docs/review/README.md) | Design review packs (v2) |
+| [apps/mobile/docs/sensory.md](apps/mobile/docs/sensory.md) | Motion, sound, haptics |
+| [apps/mobile/docs/release/](apps/mobile/docs/release/) | App Store pack, privacy policy draft, draft store screenshots |
+| [apps/api/README.md](apps/api/README.md) | API endpoints and security notes |
 
 ## Layout
 
 ```
-packages/domain/          @weekwell/domain: the one shared schema package (A1)
-  src/schemas.ts          canonical Zod schemas: preferences, meals, prices, plan, jobs
-  src/catalog/            fixture ingredients (protein per unit, allergens) and 22 recipes
-  src/fixtures/           sample prices (labelled, never "live") and fixture users
-  src/planner.ts          deterministic fixture plan generation, feasibility checks
-  src/pricing.ts          RetailerProvider interface, fixture provider, freshness, fail-closed totals
-  src/grocery.ts          scaling, consolidation, meal↔item links, diffs, check reconciliation
-  src/repair.ts           swap / cheaper / more protein / faster, preference-change previews
-  src/model-output.ts     strict model-output contract, versioned prompt, bounded retries
-  src/entitlement.ts      trial/subscription state from server time only
-  src/analytics.ts        event taxonomy with strict, PII-free payloads
-  src/server/             server-only: webhook verification, owner-scoped storage, jobs, redaction
-apps/mobile/              Expo SDK 57 + Expo Router app
-  src/app/                screens (onboarding, generating, week, meal, grocery, preferences, trial)
-  src/components/         UI primitives (no nested cards; one surface)
-  src/theme/              tokens: color, 4px/8px spacing, type, motion
-  e2e/                    Playwright journeys, states, and visual/a11y matrix on the web build
-  test/                   contrast, forbidden-copy, secret, and import-boundary checks
+packages/domain/   @weekwell/domain: canonical schemas, recipe/price fixtures, planner, pricing,
+                   swaps, entitlement + access policy, analytics taxonomy, model-output contract;
+                   /server: webhook verification, owner-scoped store, jobs, log redaction
+apps/mobile/       Expo SDK 57 + Expo Router app (on-device by default; API-connected when configured)
+apps/api/          Hono on Node 22: auth, plans, jobs, prices, entitlements, webhooks, export, deletion
 ```
 
 ## Commands
@@ -49,27 +51,18 @@ Node 22+.
 
 ```bash
 npm install
-npm run check            # typecheck + lint + unit tests (domain + mobile)
-npm run e2e              # export the web build and run Playwright
-cd apps/mobile && npx expo start    # run the app (dev build or Expo Go)
+npm run check                       # typecheck + lint + unit tests (domain, API, app checks)
+npm run e2e                         # build both web variants and run Playwright (local + API-connected)
+cd apps/mobile && npx expo start    # run the app on-device (no backend needed)
+cd apps/api && npm run dev          # run the API (dev sign-in codes returned in responses)
+EXPO_PUBLIC_API_URL=http://localhost:8787 npx expo start   # app connected to a local API
 ```
 
-Scenario switches for QA and review captures (web preview URL or dev builds only):
-`?prices=sample|fresh|stale|expired|verified|partial|unavailable|bad_data`, `?generation=ok|invalid_output|timeout`, `?restore=ok|error`, `?fontScale=1.25`.
+Review and QA switches (web preview only): `?prices=sample|fresh|stale|expired|verified|partial|unavailable|bad_data`, `?generation=ok|invalid_output|timeout`, `?restore=ok|error`, `?entitlement=none|trial|active|expired`, `?today=mon…sun`, `?priceDelay=ms`, `?fontScale=1.25`.
 
-Review captures: `cd apps/mobile && CAPTURE=1 npx playwright test e2e/visual.spec.ts`.
+Review captures: `REVIEW=1 npx playwright test e2e/review-*.spec.ts --project=local` in `apps/mobile`.
 
-## Status (2026-09-23)
+## Handoff
 
-M0 (contracts and fixtures) and M1 (usable loop on fixture data) are implemented: onboarding, the week, meal detail with swap/repair and undo, the consolidated grocery list with check/undo, preference edits with previews, and the trial/paywall with a mock entitlement.
-
-- **Not approved.** Every screen is `design_pending` until the product owner reviews the pack.
-- **Not a pilot build.** No auth or backend (D-013, D-025), no real prices (D-011, D-021), not tested on a native device, and the TestFlight workflow is disabled until Apple/EAS setup is done (D-030).
-
-## Handoff (agent protocol)
-
-- **Product owner:** review `apps/mobile/docs/review/README.md` and decide D-019 to D-030 (D-026, post-trial access, blocks paywall copy beyond the free week).
-- **A4 (generation service):** wrap `validateModelPlan` + `generateWithRetries` + `buildPlanPrompt` behind an authenticated endpoint using `GenerationJobService`. Move the planner server-side.
-- **A5 (pricing):** implement a real `RetailerProvider` once D-011 is decided. The UI copy follows quote metadata, so no screen changes are needed.
-- **A6 (security):** pick an auth provider (D-013). Map `OwnerScopedStore` semantics to database RLS. Wire `verifyWebhook` to the subscription provider (D-014).
-- **A7/A8 (QA/release):** native VoiceOver/TalkBack/Dynamic Type/haptics pass; set the bundle id and EAS credentials, then enable `.github/workflows/testflight-daily.yml`.
+- **Product owner:** review the six core screens and the state families in the review index, then accept, change, or reject D-019 to D-033 and R-1 to R-19.
+- **Before a friends pilot:** decide D-011 (prices), D-013 (auth and email provider; host the API), D-014 (purchases), D-030 (bundle id and TestFlight); do a native device pass (VoiceOver, Dynamic Type, haptics, reduced motion).

@@ -287,6 +287,14 @@ The product owner asked for waves to be built and merged overnight. Every item b
 - Decision: Each meal shows a top-down plate illustration generated from its real ingredients, in one style (flat colour, top-left light, no text). Photography can replace the component later without layout changes.
 - Owner: Product owner + design lead
 
+### D-034 — App icon and splash
+
+- Status: Proposed
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: The icon is a top-down plate (rice, chicken, broccoli) from the meal illustration system on a warm tile, with no text. The same plate on paper (light) or near-black (dark) is the splash. Replaces the Expo template placeholders.
+- Owner: Product owner + design lead
+
 ## Decision entry template
 
 ```md
