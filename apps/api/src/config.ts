@@ -9,7 +9,13 @@ export type Config = {
   corsOrigins: string[];
   allowDevCodes: boolean;
   priceSource: FixturePriceScenario;
-  storeMode: 'mock' | 'store';
+  /** mock: the app starts trials itself (dev). store: signed generic webhooks. revenuecat: RevenueCat (D-014). */
+  storeMode: 'mock' | 'store' | 'revenuecat';
+  revenuecatSecretKey: string;
+  revenuecatWebhookAuth: string;
+  /** Resend (D-013). Empty in development: codes are only shown with ALLOW_DEV_CODES. */
+  resendApiKey: string;
+  emailFrom: string;
   production: boolean;
 };
 
@@ -20,6 +26,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (production && sessionSecret.length < 32) throw new Error('SESSION_SECRET must be set (32+ chars) in production');
   if (production && webhookSecret.length < 16) throw new Error('WEBHOOK_SECRET must be set in production');
   if (production && env.ALLOW_DEV_CODES === '1') throw new Error('ALLOW_DEV_CODES must not be enabled in production');
+  const storeMode = env.STORE_MODE === 'store' ? 'store' : env.STORE_MODE === 'revenuecat' ? 'revenuecat' : 'mock';
+  const revenuecatSecretKey = env.REVENUECAT_SECRET_KEY ?? '';
+  const revenuecatWebhookAuth = env.REVENUECAT_WEBHOOK_AUTH ?? '';
+  if (storeMode === 'revenuecat' && (!revenuecatSecretKey || revenuecatWebhookAuth.length < 24)) {
+    throw new Error('STORE_MODE=revenuecat needs REVENUECAT_SECRET_KEY and REVENUECAT_WEBHOOK_AUTH (24+ chars)');
+  }
+  if (production && storeMode === 'mock') throw new Error('STORE_MODE=mock must not be used in production');
+  const resendApiKey = env.RESEND_API_KEY ?? '';
+  const emailFrom = env.EMAIL_FROM ?? '';
+  if (production && (!resendApiKey || !emailFrom)) throw new Error('RESEND_API_KEY and EMAIL_FROM must be set in production');
   const priceSource = (FIXTURE_PRICE_SCENARIOS as readonly string[]).includes(env.PRICE_SOURCE ?? '') ? (env.PRICE_SOURCE as FixturePriceScenario) : 'sample';
   return {
     port: Number(env.PORT ?? 8787),
@@ -30,7 +46,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     corsOrigins: (env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
     allowDevCodes: env.ALLOW_DEV_CODES === '1',
     priceSource,
-    storeMode: env.STORE_MODE === 'store' ? 'store' : 'mock',
+    storeMode,
+    revenuecatSecretKey,
+    revenuecatWebhookAuth,
+    resendApiKey,
+    emailFrom,
     production,
   };
 }

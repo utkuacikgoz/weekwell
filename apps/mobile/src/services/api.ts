@@ -83,7 +83,10 @@ export const api = {
   applyPreferences: (planId: string, preferences: UserPreferences) => request<PlanState>('POST', `/plans/${planId}/preferences`, { preferences }),
   rebuild: (planId: string) => request<PlanState>('POST', `/plans/${planId}/rebuild-under-budget`),
   makeCurrent: (planId: string) => request<PlanState>('POST', `/plans/${planId}/make-current`),
+  me: () => request<{ userId: string }>('GET', '/me'),
   entitlement: () => request<EntitlementView>('GET', '/entitlement'),
+  /** RevenueCat builds: ask the server to re-read the customer right after a purchase or restore. */
+  syncEntitlement: () => request<EntitlementView>('POST', '/entitlement/sync'),
   startTrial: (productId: ProductId) => request<EntitlementView>('POST', '/entitlement/trial', { productId }),
   purchase: (productId: ProductId) => request<EntitlementView>('POST', '/entitlement/purchase', { productId }),
   restore: () => request<{ result: 'restored' | 'nothing_to_restore'; entitlement: EntitlementView }>('POST', '/entitlement/restore'),

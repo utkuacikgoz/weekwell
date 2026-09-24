@@ -1,9 +1,11 @@
-# Daily TestFlight build (D-017). Disabled until release engineering sets:
+# Daily TestFlight build (D-017). Disabled until these are set (apps/mobile/docs/release/testflight-setup.md):
 #   repo variable  TESTFLIGHT_ENABLED = true
-#   repo secret    EXPO_TOKEN   (EAS robot token, least privilege)
-# and configures EAS credentials (Apple team, ASC API key) in EAS, never in Git.
+#   repo secret    EXPO_TOKEN        (EAS robot token, least privilege)
+#   repo secrets   ASC_API_KEY_P8, ASC_KEY_ID, ASC_ISSUER_ID  (App Store Connect API key, App Manager)
+# The ASC key lets EAS create signing credentials and submit without prompts.
+# Nothing secret is written to the repo; the key file lives in the runner's temp dir.
 # Identifiers are set (D-030): com.belevate.weekwell, team 9D78WTZAD8, ASC app 6815542789.
-# Still needed: `eas init` (owner + projectId in app.json) and EAS signing credentials.
+# Still needed: the EAS project id and owner in app.json (from expo.dev, or `eas init`).
 # UNVERIFIED: written without access to current Expo/EAS docs; verify flags before enabling.
 name: TestFlight daily
 
@@ -39,8 +41,21 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+      - name: App Store Connect API key for non-interactive signing and submit
+        env:
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          if [ -n "$ASC_API_KEY_P8" ]; then
+            umask 077
+            printf '%s\n' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/asc_api_key.p8"
+            echo "EXPO_ASC_API_KEY_PATH=$RUNNER_TEMP/asc_api_key.p8" >> "$GITHUB_ENV"
+          fi
       - name: Build and submit to TestFlight
         working-directory: apps/mobile
+        env:
+          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          EXPO_APPLE_TEAM_ID: 9D78WTZAD8
         run: >
           eas build --platform ios --profile production --non-interactive --auto-submit
           --message "daily ${{ github.sha }}"
