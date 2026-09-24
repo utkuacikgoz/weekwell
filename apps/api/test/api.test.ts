@@ -1,13 +1,14 @@
 import { signWebhook } from '@weekwell/domain/server';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createApp } from '../src/app';
+import { createApp, resendSender } from '../src/app';
 import { loadConfig } from '../src/config';
 import { Db } from '../src/db';
 
+const json = async (res: Response | Promise<Response>) => (await res).json();
 const PREFS = { retailer: 'trader_joes', weeklyBudget: 75, proteinGoal: 'high_protein', maxMinutes: 30, householdSize: 1, exclusions: [] };
 const T0 = new Date('2026-09-23T15:00:00.000Z');
 
-function setup(overrides: Record<string, string> = {}) {
+function setup(overrides: Record<string, string> = {}, opts: { fetch?: typeof fetch } = {}) {
   let clock = T0.getTime();
   const logs: Record<string, unknown>[] = [];
   const sent: { email: string; code: string }[] = [];
@@ -18,6 +19,7 @@ function setup(overrides: Record<string, string> = {}) {
     db,
     now: () => new Date(clock),
     log: (e) => logs.push(e),
+    ...(opts.fetch ? { fetch: opts.fetch } : {}),
     sendEmail: async (email, code) => {
       sent.push({ email, code });
     },
@@ -224,6 +226,106 @@ describe('entitlements and access policy', () => {
     expect((await send(signWebhook(body, 'test-webhook-secret-123', ts))).status).toBe(200);
     expect((await send(signWebhook(body, 'test-webhook-secret-123', ts))).status).toBe(409);
     expect(await (await t.call('GET', '/v1/entitlement', { token })).json()).toMatchObject({ state: 'active', productId: 'yearly' });
+  });
+});
+
+describe('RevenueCat (D-014)', () => {
+  const RC = { STORE_MODE: 'revenuecat', REVENUECAT_SECRET_KEY: 'sk_test_example', REVENUECAT_WEBHOOK_AUTH: 'Bearer rc-webhook-auth-value-000000' };
+  const future = (days: number) => new Date(T0.getTime() + days * 86_400_000).toISOString();
+  /** A fake RevenueCat REST API holding one subscriber state per user. */
+  function fakeRevenueCat() {
+    const state = new Map<string, unknown>();
+    const calls: { url: string; auth: string | null }[] = [];
+    const impl = (async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      calls.push({ url: u, auth: new Headers(init?.headers).get('authorization') });
+      const id = decodeURIComponent(u.split('/subscribers/')[1] ?? '');
+      if (!state.has(id)) return new Response(JSON.stringify({ subscriber: {} }), { status: 200 });
+      return new Response(JSON.stringify(state.get(id)), { status: 200 });
+    }) as typeof fetch;
+    return { state, calls, impl };
+  }
+  const trialFor = (days: number) => ({
+    subscriber: {
+      entitlements: { pro: { expires_date: future(days), product_identifier: 'com.belevate.weekwell.monthly' } },
+      subscriptions: { 'com.belevate.weekwell.monthly': { period_type: 'trial', expires_date: future(days), purchase_date: T0.toISOString() } },
+    },
+  });
+
+  it('refuses to start without its secrets, and never runs mock mode in production', () => {
+    expect(() => loadConfig({ STORE_MODE: 'revenuecat' } as NodeJS.ProcessEnv)).toThrow(/REVENUECAT/u);
+    expect(() => loadConfig({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40), WEBHOOK_SECRET: 'y'.repeat(20), RESEND_API_KEY: 're_x', EMAIL_FROM: 'a@b.c' } as NodeJS.ProcessEnv)).toThrow(/STORE_MODE=mock/u);
+  });
+
+  it('webhook: wrong auth is rejected; a real event re-reads the customer from RevenueCat', async () => {
+    const rc = fakeRevenueCat();
+    const t = setup(RC, { fetch: rc.impl });
+    const { token, userId } = await t.signIn('buyer@example.com');
+    rc.state.set(userId, trialFor(7));
+    const event = { api_version: '1.0', event: { id: 'evt_1', type: 'INITIAL_PURCHASE', app_user_id: userId } };
+    expect((await t.call('POST', '/v1/webhooks/revenuecat', { body: event, headers: { authorization: 'Bearer wrong' } })).status).toBe(401);
+    expect(await json(t.call('GET', '/v1/entitlement', { token }))).toMatchObject({ state: 'none' });
+    const ok = await t.call('POST', '/v1/webhooks/revenuecat', { body: event, headers: { authorization: RC.REVENUECAT_WEBHOOK_AUTH } });
+    expect(ok.status).toBe(200);
+    expect(rc.calls.at(-1)).toEqual({ url: `https://api.revenuecat.com/v1/subscribers/${userId}`, auth: 'Bearer sk_test_example' });
+    expect(await json(t.call('GET', '/v1/entitlement', { token }))).toMatchObject({ state: 'trial', productId: 'monthly', daysLeft: 7 });
+  });
+
+  it('webhook: the body cannot grant access by itself; unknown users and test events are acknowledged', async () => {
+    const rc = fakeRevenueCat();
+    const t = setup(RC, { fetch: rc.impl });
+    const { token, userId } = await t.signIn('forger@example.com');
+    // Claims a purchase, but RevenueCat has nothing for this user.
+    const forged = { event: { id: 'evt_2', type: 'INITIAL_PURCHASE', app_user_id: userId, product_id: 'com.belevate.weekwell.yearly', expiration_at_ms: Date.parse(future(365)) } };
+    await t.call('POST', '/v1/webhooks/revenuecat', { body: forged, headers: { authorization: RC.REVENUECAT_WEBHOOK_AUTH } });
+    expect(await json(t.call('GET', '/v1/entitlement', { token }))).toMatchObject({ state: 'none' });
+    for (const body of [{ event: { id: 'e3', type: 'TEST', app_user_id: 'x' } }, { event: { id: 'e4', type: 'RENEWAL', app_user_id: 'usr_nobody' } }]) {
+      const res = await t.call('POST', '/v1/webhooks/revenuecat', { body, headers: { authorization: RC.REVENUECAT_WEBHOOK_AUTH } });
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it('sync after a purchase; the mock trial and purchase routes are closed', async () => {
+    const rc = fakeRevenueCat();
+    const t = setup(RC, { fetch: rc.impl });
+    const { token, userId } = await t.signIn('sync@example.com');
+    expect((await t.call('POST', '/v1/entitlement/trial', { token, body: { productId: 'monthly' } })).status).toBe(403);
+    rc.state.set(userId, trialFor(7));
+    expect(await json(t.call('POST', '/v1/entitlement/sync', { token }))).toMatchObject({ state: 'trial' });
+    // After the trial ends without a renewal, plan changes are refused.
+    t.advance(8 * 86_400_000);
+    expect(await json(t.call('POST', '/v1/entitlement/sync', { token }))).toMatchObject({ state: 'expired' });
+  });
+
+  it('a RevenueCat outage returns 502 to the webhook so it is retried', async () => {
+    const down = (async () => new Response('nope', { status: 500 })) as unknown as typeof fetch;
+    const t = setup(RC, { fetch: down });
+    const { userId } = await t.signIn('retry@example.com');
+    const res = await t.call('POST', '/v1/webhooks/revenuecat', { body: { event: { id: 'e5', type: 'RENEWAL', app_user_id: userId } }, headers: { authorization: RC.REVENUECAT_WEBHOOK_AUTH } });
+    expect(res.status).toBe(502);
+  });
+});
+
+describe('Resend (D-013)', () => {
+  it('sends the code with the configured sender and fails closed when Resend is down', async () => {
+    const sent: { url: string; body: Record<string, unknown>; auth: string | null }[] = [];
+    const ok = (async (url: string | URL | Request, init?: RequestInit) => {
+      sent.push({ url: String(url), body: JSON.parse(String(init?.body)), auth: new Headers(init?.headers).get('authorization') });
+      return new Response('{"id":"x"}', { status: 200 });
+    }) as typeof fetch;
+    await resendSender('re_test', 'Weekwell <signin@mail.weekwell.test>', ok)('a@example.com', '123456');
+    expect(sent[0]).toMatchObject({ url: 'https://api.resend.com/emails', auth: 'Bearer re_test', body: { from: 'Weekwell <signin@mail.weekwell.test>', to: ['a@example.com'] } });
+    expect(String(sent[0]!.body.text)).toContain('123456');
+    const failing = (async () => new Response('', { status: 500 })) as unknown as typeof fetch;
+    await expect(resendSender('re_test', 'x@y.z', failing)('a@example.com', '1')).rejects.toThrow(/resend_500/u);
+  });
+
+  it('a failed email is a clear error, never a silent success', async () => {
+    // No injected sender: the app builds its Resend sender from config.
+    const app = createApp({ config: loadConfig({ RESEND_API_KEY: 're_test', EMAIL_FROM: 'x@y.z' } as NodeJS.ProcessEnv), db: new Db(':memory:'), log: () => {}, fetch: (async () => new Response('', { status: 500 })) as unknown as typeof fetch });
+    const res = await app.request('/v1/auth/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'a@example.com' }) });
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'email_unavailable' });
   });
 });
 
