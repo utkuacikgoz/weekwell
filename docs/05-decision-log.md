@@ -251,10 +251,10 @@ Everything below was decided provisionally by the mobile agent to complete the f
 
 ### D-030 — iOS phone-only and app identifiers
 
-- Status: Proposed
-- Date: 2026-09-23
+- Status: Proposed (tablet); Accepted (identifiers, 2026-09-24)
+- Date: 2026-09-23, updated 2026-09-24
 - Workstream: mobile
-- Decision: `ios.supportsTablet: false` for the pilot. The bundle identifier, Apple team, and App Store Connect app record are not set; they are needed before the first TestFlight build (D-017).
+- Decision: `ios.supportsTablet: false` for the pilot. Identifiers from the product owner: bundle id `com.belevate.weekwell`, Apple team `9D78WTZAD8`, App Store Connect app `6815542789` (set in `app.json` and `eas.json`). Still open before the daily TestFlight workflow runs: EAS project link (`eas init`), EAS signing credentials and App Store Connect API key, `EXPO_TOKEN` secret, `TESTFLIGHT_ENABLED` variable.
 - Owner: Product owner + release engineering
 
 ## Overnight autonomous-run decisions (2026-09-24)

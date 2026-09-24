@@ -8,6 +8,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
+      "bundleIdentifier": "com.belevate.weekwell",
       "usesNonExemptEncryption": false
     },
     "android": {
