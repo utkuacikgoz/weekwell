@@ -42,7 +42,8 @@ Discoverability 2 · Feedback 2 (toasts, pending swap, progress) · Conceptual m
 | D-011 price source (or accept a sample-price pilot) | Product owner |
 | D-013 auth and email provider; hosted API; Postgres + RLS migration run and tested | Tech lead / security |
 | D-014 real purchases and store webhooks | Tech lead |
-| D-030 bundle id, Apple team, EAS credentials → enable daily TestFlight | Release |
+| D-030 bundle id, Apple team, EAS credentials → enable daily TestFlight (bundle id, team and App Store Connect app now set) | Release |
+| D-038 meal photos: all 22 in `assets/meals/`, and `npm run photos -- --check` passes | Product owner + design |
 | Hosted privacy policy + support URL; legal review | Product owner |
 | App Store requirement check at submission | Release |
 

@@ -2,7 +2,7 @@ import { DAY_LABEL, DAY_SHORT, type Meal } from '@weekwell/domain';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
 import { Icon } from './Icon';
-import { MealArt } from './MealArt';
+import { MealImage } from './MealImage';
 import { Text } from './Text';
 
 const ingredientIds = (m: Meal) => m.ingredients.map((i) => i.ingredientId);
@@ -25,7 +25,7 @@ export function TonightCard({ meal, label, onPress, width, compact }: { meal: Me
     >
       {({ pressed }) => (
         <>
-          <MealArt recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={width} height={Math.round(width * (compact ? 0.3 : 0.46))} radius={0} />
+          <MealImage recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={width} height={Math.round(width * (compact ? 0.3 : 0.46))} radius={0} />
           <View style={styles.cardBody}>
             <Text variant="label" tone="accent">{label}</Text>
             <Text variant="dish" style={{ marginTop: 2 }}>{meal.name}</Text>
@@ -58,7 +58,7 @@ export function WeekRow({ meal, onPress, tonight, offList }: { meal: Meal; onPre
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
-      <MealArt recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={60} radius={radius.thumb} />
+      <MealImage recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={60} radius={radius.thumb} />
       <View style={{ flex: 1 }}>
         <Text variant="caption" tone={tonight ? 'accent' : 'muted'}>
           {tonight ? `${when} · Tonight` : when}

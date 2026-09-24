@@ -5,7 +5,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { Screen } from '../../components/Layout';
-import { MealArt } from '../../components/MealArt';
+import { MealImage } from '../../components/MealImage';
 import { Text } from '../../components/Text';
 import { useStore } from '../../state/store';
 import { color, radius, space } from '../../theme/tokens';
@@ -27,7 +27,7 @@ export default function Welcome() {
     <Screen footer={<Button label="Get started" onPress={() => router.push('/onboarding/store')} testID="start" />}>
       <View style={styles.plates}>
         {recipes.map((r) => (
-          <MealArt key={r.id} recipeId={r.id} ingredientIds={r.perServing.map((p) => p.ingredientId)} width={tile} radius={radius.card} />
+          <MealImage key={r.id} recipeId={r.id} ingredientIds={r.perServing.map((p) => p.ingredientId)} width={tile} radius={radius.card} />
         ))}
       </View>
       <Text variant="display" accessibilityRole="header" style={{ marginTop: space.xl }}>
