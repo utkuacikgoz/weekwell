@@ -38,6 +38,7 @@ import { ApiRequestError, api } from '../services/api';
 import { MockEntitlementServer } from '../services/entitlement';
 import { generatePlan } from '../services/generation';
 import { haptic, setHapticsEnabled } from '../services/haptics';
+import { configureRevenueCat, rcBuy, rcLogIn, rcLogOut, rcRestore, rcView, revenueCatEnabled } from '../services/purchases';
 import { DEFAULT_SCENARIOS, scenariosFromUrl, type Scenarios } from '../services/scenarios';
 
 const STORAGE_KEY = 'weekwell:v1';
@@ -129,8 +130,8 @@ type Ctx = {
   setHaptics: (on: boolean) => void;
   setCooking: (c: CookingSession | null) => void;
   refreshEntitlement: () => Promise<void>;
-  startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'failed'>;
-  purchase: (productId: ProductId) => Promise<'ok' | 'failed'>;
+  startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'cancelled' | 'failed'>;
+  purchase: (productId: ProductId) => Promise<'ok' | 'cancelled' | 'failed'>;
   restorePurchases: () => Promise<'restored' | 'nothing_to_restore' | 'failed'>;
   deleteAllData: () => Promise<'ok' | 'failed'>;
   /** True when this build talks to the Weekwell API (EXPO_PUBLIC_API_URL). */
@@ -195,7 +196,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ? new MockEntitlementServer(loaded.entitlement)
           : MockEntitlementServer.fresh('local_user');
       setHapticsEnabled(loaded.hapticsEnabled);
-      if (remote && (await api.signedIn())) {
+      const isSignedIn = remote && (await api.signedIn());
+      if (revenueCatEnabled) {
+        // Purchases belong to the Weekwell account when signed in, so they follow the user across devices.
+        let rcUser: string | null = null;
+        if (isSignedIn) rcUser = await api.me().then((m) => m.userId).catch(() => null);
+        configureRevenueCat(rcUser);
+      }
+      if (isSignedIn) {
         setSignedIn(true);
         // The server is the source of truth; the cached copy covers offline use.
         try {
@@ -235,7 +243,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshEntitlement = useCallback(async () => {
     setEntitlementView({ state: 'loading' });
     try {
-      if (remote) setEntitlementView((await api.signedIn()) ? await api.entitlement() : { state: 'none', trialEligible: true });
+      if (revenueCatEnabled) setEntitlementView(remote && (await api.signedIn()) ? await api.syncEntitlement() : await rcView());
+      else if (remote) setEntitlementView((await api.signedIn()) ? await api.entitlement() : { state: 'none', trialEligible: true });
       else if (server.current) setEntitlementView(await server.current.view());
     } catch {
       setEntitlementView({ state: 'error' });
@@ -517,8 +526,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setData((d) => ({ ...d, hapticsEnabled: on }));
   }, []);
 
+  /** RevenueCat builds: the free week and a subscription are the same App Store purchase. */
+  const buyFromStore = useCallback(
+    async (productId: ProductId, kind: 'trial' | 'subscription'): Promise<'ok' | 'cancelled' | 'failed'> => {
+      const res = await rcBuy(productId);
+      if (res === 'cancelled') return 'cancelled';
+      if (res !== 'ok') {
+        haptic.warning();
+        return 'failed';
+      }
+      try {
+        setEntitlementView(remote && (await api.signedIn()) ? await api.syncEntitlement().catch(() => rcView()) : await rcView());
+      } catch {
+        setEntitlementView({ state: 'error' });
+      }
+      analytics?.track(kind === 'trial' ? 'trial_started' : 'subscription_started', { productId });
+      haptic.success();
+      return 'ok';
+    },
+    [analytics, remote],
+  );
+
   const startTrial = useCallback(
     async (productId: ProductId) => {
+      if (revenueCatEnabled) return buyFromStore(productId, 'trial');
       if (remote) {
         try {
           setEntitlementView(await api.startTrial(productId));
@@ -542,11 +573,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       haptic.warning();
       return res.reason;
     },
-    [analytics, remote],
+    [analytics, buyFromStore, remote],
   );
 
   const purchase = useCallback(
     async (productId: ProductId) => {
+      if (revenueCatEnabled) return buyFromStore(productId, 'subscription');
       if (remote) {
         try {
           setEntitlementView(await api.purchase(productId));
@@ -570,12 +602,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       haptic.success();
       return 'ok' as const;
     },
-    [analytics, remote],
+    [analytics, buyFromStore, remote],
   );
 
   const restorePurchases = useCallback(async () => {
     let result: 'restored' | 'nothing_to_restore' | 'failed';
-    if (remote) {
+    if (revenueCatEnabled) {
+      result = await rcRestore();
+    } else if (remote) {
       try {
         const out = await api.restore();
         result = out.result;
@@ -604,6 +638,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSignedIn(false);
     }
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    await rcLogOut();
     server.current = MockEntitlementServer.fresh('local_user');
     lastPricedKey.current = '';
     setData({ ...EMPTY, anonId: newAnonId() });
@@ -626,7 +661,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const verifySignIn = useCallback(async (email: string, code: string) => {
     try {
-      await api.verify(email, code);
+      const res = await api.verify(email, code);
+      if (revenueCatEnabled) await rcLogIn(res.userId).catch(() => undefined);
       setSignedIn(true);
       return 'ok' as const;
     } catch (e) {
@@ -636,6 +672,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await api.signOut();
+    await rcLogOut();
     setSignedIn(false);
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     setData({ ...EMPTY, anonId: newAnonId() });

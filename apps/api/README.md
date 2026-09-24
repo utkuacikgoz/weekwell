@@ -32,6 +32,11 @@ npm test                    # 22 tests incl. cross-user access, webhook replay, 
 | GET | `/export` | the caller's data only |
 | DELETE | `/me` | deletes the account and every owned row |
 
+## Email and subscriptions
+
+- **Sign-in email (D-013):** sent with Resend. Set `RESEND_API_KEY` and `EMAIL_FROM` (an address on a domain verified in Resend, with SPF and DKIM set up as Resend shows). Production refuses to start without them. If Resend fails, `/v1/auth/start` returns `503 email_unavailable`.
+- **Subscriptions (D-014):** `STORE_MODE=revenuecat` with `REVENUECAT_SECRET_KEY` and `REVENUECAT_WEBHOOK_AUTH`. `POST /v1/webhooks/revenuecat` checks the Authorization header, then re-reads the customer from RevenueCat. `POST /v1/entitlement/sync` does the same for the signed-in user right after a purchase. Setup: `apps/mobile/docs/release/revenuecat-setup.md`.
+
 ## Security notes
 
 - Emails, login codes, and session tokens are stored only as HMACs keyed by `SESSION_SECRET`.

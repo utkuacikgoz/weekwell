@@ -7,6 +7,7 @@ export * from './pricing';
 export * from './planner';
 export * from './repair';
 export * from './entitlement';
+export * from './revenuecat';
 export * from './analytics';
 export * from './model-output';
 export * from './format';

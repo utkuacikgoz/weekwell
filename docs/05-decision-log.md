@@ -123,14 +123,23 @@ This is the lightweight record of decisions that affect product, architecture, s
 
 ### D-013 — Authentication provider
 
-- Status: Proposed
+- Status: Accepted in part (product owner, 2026-09-24): **Resend** sends the sign-in codes. Hosting is still open (Fly.io or Render, with Postgres).
 - Question: Which supported identity provider handles passwordless or email authentication?
+- Decision:
+  - **Sign-in:** the API keeps its own passwordless sign-in (6-digit code, 10-minute expiry, 5 attempts, hashed tokens) and sends the code through Resend (`RESEND_API_KEY`, `EMAIL_FROM` on a verified domain).
+  - **Production:** the server refuses to start without them.
+  - **Failure:** a failed send returns `503 email_unavailable`. It is never reported as sent.
 - Required evidence: data residency, deletion support, rate limits, mobile SDK quality, and recovery behavior.
 
 ### D-014 — Subscription infrastructure
 
-- Status: Proposed
+- Status: Accepted (product owner, 2026-09-24): **RevenueCat**.
 - Question: RevenueCat or direct App Store/Google Play entitlement implementation?
+- Decision:
+  - **Purchases:** made through `react-native-purchases`, with entitlement `pro` and offering `default`. The product ids are `com.belevate.weekwell.{weekly,monthly,yearly}`, and the free week is Apple's introductory offer.
+  - **Server:** it trusts only RevenueCat's REST view of the customer. Webhooks (checked by an Authorization header) and `POST /v1/entitlement/sync` just trigger a re-read.
+  - **Mock store:** stays for the web preview and tests, and production refuses `STORE_MODE=mock`.
+  - **Setup:** `apps/mobile/docs/release/revenuecat-setup.md`.
 - Decision rule: choose the path with reliable server-side verification and restore behavior for the pilot.
 
 ### D-015 — Content publishing method

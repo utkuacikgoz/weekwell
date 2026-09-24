@@ -6,7 +6,9 @@
  *   another user's plan reads as 404 so ids cannot be probed.
  * - Plan changes enforce the access policy server-side (canChangePlan).
  * - Generation is idempotent and rate limited; prices come only from a provider.
- * - Store webhooks are signature-verified and replay-protected.
+ * - Store webhooks are signature-verified and replay-protected. RevenueCat
+ *   webhooks (D-014) only trigger a re-read of the customer from RevenueCat.
+ * - Sign-in codes are emailed with Resend (D-013).
  * - Logs are structured and redacted: no emails, tokens, or exclusions.
  */
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
@@ -24,6 +26,7 @@ import {
   generateFixturePlan,
   generateUnderBudgetPlan,
   getRecipe,
+  recordFromSubscriber,
   previewPreferenceChange,
   priceGroceryList,
   recipeFitsTime,
@@ -31,6 +34,7 @@ import {
   reconcileChecks,
   replaceMeal,
   type EntitlementRecord,
+  type RcSubscriberResponse,
   type Plan,
   type UserPreferences,
 } from '@weekwell/domain';
@@ -52,7 +56,31 @@ export type Deps = {
   now?: () => Date;
   log?: Logger;
   sendEmail?: EmailSender;
+  /** Outbound HTTP (Resend, RevenueCat). Injected in tests. */
+  fetch?: typeof fetch;
 };
+
+const REVENUECAT_API = 'https://api.revenuecat.com/v1';
+const RESEND_API = 'https://api.resend.com/emails';
+
+/** Resend sender (D-013). Plain text plus minimal HTML; the code is the only personal data sent. */
+export function resendSender(apiKey: string, from: string, fetchImpl: typeof fetch = fetch): EmailSender {
+  return async (email, code) => {
+    const res = await fetchImpl(RESEND_API, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from,
+        to: [email],
+        subject: `${code} is your Weekwell sign-in code`,
+        text: `Your Weekwell sign-in code is ${code}. It expires in 10 minutes.\n\nIf you didn’t ask for this, you can ignore this email.`,
+        html: `<p>Your Weekwell sign-in code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It expires in 10 minutes. If you didn’t ask for this, you can ignore this email.</p>`,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`resend_${res.status}`);
+  };
+}
 
 type Env = { Variables: { userId: string; requestId: string } };
 
@@ -65,7 +93,7 @@ const IdListSchema = z.array(z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/u)).ma
 
 class ApiError extends Error {
   constructor(
-    readonly status: 400 | 401 | 403 | 404 | 409 | 413 | 422 | 429,
+    readonly status: 400 | 401 | 403 | 404 | 409 | 413 | 422 | 429 | 503,
     readonly code: string,
     readonly extra: Record<string, unknown> = {},
   ) {
@@ -77,10 +105,26 @@ export function createApp(deps: Deps) {
   const { config, db } = deps;
   const now = deps.now ?? (() => new Date());
   const log = deps.log ?? ((e) => console.log(JSON.stringify(e)));
-  const sendEmail: EmailSender = deps.sendEmail ?? (async () => {
-    // No email provider is configured in the pilot (D-013). Codes are only
-    // available through ALLOW_DEV_CODES in development.
-  });
+  const fetchImpl = deps.fetch ?? fetch;
+  const sendEmail: EmailSender =
+    deps.sendEmail ??
+    (config.resendApiKey && config.emailFrom
+      ? resendSender(config.resendApiKey, config.emailFrom, fetchImpl)
+      : async () => {
+          // Development without Resend: codes are only available through ALLOW_DEV_CODES.
+        });
+
+  /** Re-read a customer from RevenueCat and store the result (D-014). The REST view is the source of truth. */
+  const syncFromRevenueCat = async (ownerId: string) => {
+    const res = await fetchImpl(`${REVENUECAT_API}/subscribers/${encodeURIComponent(ownerId)}`, {
+      headers: { authorization: `Bearer ${config.revenuecatSecretKey}`, accept: 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`revenuecat_${res.status}`);
+    const json = (await res.json()) as RcSubscriberResponse;
+    if (!json || typeof json !== 'object' || !json.subscriber) throw new Error('revenuecat_bad_body');
+    db.setEntitlement(ownerId, recordFromSubscriber(ownerId, json, db.entitlement(ownerId) ?? null, now()));
+  };
 
   const hmac = (value: string) => createHmac('sha256', config.sessionSecret).update(value).digest('hex');
   const ipLimiter = new RateLimiter({ maxPerWindow: 300, windowMs: 60_000 });
@@ -155,7 +199,12 @@ export function createApp(deps: Deps) {
     if (!authIpLimiter.take(ipOf(c), now().getTime()) || !authEmailLimiter.take(emailHash, now().getTime())) throw new ApiError(429, 'rate_limited');
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
     db.setLoginCode(emailHash, hmac(`code:${emailHash}:${code}`), now().getTime() + CODE_TTL_MS);
-    await sendEmail(email, code);
+    try {
+      await sendEmail(email, code);
+    } catch (e) {
+      log(redact({ at: now().toISOString(), requestId: c.get('requestId'), level: 'error', msg: 'email_failed', error: e instanceof Error ? e.message : 'unknown' }) as Record<string, unknown>);
+      throw new ApiError(503, 'email_unavailable');
+    }
     // Same response whether or not the account exists (no enumeration).
     return c.json(config.allowDevCodes ? { sent: true, devCode: code } : { sent: true });
   });
@@ -194,6 +243,34 @@ export function createApp(deps: Deps) {
     } catch {
       return c.json({ error: 'invalid_transition' }, 409);
     }
+    return c.json({ ok: true });
+  });
+
+  // RevenueCat (D-014). Auth is the exact header value configured in RevenueCat.
+  // The body only names who changed: state always comes from the REST re-read,
+  // so a forged, stale, or out-of-order event can't grant access.
+  app.post('/v1/webhooks/revenuecat', async (c) => {
+    if (config.storeMode !== 'revenuecat') return c.json({ error: 'not_found' }, 404);
+    const given = Buffer.from(c.req.header('authorization') ?? '');
+    const expected = Buffer.from(config.revenuecatWebhookAuth);
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) return c.json({ error: 'unauthorized' }, 401);
+    const parsed = z
+      .object({ event: z.object({ id: z.string().min(1).max(200), type: z.string().max(64), app_user_id: z.string().max(200).optional() }).passthrough() })
+      .passthrough()
+      .safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: 'bad_body' }, 400);
+    const { id, type, app_user_id: ownerId } = parsed.data.event;
+    if (type === 'TEST') return c.json({ ok: true, ignored: 'test' });
+    if (!ownerId || !db.userExists(ownerId)) return c.json({ ok: true, ignored: 'unknown_user' });
+    try {
+      await syncFromRevenueCat(ownerId);
+    } catch (e) {
+      log(redact({ at: now().toISOString(), requestId: c.get('requestId'), level: 'error', msg: 'revenuecat_sync_failed', error: e instanceof Error ? e.message : 'unknown' }) as Record<string, unknown>);
+      // RevenueCat retries non-2xx responses.
+      return c.json({ error: 'sync_failed' }, 502);
+    }
+    // A repeat delivery just re-reads the same state (idempotent); the id is kept as a delivery record.
+    db.markWebhookSeen(`rc:${id}`, now().getTime());
     return c.json({ ok: true });
   });
 
@@ -365,6 +442,18 @@ export function createApp(deps: Deps) {
     const { productId } = await body(c, z.object({ productId: ProductIdSchema }).strict());
     const days = productId === 'weekly' ? 7 : productId === 'monthly' ? 30 : 365;
     db.setEntitlement(userId, applyStoreEvent(entitlementOf(userId), { type: 'purchased', productId, at: now().toISOString(), periodEndsAt: new Date(now().getTime() + days * 86_400_000).toISOString() }));
+    return c.json(viewOf(userId));
+  });
+  // After a purchase or restore in the app: re-read from RevenueCat now instead of waiting for the webhook.
+  authed.post('/entitlement/sync', async (c) => {
+    const userId = c.get('userId');
+    if (config.storeMode === 'revenuecat') {
+      try {
+        await syncFromRevenueCat(userId);
+      } catch {
+        throw new ApiError(503, 'store_unavailable');
+      }
+    }
     return c.json(viewOf(userId));
   });
   authed.post('/entitlement/restore', (c) => {
