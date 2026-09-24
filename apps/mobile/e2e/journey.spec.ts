@@ -8,14 +8,14 @@ test('a new user builds a plan in under two minutes', async ({ page }) => {
   for (const d of ['dinner_mon', 'dinner_tue', 'dinner_wed', 'dinner_thu', 'dinner_fri', 'lunch_a', 'lunch_b']) {
     await expect($(page, `meal-${d}`)).toHaveCount(1);
   }
-  await expect($(page, 'price-status')).toContainText('estimated at Trader Joe’s');
-  await expect($(page, 'price-status')).toContainText('sample prices');
+  await expect($(page, 'price-chip')).toContainText('sample est.');
+  await expect($(page, 'settings-summary')).toContainText('Trader Joe’s');
 });
 
 test('tonight’s meal, total, budget fit, and store are visible without scrolling', async ({ page }) => {
   await buildWeek(page);
   const vh = page.viewportSize()!.height;
-  for (const id of ['settings-summary', 'tonight-card', 'price-status']) {
+  for (const id of ['settings-summary', 'tonight-card', 'price-chip']) {
     const box = await $(page, id).boundingBox();
     expect(box, id).not.toBeNull();
     expect(box!.y + box!.height, id).toBeLessThanOrEqual(vh);
@@ -137,7 +137,7 @@ test('changing store previews exactly what will change before applying', async (
   await $(page, 'pref-store-walmart').click();
   await expect($(page, 'preference-preview')).toContainText(/Changing to Walmart may change \d+ prices/u);
   await $(page, 'apply-preferences').click();
-  await expect($(page, 'price-status')).toContainText('Walmart');
+  await expect($(page, 'settings-summary')).toContainText('Walmart');
 });
 
 test('delete my data returns to onboarding', async ({ page }) => {

@@ -19,7 +19,7 @@ async function signInAndPlan(page: Page, email: string) {
 
 test('sign in, plan, and the server keeps the plan and grocery checks', async ({ page }) => {
   await signInAndPlan(page, `a${Date.now()}@example.com`);
-  await expect($(page, 'price-status')).toContainText('estimated at Trader Joe’s');
+  await expect($(page, 'price-chip')).toContainText('sample est.');
   await $(page, 'open-grocery').click();
   await page.locator('[data-testid^="item-"]:visible').first().click();
   await expect($(page, 'checked-count')).toContainText('1 of');
