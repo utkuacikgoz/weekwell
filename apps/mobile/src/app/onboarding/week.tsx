@@ -1,7 +1,7 @@
 import { PROTEIN_GOALS, type HouseholdSize, type MaxMinutes } from '@weekwell/domain';
 import { ChoiceGroup } from '../../components/Segmented';
 import { StepScreen } from '../../components/StepScreen';
-import { GOAL_COPY, householdCopy, timeCopy } from '../../copy';
+import { GOAL_COPY, HOUSEHOLD_CHOICE, householdCopy, timeCopy } from '../../copy';
 import { useStore } from '../../state/store';
 
 const TIMES: MaxMinutes[] = [20, 30, 'batch'];
@@ -26,10 +26,10 @@ export default function YourWeek() {
         options={TIMES.map((m) => ({ value: String(m), label: timeCopy(m).short === 'Batch' ? 'Batch cook' : timeCopy(m).short, testID: `time-${m}` }))}
       />
       <ChoiceGroup
-        label="People eating"
+        label="Who’s eating?"
         value={String(d.householdSize)}
         onChange={(v) => setDraft({ householdSize: v === '3_4' ? '3_4' : (Number(v) as 1 | 2) })}
-        options={PEOPLE.map((h) => ({ value: String(h), label: householdCopy(h).label, testID: `household-${h}` }))}
+        options={PEOPLE.map((h) => ({ value: String(h), label: HOUSEHOLD_CHOICE[String(h)] ?? householdCopy(h).label, testID: `household-${h}` }))}
       />
     </StepScreen>
   );

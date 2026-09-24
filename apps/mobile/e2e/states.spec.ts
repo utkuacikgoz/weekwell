@@ -73,11 +73,14 @@ test('paywall: nothing preselected, exact prices, truthful yearly saving', async
   expect(text).toContain('$4.99 a week');
   expect(text).toContain('$9.99 a month');
   expect(text).toContain('$49.99 a year');
-  expect(text).toContain('$69.89 less than 12 months of monthly');
-  expect(text).toContain('About $2.31 a week, billed monthly');
+  expect(text).toContain('Save 58% vs monthly');
+  expect(text).toContain('12 months of monthly ($119.88), $69.89 less');
+  expect(text).toContain('About $2.31 a week');
   expect(text).toContain('About $0.96 a week');
+  await expect($(page, 'start-trial')).toHaveText('Choose a plan');
+  await expect($(page, 'legal')).toContainText('renew automatically unless cancelled at least 24 hours before');
   await $(page, 'product-monthly').click();
-  await expect($(page, 'charge-line')).toContainText('Free for 7 days, then $9.99 a month.');
+  await expect($(page, 'charge-line')).toHaveText('Free for 7 days, then $9.99 a month.');
   await $(page, 'start-trial').click();
   await expect($(page, 'trial-active')).toContainText('7 days left');
 });

@@ -318,6 +318,18 @@ The product owner's design audit asked for a correction pass before any further 
 - Guard: the `/review/type?review=1` specimen, checked in `footer.spec.ts` at 320px and 150% (longest catalogue name plus a 96-character stress name, with no clipping).
 - Owner: Product owner
 
+### D-037 — Budget presets, "Who’s eating?", and a two-card paywall
+
+- Status: Proposed
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision:
+  - **Budget:** the step offers $60, $80 and $100 plus Custom. The −/+ field appears only for Custom, and the slider is removed. The default is now $80 (was $75), so it matches a preset. The explanation says who the estimate is for, and in onboarding it says that household size comes next.
+  - **People:** the question reads "Who’s eating?", with the answers "Just me", "Two of us" and "3–4 people". Preferences asks "How many people?".
+  - **Paywall:** one value statement, three one-line benefits, and two plan cards (yearly and monthly), each with the per-week equivalent. Weekly stays available as a smaller "Or pay weekly" option, so all three D-008 prices remain. It has one primary action. The auto-renew disclosure is one compact paragraph. Restore purchases is a quiet link. Nothing is preselected (D-008).
+- Open: the renewal wording still needs a check against the current App Store Review Guidelines before submission.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md

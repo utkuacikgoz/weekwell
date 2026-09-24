@@ -38,7 +38,7 @@ export function Button({ label, onPress, kind = 'primary', disabled, busy, acces
         {busy ? <ActivityIndicator color={kind === 'primary' ? color.onAccent : color.ink} style={{ marginRight: space.s }} /> : null}
         <Text
           variant="bodyStrong"
-          tone={kind === 'primary' ? 'onAccent' : kind === 'quiet' ? 'accent' : 'ink'}
+          tone={inactive && kind === 'primary' ? 'ink' : kind === 'primary' ? 'onAccent' : kind === 'quiet' ? 'accent' : 'ink'}
           style={[kind === 'quiet' && styles.quietText, inactive && kind === 'quiet' && { color: color.inkMuted }]}
         >
           {label}
