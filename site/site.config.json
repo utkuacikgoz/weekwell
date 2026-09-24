@@ -1,10 +1,12 @@
 {
   "_comment": "Fill every TODO before publishing. The build refuses to run while any value starts with TODO.",
+  "_server": "false for the pilot (D-039: no Weekwell server; data stays on the phone). Set true when the API is hosted; hostingProvider is then required.",
+  "server": false,
   "company": "TODO: legal name of the company or person that publishes Weekwell",
   "supportEmail": "TODO: support@your-domain",
   "privacyEmail": "TODO: privacy@your-domain (can be the same as support)",
   "mailingAddress": "TODO: postal address for privacy requests",
   "governingState": "TODO: the US state whose law governs the terms, e.g. Delaware",
   "effectiveDate": "TODO: e.g. October 1, 2026",
-  "hostingProvider": "TODO: where the API runs, e.g. Fly.io or Render"
+  "hostingProvider": "TODO (only needed when server is true): where the API runs, e.g. Fly.io"
 }

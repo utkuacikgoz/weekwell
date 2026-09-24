@@ -12,14 +12,21 @@ import { join } from 'node:path';
 const here = import.meta.dirname;
 const preview = process.argv.includes('--preview');
 const config = JSON.parse(readFileSync(join(here, 'site.config.json'), 'utf8'));
-const todo = Object.entries(config).filter(([k, v]) => !k.startsWith('_') && String(v).startsWith('TODO'));
+// `server`: whether a Weekwell server holds user data (D-039: false for the pilot).
+const server = config.server === true;
+const todo = Object.entries(config).filter(([k, v]) => !k.startsWith('_') && String(v).startsWith('TODO') && (server || k !== 'hostingProvider'));
 if (todo.length && !preview) {
   console.error(`site.config.json still has TODO values: ${todo.map(([k]) => k).join(', ')}`);
   process.exit(1);
 }
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+/** <!--server-->…<!--/server--> only with a server; <!--device-->…<!--/device--> only without one. */
+const choose = (html) =>
+  html
+    .replace(/<!--server-->([\s\S]*?)<!--\/server-->/g, (_, inner) => (server ? inner : ''))
+    .replace(/<!--device-->([\s\S]*?)<!--\/device-->/g, (_, inner) => (server ? '' : inner));
 const fill = (html) =>
-  html.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+  choose(html).replace(/\{\{(\w+)\}\}/g, (_, key) => {
     if (!(key in config)) throw new Error(`unknown placeholder {{${key}}}`);
     const v = String(config[key]);
     return v.startsWith('TODO') ? `<mark>[${esc(key)}]</mark>` : esc(v);
