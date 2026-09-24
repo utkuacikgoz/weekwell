@@ -8,7 +8,7 @@
 |---|---|---|
 | App name | Weekwell | needs trademark/name-availability check |
 | Subtitle (≤30) | Five dinners, one grocery list | draft |
-| Bundle ID | — | **open (D-030)** |
+| Bundle ID | com.belevate.weekwell (team 9D78WTZAD8, ASC app 6815542789) | set (D-030) |
 | Primary category | Food & Drink | draft |
 | Secondary category | Health & Fitness | draft; confirm this doesn't imply medical claims |
 | Age rating | 4+ (no objectionable content) | answer the current questionnaire at submission |
@@ -85,7 +85,7 @@ The app requests no device permissions (no camera, location, contacts, notificat
 ## Open before submission
 
 1. Product-owner approval of every screen and sensory state (D-016, D-018).
-2. D-030 bundle id, Apple team, App Store Connect record, EAS credentials; then enable the daily TestFlight workflow.
+2. D-030: EAS project link and credentials, `EXPO_TOKEN` secret; then enable the daily TestFlight workflow (bundle id, team and App Store Connect record are set).
 3. D-014 real purchases (StoreKit/RevenueCat) and store webhooks.
 4. D-013 auth provider and email delivery (API build), plus a hosted API.
 5. D-011 price source, or explicit acceptance of labelled sample prices.
