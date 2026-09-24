@@ -60,7 +60,7 @@ test.describe('grocery · 390×844', () => {
     await openList(page, 'today=wed&priceDelay=4000');
     await $(page, 'price-about').click();
     await page.getByRole('button', { name: 'Check prices again' }).filter({ visible: true }).click();
-    await expect($(page, 'price-detail')).toContainText('updating');
+    await expect($(page, 'price-kind')).toContainText('updating');
     await shot(page, '08-loading-prices');
   });
 

@@ -125,31 +125,30 @@ export default function MealDetail() {
       overlay={toast ? <Toast message={toast.message} tone={toast.tone} testID="meal-toast" /> : null}
       footer={
         pending ? (
-          <View style={{ gap: space.s }} testID="swap-pending">
-            <View accessibilityLiveRegion="polite">
-              <Text variant="bodyStrong">Swapped to {pending.next.name}</Text>
-              <Text variant="meta" tone="muted">
-                {changedItems} grocery item{changedItems === 1 ? '' : 's'} changed · was {pending.previous.name}
-                {pending.removedChecked > 0 ? ` · ${pending.removedChecked} checked item${pending.removedChecked === 1 ? '' : 's'} no longer needed` : ''}
-              </Text>
+          <View style={{ gap: space.s }}>
+            <View style={styles.swapActions}>
+              <View style={{ flexGrow: 2, flexBasis: 150 }}>
+                <Button
+                  label="Keep swap"
+                  onPress={() => {
+                    dismissSwap();
+                    showToast('Swap kept · grocery list updated');
+                  }}
+                  testID="keep-swap"
+                />
+              </View>
+              <View style={{ flexGrow: 1, flexBasis: 100 }}>
+                <Button
+                  label="Undo"
+                  kind="secondary"
+                  onPress={async () => {
+                    await undoSwap();
+                    showToast('Swap undone');
+                  }}
+                  testID="undo-swap"
+                />
+              </View>
             </View>
-            <Button
-              label="Keep swap"
-              onPress={() => {
-                dismissSwap();
-                showToast('Swap kept · grocery list updated');
-              }}
-              testID="keep-swap"
-            />
-            <Button
-              label="Undo"
-              kind="secondary"
-              onPress={async () => {
-                await undoSwap();
-                showToast('Swap undone');
-              }}
-              testID="undo-swap"
-            />
           </View>
         ) : (
           <Button label="Start cooking" onPress={() => router.push(`/cook/${meal.id}` as Href)} testID="start-cooking" />
@@ -157,6 +156,18 @@ export default function MealDetail() {
       }
     >
       <NavBar backLabel="Week" />
+      {pending ? (
+        <View style={styles.swapBanner} testID="swap-pending" accessibilityLiveRegion="polite">
+          <Icon name="check" size={20} color={color.accent} />
+          <View style={{ flex: 1 }}>
+            <Text variant="bodyStrong">Swapped to {pending.next.name}</Text>
+            <Text variant="meta" tone="muted">
+              {changedItems} grocery item{changedItems === 1 ? '' : 's'} changed · was {pending.previous.name}
+              {pending.removedChecked > 0 ? ` · ${pending.removedChecked} checked item${pending.removedChecked === 1 ? '' : 's'} no longer needed` : ''}
+            </Text>
+          </View>
+        </View>
+      ) : null}
       <MealArt recipeId={meal.recipeId} ingredientIds={meal.ingredients.map((i) => i.ingredientId)} width={heroWidth} height={Math.round(heroWidth * 0.5)} radius={radius.card} />
       <Text variant="label" tone="accent" style={{ marginTop: space.m }}>{mealWhen(meal)}</Text>
       <Text variant="title" accessibilityRole="header" testID="meal-name">
@@ -238,8 +249,11 @@ export default function MealDetail() {
 }
 
 const styles = StyleSheet.create({
-  facts: { flexDirection: 'row', marginTop: space.m, marginBottom: space.s, gap: space.s },
-  fact: { flex: 1 },
+  // Two by two when four across would squeeze (narrow phones, large text).
+  facts: { flexDirection: 'row', flexWrap: 'wrap', marginTop: space.m, marginBottom: space.s, rowGap: space.s },
+  fact: { flexGrow: 1, flexBasis: '25%', minWidth: 120 },
+  swapBanner: { flexDirection: 'row', gap: space.s, alignItems: 'flex-start', backgroundColor: color.accentTint, borderRadius: radius.control, padding: space.m - 4, marginBottom: space.m },
+  swapActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s },
   listToggle: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, minHeight: MIN_TOUCH + 8, marginTop: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
   box: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: color.control, alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: color.accent, borderColor: color.accent },

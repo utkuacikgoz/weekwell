@@ -295,6 +295,29 @@ The product owner asked for waves to be built and merged overnight. Every item b
 - Decision: The icon is a top-down plate (rice, chicken, broccoli) from the meal illustration system on a warm tile, with no text. The same plate on paper (light) or near-black (dark) is the splash. Replaces the Expo template placeholders.
 - Owner: Product owner + design lead
 
+## Design audit corrections (2026-09-24)
+
+The product owner's design audit asked for a correction pass before any further polish. Every entry below is **Proposed** until the next design review.
+
+### D-035 — Compact bottom bar and one price location
+
+- Status: Proposed
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: The bottom bar holds one primary action, plus the price chip on the week screen ("$73 · sample est.", tap for About this estimate). States that need attention (over budget, older prices, unavailable, partial) become one neutral notice in the content with one next step. Over budget reads "Estimated total $X · $Y over your $Z target", with "Rebuild under $Z" first. The grocery list has no bar: Share moves to the top bar, and the total sits under the title. "Sample" appears only in the chip and the About sheet. The swap result is a banner at the top of the meal, and the bar keeps only Keep swap and Undo.
+- Reason: The audit's P0 and P1 items: the bar used about 27–41% of a 320px screen at 150% text.
+- Guard: `apps/mobile/e2e/footer.spec.ts` fails if the last row ends under the bar, if the bar is over 20% of the height at 390×844 or 32% at 320×568 with 150% text, or if the page scrolls sideways.
+- Owner: Product owner
+
+### D-036 — Type rules for narrow screens, large text, and long names
+
+- Status: Proposed
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: Under 360pt wide, the serif steps down (title 28 → 24, dish 20 → 18). Serif text stops growing at 130%, while body text follows the system setting up to 220%. Use one serif title per screen. Dish names are never truncated; they wrap. The week screen drops the "Your week, well fed." headline, so tonight's dish is the one primary statement, and a small "Weekwell" wordmark replaces it.
+- Guard: the `/review/type?review=1` specimen, checked in `footer.spec.ts` at 320px and 150% (longest catalogue name plus a 96-character stress name, with no clipping).
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md

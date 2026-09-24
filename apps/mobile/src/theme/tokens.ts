@@ -50,6 +50,26 @@ export const type = {
 export type TypeVariant = keyof typeof type;
 
 /**
+ * Narrow widths and large text (design audit 2026-09-24). The serif is an
+ * accent, so it grows less than body text and steps down on small phones:
+ * - under 360pt wide, serif sizes step down (title 28 → 24, dish 20 → 18, display 32 → 26);
+ * - serif variants stop growing at 130% of their size; body text follows the
+ *   system setting up to 220%;
+ * - one serif title per screen, and titles are never truncated: long dish
+ *   names wrap at the smaller size instead (fixture test: longest recipe name).
+ */
+export const NARROW_WIDTH = 360;
+export const SERIF_MAX_SCALE = 1.3;
+export const BODY_MAX_SCALE = 2.2;
+export const narrowType: Partial<Record<TypeVariant, { fontSize: number; lineHeight: number }>> = {
+  display: { fontSize: 26, lineHeight: 30 },
+  title: { fontSize: 24, lineHeight: 28 },
+  total: { fontSize: 24, lineHeight: 28 },
+  dish: { fontSize: 18, lineHeight: 22 },
+};
+export const isSerif = (v: TypeVariant) => v === 'display' || v === 'title' || v === 'dish' || v === 'total';
+
+/**
  * Motion tokens (D-018). Motion only explains a state change. Every duration
  * collapses to 0 when the OS reduce-motion setting is on.
  */

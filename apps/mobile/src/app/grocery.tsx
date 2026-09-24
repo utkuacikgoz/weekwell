@@ -8,13 +8,13 @@ import {
 } from '@weekwell/domain';
 import { Redirect, router, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Animated, Platform, Pressable, Share, StyleSheet, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Layout';
 import { NavBar } from '../components/NavBar';
 import { AboutEstimateSheet } from '../components/PriceSheets';
-import { PriceStatus } from '../components/PriceStatus';
+import { PriceChip, PriceNotice } from '../components/PriceStatus';
 import { Sheet } from '../components/Sheet';
 import { Text } from '../components/Text';
 import { WeekRow } from '../components/WeekParts';
@@ -105,7 +105,7 @@ export default function Grocery() {
   const checkedCount = groceryItems.filter((i) => checked.has(i.id)).length;
   const [sheet, setSheet] = useState<{ kind: 'about' } | { kind: 'meals'; item: GroceryItem } | null>(null);
   const [showStaples, setShowStaples] = useState(false);
-  const [toast, setToast] = useState<{ id: string; name: string } | null>(null);
+  const [toast, setToast] = useState<{ id: string; name: string } | { id: null; name: string } | null>(null);
 
   useEffect(() => {
     analytics?.track('grocery_list_opened', { itemCount: groceryItems.length });
@@ -140,11 +140,24 @@ export default function Grocery() {
     const lines = groceryItems
       .filter((i) => !i.staple && !checked.has(i.id))
       .map((i) => `• ${i.name} — ${formatQuantity(i.amount, i.unit)}`);
+    const message = `Weekwell grocery list\n\n${lines.join('\n')}\n\nPrices are estimates and can change in store.`;
+    // Web preview without a system share sheet: copy instead, and say so.
+    const nav = Platform.OS === 'web' ? (globalThis.navigator as (Navigator & { share?: unknown }) | undefined) : undefined;
+    if (nav && !nav.share) {
+      try {
+        await nav.clipboard.writeText(message);
+        setToast({ id: null, name: 'List copied' });
+        analytics?.track('grocery_list_shared', { itemCount: lines.length });
+      } catch {
+        setToast({ id: null, name: 'Sharing isn’t available in this browser' });
+      }
+      return;
+    }
     try {
-      await Share.share({ message: `Weekwell grocery list\n\n${lines.join('\n')}\n\nPrices are estimates and can change in store.` });
-      analytics?.track('grocery_list_shared', { itemCount: lines.length });
+      const res = await Share.share({ message });
+      if (res.action !== Share.dismissedAction) analytics?.track('grocery_list_shared', { itemCount: lines.length });
     } catch {
-      // Share sheet dismissed or unavailable.
+      setToast({ id: null, name: 'Couldn’t open sharing. Try again.' });
     }
   };
 
@@ -157,10 +170,10 @@ export default function Grocery() {
       toast ? (
         <View>
           <View style={styles.toast} accessibilityLiveRegion="polite" testID="check-toast">
-            <Text variant="meta" tone="onAccent" style={{ flex: 1 }} numberOfLines={1}>
-              Checked {toast.name}
+            <Text variant="meta" tone="onAccent" style={{ flex: 1, paddingVertical: space.m - 4 }} numberOfLines={2}>
+              {toast.id ? `Checked ${toast.name}` : toast.name}
             </Text>
-            <Pressable
+            {toast.id ? <Pressable
               accessibilityRole="button"
               onPress={() => {
                 toggleChecked(toast.id);
@@ -170,29 +183,46 @@ export default function Grocery() {
               testID="undo-check"
             >
               <Text variant="label" tone="onAccent">Undo</Text>
-            </Pressable>
+            </Pressable> : <View style={{ width: space.m }} />}
           </View>
         </View>
       ) : null
       }
-      footer={
-        <>
-          <PriceStatus priceCheck={priceCheck} budget={plan.preferences.weeklyBudget} onAction={(a) => (a === 'refresh' ? void refreshPrices() : setSheet({ kind: 'about' }))} />
-          <Button label="Share list" kind="secondary" onPress={share} disabled={buyable === 0} testID="share-list" accessibilityHint="Sends the unchecked items to Notes, Messages, or another app" />
-        </>
-      }
     >
-      <NavBar backLabel="Week" />
+      <NavBar
+        backLabel="Week"
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Share list"
+            accessibilityHint="Sends the unchecked items to Notes, Messages, or another app"
+            aria-disabled={buyable === 0}
+            disabled={buyable === 0}
+            onPress={share}
+            style={({ pressed }) => [styles.share, buyable === 0 && { opacity: 0.4 }, pressed && { backgroundColor: color.placeholder }]}
+            testID="share-list"
+          >
+            <Icon name="share" size={20} color={color.accent} />
+            <Text variant="bodyStrong" tone="accent">Share</Text>
+          </Pressable>
+        }
+      />
       <Text variant="title" accessibilityRole="header">Grocery list</Text>
 
-      <View style={styles.progress} accessible accessibilityLabel={`${checkedCount} of ${groceryItems.length} items checked`} testID="checked-count">
-        <Text variant="bodyStrong">
+      <View style={styles.summary}>
+        <Text variant="meta" tone="muted" style={{ flex: 1 }} accessible accessibilityLabel={`${checkedCount} of ${groceryItems.length} items checked`} testID="checked-count">
           {checkedCount} of {groceryItems.length} checked
         </Text>
+        <PriceChip priceCheck={priceCheck} budget={plan.preferences.weeklyBudget} onAbout={() => setSheet({ kind: 'about' })} />
+      </View>
+      <View style={styles.progress}>
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${groceryItems.length ? (checkedCount / groceryItems.length) * 100 : 0}%` }]} />
         </View>
       </View>
+
+      {/* Over budget is handled on the week, where the rebuild happens; here only data problems show. */}
+      <PriceNotice priceCheck={priceCheck} budget={plan.preferences.weeklyBudget} skip={['over_budget']} onAction={() => void refreshPrices()} />
 
       {groceryItems.length === 0 ? (
         <View style={styles.empty} testID="empty-list">
@@ -272,7 +302,9 @@ export default function Grocery() {
 }
 
 const styles = StyleSheet.create({
-  progress: { marginTop: space.s, marginBottom: space.s, gap: space.s },
+  summary: { flexDirection: 'row', alignItems: 'center', gap: space.s, marginTop: space.xs, flexWrap: 'wrap' },
+  progress: { marginBottom: space.s },
+  share: { minHeight: MIN_TOUCH, flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.s, borderRadius: radius.control },
   track: { height: 6, borderRadius: 3, backgroundColor: color.divider, overflow: 'hidden' },
   fill: { height: 6, backgroundColor: color.accent },
   sectionHead: { marginTop: space.l, marginBottom: space.xs },
