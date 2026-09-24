@@ -25,13 +25,13 @@ The code expects the setup below. The names must match exactly, because they're 
 4. **Offering:** create **`default`** and mark it current. Add three packages: Weekly → weekly, Monthly → monthly, Annual → yearly.
 5. **API keys:**
    - **Public iOS SDK key** (starts `appl_`): on expo.dev, under **Environment variables** (production), add it as `EXPO_PUBLIC_REVENUECAT_IOS_KEY`. It's safe to ship in the app, but keep it out of Git.
-   - **Secret API key** (starts `sk_`): this goes on the **API server only**, as `REVENUECAT_SECRET_KEY`. Never put it in the app.
-6. **Webhook:** under **Integrations → Webhooks**, add one:
+   - **Secret API key** (starts `sk_`): this goes on the **API server only**, as `REVENUECAT_SECRET_KEY`, and isn't needed for the pilot. Never put it in the app.
+6. **Webhook (only when the Weekwell server runs; skip for the pilot, D-039):** under **Integrations → Webhooks**, add one:
    - **URL:** `https://<your API host>/v1/webhooks/revenuecat`.
    - **Authorization header:** a long random value, for example `Bearer ` followed by 32+ random characters. Set the same exact value on the server as `REVENUECAT_WEBHOOK_AUTH`.
    - Send a **test event**; the server answers 200 and ignores it.
 
-## 3. API server environment
+## 3. API server environment (only when the server runs; not in the pilot, D-039)
 
 ```
 STORE_MODE=revenuecat

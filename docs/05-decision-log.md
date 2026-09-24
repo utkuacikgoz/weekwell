@@ -123,7 +123,7 @@ This is the lightweight record of decisions that affect product, architecture, s
 
 ### D-013 — Authentication provider
 
-- Status: Accepted in part (product owner, 2026-09-24): **Resend** sends the sign-in codes. Hosting is still open (Fly.io or Render, with Postgres).
+- Status: Accepted in part (product owner, 2026-09-24): **Resend** sends the sign-in codes when a server runs. The pilot has no server (D-039), so hosting is deferred.
 - Question: Which supported identity provider handles passwordless or email authentication?
 - Decision:
   - **Sign-in:** the API keeps its own passwordless sign-in (6-digit code, 10-minute expiry, 5 attempts, hashed tokens) and sends the code through Resend (`RESEND_API_KEY`, `EMAIL_FROM` on a verified domain).
@@ -352,6 +352,26 @@ The product owner's design audit asked for a correction pass before any further 
   - **Sourcing:** generated stills (recommended) or a commissioned shoot. The prompts for all 22 are in `apps/mobile/assets/meals/prompts.json`.
   - **Checks for generated stills:** a person checks every still against the ingredient list, and the About sheet and store listing call them illustrative.
 - Superseded: the refined-illustration direction (B) board was removed from the code. Its captures remain in `apps/mobile/docs/review/v3/food/` for reference.
+- Owner: Product owner
+
+### D-039 — Friends pilot runs without a Weekwell server
+
+- Status: Accepted (product owner, 2026-09-24: "skip the server for the pilot")
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision: the pilot build is **on-device only**.
+  - **Build setting:** leave `EXPO_PUBLIC_API_URL` unset in EAS. There are no accounts, no sync and no sign-in email, and plans, preferences, foods left out and grocery lists stay on the phone.
+  - **Subscriptions:** RevenueCat works client-side. The app reads access from the RevenueCat SDK, and no webhook or secret key is needed. The paid-access rule (D-026) is enforced in the app only.
+  - **Privacy texts:** the site is built with `"server": false` (`site/site.config.json`), so the privacy policy, health data policy, terms and support page describe the no-server pilot.
+- Kept, not deleted:
+  - **Unused code:** the API (`apps/api`), Resend sign-in (D-013) and the RevenueCat webhook stay in the repo, tested but not deployed.
+  - **Future hosting:** Fly.io was recommended; Render works too with the Postgres migration, which is untested.
+- Revisit when: accounts and sync across devices are wanted, server-side access enforcement is needed, or the pilot grows beyond friends.
+- Turning the server on later:
+  1. host the API with `STORE_MODE=revenuecat` and Resend;
+  2. set `EXPO_PUBLIC_API_URL`;
+  3. set `"server": true` and `hostingProvider` in the site config, and republish the policies before the build ships;
+  4. update the App Store privacy label.
 - Owner: Product owner
 
 ## Decision entry template
