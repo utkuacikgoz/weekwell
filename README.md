@@ -16,8 +16,8 @@ The app is built end to end, **but nothing is approved and it is not ready to su
 |---|---|
 | Setup (4 steps), week, meal, cooking mode, grocery list, swap/undo, preferences, paywall, read-only after trial, dark mode | built, `design_pending` |
 | Pricing | sample prices, clearly labelled (D-011 open) |
-| Accounts and sync | built into the pilot API; the app uses it only when built with `EXPO_PUBLIC_API_URL` |
-| Purchases | mock (D-014 open) |
+| Accounts and sync | **not in the pilot (D-039: no server).** The API is built and tested but not deployed; the app uses it only when built with `EXPO_PUBLIC_API_URL`. |
+| Purchases | RevenueCat (D-014), client-side in the pilot; mock store in the web preview and tests |
 | TestFlight | workflow ready but disabled; bundle id and App Store Connect app set, EAS link and credentials still needed (D-030) |
 
 ## Source of truth
