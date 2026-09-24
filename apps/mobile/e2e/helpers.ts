@@ -38,3 +38,12 @@ export async function buildWeek(page: Page, opts: Parameters<typeof onboard>[1] 
 export async function visibleText(page: Page): Promise<string> {
   return page.evaluate(() => document.body.innerText);
 }
+
+/** In cooking mode, go to the first step that offers a timer. */
+export async function findTimerStep(page: Page) {
+  while ((await $(page, 'cook-prev').getAttribute('aria-disabled')) !== 'true') await $(page, 'cook-prev').click();
+  for (let i = 0; i < 12 && (await $(page, 'cook-timer-start').count()) === 0; i++) {
+    if ((await $(page, 'cook-next').innerText()) === 'Done') throw new Error('no step in this recipe has a timer');
+    await $(page, 'cook-next').click();
+  }
+}

@@ -2,9 +2,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, buildWeek, onboard } from './helpers';
+import { $, buildWeek, onboard, findTimerStep } from './helpers';
 
-const OUT = 'docs/review/v2/meal';
+const OUT = 'docs/review/v3/meal';
 const REVIEW = process.env.REVIEW === '1';
 if (REVIEW) mkdirSync(OUT, { recursive: true });
 const shot = (page: Page, name: string, primary?: string) => audit(page, name, { primary, out: REVIEW ? `${OUT}/${name}.png` : undefined });
@@ -86,6 +86,14 @@ test.describe('meal · 390×844', () => {
     await $(page, 'cook-next').click();
     await $(page, 'cook-next').click();
     await shot(page, '11-cooking-step-3', 'cook-next');
+    await findTimerStep(page);
+    await shot(page, '13-cooking-timer-offered', 'cook-next');
+    await $(page, 'cook-timer-start').click();
+    await shot(page, '14-cooking-timer-running', 'cook-next');
+    await $(page, 'nav-back').click();
+    await $(page, 'nav-back').click();
+    await expect($(page, 'continue-cooking')).toBeVisible();
+    await shot(page, '15-week-continue-cooking', 'open-grocery');
   });
 });
 

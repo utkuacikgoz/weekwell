@@ -3,6 +3,7 @@
  * checks, and last price check on-device so the week and list work offline.
  * Exclusions are stored only on this device and cleared by "Delete my data".
  */
+import type { CookingSession } from '../services/cooking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BUDGET_DEFAULT,
@@ -70,6 +71,8 @@ export type PlanUndo = { previous: Plan; previousChecked: string[]; previousSkip
 
 export type SwapRecord = { previous: Meal; next: Meal; action: RepairAction; diff: GroceryDiff; changedChecked: number; removedChecked: number };
 
+export type { CookingSession };
+
 type Persisted = {
   anonId: string;
   draft: Draft;
@@ -80,6 +83,7 @@ type Persisted = {
   hapticsEnabled: boolean;
   entitlement: EntitlementRecord | null;
   onboardingDone: boolean;
+  cooking: CookingSession | null;
 };
 
 const EMPTY: Persisted = {
@@ -92,6 +96,7 @@ const EMPTY: Persisted = {
   hapticsEnabled: true,
   entitlement: null,
   onboardingDone: false,
+  cooking: null,
 };
 
 export type GenerationState =
@@ -122,6 +127,7 @@ type Ctx = {
   undoPlanChange: () => void;
   dismissPlanUndo: () => void;
   setHaptics: (on: boolean) => void;
+  setCooking: (c: CookingSession | null) => void;
   refreshEntitlement: () => Promise<void>;
   startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'failed'>;
   purchase: (productId: ProductId) => Promise<'ok' | 'failed'>;
@@ -659,6 +665,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     undoPlanChange,
     dismissPlanUndo: () => setPlanUndo(null),
     setHaptics,
+    setCooking: (cooking) => setData((d) => ({ ...d, cooking })),
     refreshEntitlement,
     startTrial,
     purchase,
