@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { Platform, Text as RNText, type TextProps } from 'react-native';
-import { color, type as typeScale, type TypeVariant } from '../theme/tokens';
+import { Platform, Text as RNText, useWindowDimensions, type TextProps } from 'react-native';
+import { BODY_MAX_SCALE, NARROW_WIDTH, SERIF_MAX_SCALE, color, isSerif, narrowType, type as typeScale, type TypeVariant } from '../theme/tokens';
 
 /**
  * Native platforms apply the user's Dynamic Type / font size automatically.
@@ -16,13 +16,18 @@ type Props = TextProps & { variant?: TypeVariant; tone?: 'ink' | 'muted' | 'acce
 const toneColor = { ink: color.ink, muted: color.inkMuted, accent: color.accent, warning: color.warning, onAccent: color.onAccent };
 
 export function Text({ variant = 'body', tone = 'ink', style, ...rest }: Props) {
-  const scale = useContext(FontScaleContext);
-  const t = typeScale[variant];
+  const simulated = useContext(FontScaleContext);
+  const { width } = useWindowDimensions();
+  const serif = isSerif(variant);
+  const base = typeScale[variant];
+  const sized = width < NARROW_WIDTH && narrowType[variant] ? { ...base, ...narrowType[variant] } : base;
+  // Web preview only: mirror the native cap so captures match a phone.
+  const scale = serif ? Math.min(simulated, SERIF_MAX_SCALE) : simulated;
   return (
     <RNText
       {...rest}
-      maxFontSizeMultiplier={variant === 'display' || variant === 'total' ? 1.6 : 2.2}
-      style={[t, { color: toneColor[tone], fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale }, style]}
+      maxFontSizeMultiplier={serif ? SERIF_MAX_SCALE : BODY_MAX_SCALE}
+      style={[sized, { color: toneColor[tone], fontSize: sized.fontSize * scale, lineHeight: sized.lineHeight * scale }, style]}
     />
   );
 }

@@ -3,35 +3,40 @@ import { $, buildWeek, onboard, visibleText } from './helpers';
 
 test('a failed price check never shows a total', async ({ page }) => {
   await buildWeek(page, { query: 'prices=unavailable' });
-  await expect($(page, 'price-status')).toContainText('Price unavailable right now');
-  expect(await $(page, 'price-headline').innerText()).not.toMatch(/\$\d/u);
+  await expect($(page, 'price-notice')).toContainText('Prices unavailable right now');
+  await expect($(page, 'price-amount')).toHaveText('No total');
+  expect(await $(page, 'price-chip').innerText()).not.toMatch(/\$\d/u);
   await expect($(page, 'price-action-refresh')).toBeVisible();
 });
 
 test('partial prices withhold the total and mark missing items', async ({ page }) => {
   await buildWeek(page, { query: 'prices=partial' });
-  await expect($(page, 'price-status')).toContainText('Total unavailable');
+  await expect($(page, 'price-notice')).toContainText('Total unavailable');
   await $(page, 'open-grocery').click();
   await expect(page.getByText('No price').filter({ visible: true }).first()).toBeVisible();
 });
 
 test('stale prices are labelled as older estimates', async ({ page }) => {
   await buildWeek(page, { query: 'prices=stale' });
-  await expect($(page, 'price-status')).toContainText('last checked 3 days ago');
+  await expect($(page, 'price-notice')).toContainText('Prices last checked 3 days ago');
+  await expect($(page, 'price-kind')).toHaveText('older est.');
   await expect($(page, 'price-action-refresh')).toBeVisible();
 });
 
 test('a user can inspect pricing caveats in the list', async ({ page }) => {
   await buildWeek(page, { query: 'prices=fresh' });
   await $(page, 'open-grocery').click();
-  await expect($(page, 'price-status')).toContainText(/price checked (today|2 hours ago)/u);
+  await expect($(page, 'price-kind')).toHaveText('estimate');
+  await expect($(page, 'price-notice')).toHaveCount(0);
   await $(page, 'price-about').click();
+  await expect($(page, 'about-sheet')).toContainText(/checked (today|\d+ hours? ago)/u);
   await expect($(page, 'about-sheet')).toContainText('Prices can change in store');
 });
 
 test('over budget is stated, can be rebuilt, and the rebuild can be undone', async ({ page }) => {
   await buildWeek(page, { store: 'walmart', budget: 40, household: '3_4' });
-  await expect($(page, 'price-status')).toContainText('over your $40 budget');
+  await expect($(page, 'price-notice')).toContainText(/Estimated total \$\d+ · \$\d+ over your \$40 target/u);
+  await expect($(page, 'price-action-rebuild')).toHaveText('Rebuild under $40');
   const before = await page.locator('[data-testid^="meal-"]:visible').allInnerTexts();
   await $(page, 'price-action-rebuild').click();
   await expect($(page, 'rebuild-sheet')).toContainText('lowest-cost meals');
