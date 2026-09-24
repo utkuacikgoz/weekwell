@@ -12,7 +12,7 @@ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { Screen } from '../../components/Layout';
-import { MealArt } from '../../components/MealArt';
+import { MealImage } from '../../components/MealImage';
 import { mealWhen } from '../../components/MealRow';
 import { NavBar } from '../../components/NavBar';
 import { Text } from '../../components/Text';
@@ -173,7 +173,7 @@ export default function MealDetail() {
           </View>
         </View>
       ) : null}
-      <MealArt recipeId={meal.recipeId} ingredientIds={meal.ingredients.map((i) => i.ingredientId)} width={heroWidth} height={Math.round(heroWidth * 0.5)} radius={radius.card} />
+      <MealImage recipeId={meal.recipeId} ingredientIds={meal.ingredients.map((i) => i.ingredientId)} width={heroWidth} height={Math.round(heroWidth * 0.5)} radius={radius.card} />
       <Text variant="label" tone="accent" style={{ marginTop: space.m }}>{mealWhen(meal)}</Text>
       <Text variant="title" accessibilityRole="header" testID="meal-name">
         {meal.name}
