@@ -13,7 +13,7 @@
 |---|---|---|
 | P0.1 Footer covers content | The bar sits beside the scroll view, never on top of it. The gate proves the last row scrolls fully above the bar. | D-035 |
 | P0.2 Bottom-action footprint | One action per bar. The week total is a small chip ("$78 · sample est.") that opens About this estimate. Grocery has no bar, and Share is in the top bar. The swap result is a banner, with only Keep/Undo in the bar. | D-035 |
-| P1.3 Food art | Two directions on six meals, for approval before any screen changes: see [food/](food/README.md). The screens still use the v2 plates. | Open (food README) |
+| P1.3 Food art | **Photography chosen (D-038).** The pipeline is built: the app switches to photos when all 22 are present, and the photos themselves are still to come. See [food/](food/README.md). | D-038 |
 | P1.4 Typography | The serif steps down under 360pt and caps at 130%. There's one serif title per screen. The "Your week, well fed." headline is gone, so tonight's dish is the primary statement. Long names are tested. | D-036 |
 | P1.5 Identity | A quiet "Week*well*" wordmark in the serif, with "well" in leaf green, at the top of the week screen. | D-036 (proposed) |
 | P1.6 Budget onboarding | $60 / $80 / $100 / Custom, with the stepper only for Custom and no slider. "Who’s eating?" asks about people. | D-037 |
@@ -38,11 +38,11 @@ The format for each row is: 5-second understanding · primary · secondary · mo
 | **Onboarding**: welcome, store/budget empty, pressed, selected, custom, your week, foods to leave out, review, conflicts, generating, timeout, 320/150 · [onboarding/](onboarding/) | One question per step | Continue / Back | Progress bar step · no sound · selection haptic · instant | — |
 | **Account and paywall**: preferences (idle, preview, blocked, delete), paywall (idle, selected, trial active, restore failed, after trial, locked, subscribe, 320/150) · [account/](account/) | What I'd pay and when | Start free week / plan cards, Or pay weekly, Restore purchases | — · no sound · selection haptic · — | Mock store (D-014). The renewal wording still needs an App Store guideline check. |
 | **Dark mode**: core screens plus every price state and the cooking timer · [dark/](dark/) | Same as light | Same as light | Same as light | Follows the system setting at launch (D-027) |
-| **Food art**: direction board · [food/](food/README.md) | Which direction to approve | — | — | Photography has no photographs yet (see README) |
+| **Meal photos**: coverage page · `/review/food?review=1` | Which recipes still need a photo | — | — | 0 of 22 photos so far; screens use the plates until all 22 are in |
 
 ## Open questions for the product owner
 
-1. **Food art direction.** Recommendation: A, photography, from generated stills with a fixed prompt. Alternatives: A with a commissioned shoot, or B, refined illustration. See [food/README.md](food/README.md).
+1. ~~Food art direction~~: decided as photography (D-038). Still open: the sourcing method. Recommendation: generated stills from `assets/meals/prompts.json`, each checked by a person. Alternatives: a commissioned shoot, or a mix, starting with generated stills and moving to a shoot before public release.
 2. **Price chip wording.** Recommendation: "sample est.". Alternatives:
    - "sample price" (longer; may wrap at 320);
    - "estimate" with the sample note only in the sheet. This weakens the truth policy, so it isn't recommended.

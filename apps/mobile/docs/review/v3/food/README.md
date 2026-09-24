@@ -1,8 +1,10 @@
 # Food art: two directions (design audit 2026-09-24)
 
+> **Decided 2026-09-24: photography (D-038).** The product owner chose Direction A. The illustration code was removed. This page and its captures stay as the record of the decision. Next step: produce the 22 photos, using [the checklist](../../../release/food-photography-checklist.md) and `assets/meals/prompts.json`. The live coverage page is `/review/food?review=1`.
+
 Status: `design_pending`. Nothing in the app uses either direction yet. The screens keep today's flat plates until one of these directions is approved (audit instruction: "Do not expand the current SVG plate system until one direction is approved").
 
-Board: `/review/food?review=1` in the web preview (six meals, both directions). `?only=b` shows the illustrations alone.
+The board route was replaced by the photo coverage page (`/review/food?review=1`). The captures below come from the board as it was.
 
 | File | What it shows |
 |---|---|

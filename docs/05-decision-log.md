@@ -330,6 +330,21 @@ The product owner's design audit asked for a correction pass before any further 
 - Open: the renewal wording still needs a check against the current App Store Review Guidelines before submission.
 - Owner: Product owner
 
+### D-038 — Meal imagery: editorial photography
+
+- Status: Accepted (product owner, 2026-09-24: "go with photography")
+- Date: 2026-09-24
+- Workstream: mobile
+- Decision:
+  - **Style:** meal imagery is editorial food photography: one 4:3 master per recipe, cropped to a 16:9 hero and a 1:1 thumbnail, in one consistent style (the brief is in `apps/mobile/src/photos/brief.ts`).
+  - **No mixing:** the app switches from the illustrated plates to photos only when all 22 recipes have a valid photo.
+  - **Release gate:** `npm run photos -- --check`.
+- Open:
+  - **Sourcing:** generated stills (recommended) or a commissioned shoot. The prompts for all 22 are in `apps/mobile/assets/meals/prompts.json`.
+  - **Checks for generated stills:** a person checks every still against the ingredient list, and the About sheet and store listing call them illustrative.
+- Superseded: the refined-illustration direction (B) board was removed from the code. Its captures remain in `apps/mobile/docs/review/v3/food/` for reference.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
