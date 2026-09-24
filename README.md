@@ -18,7 +18,7 @@ The app is built end to end, **but nothing is approved and it is not ready to su
 | Pricing | sample prices, clearly labelled (D-011 open) |
 | Accounts and sync | built into the pilot API; the app uses it only when built with `EXPO_PUBLIC_API_URL` |
 | Purchases | mock (D-014 open) |
-| TestFlight | workflow ready but disabled (D-030: bundle id, Apple team, EAS credentials) |
+| TestFlight | workflow ready but disabled; bundle id and App Store Connect app set, EAS link and credentials still needed (D-030) |
 
 ## Source of truth
 
@@ -65,4 +65,4 @@ Review captures: `REVIEW=1 npx playwright test e2e/review-*.spec.ts --project=lo
 ## Handoff
 
 - **Product owner:** review the six core screens and the state families in the review index, then accept, change, or reject D-019 to D-033 and R-1 to R-19.
-- **Before a friends pilot:** decide D-011 (prices), D-013 (auth and email provider; host the API), D-014 (purchases), D-030 (bundle id and TestFlight); do a native device pass (VoiceOver, Dynamic Type, haptics, reduced motion).
+- **Before a friends pilot:** decide D-011 (prices), D-013 (auth and email provider; host the API), D-014 (purchases), D-030 (EAS credentials and TestFlight); do a native device pass (VoiceOver, Dynamic Type, haptics, reduced motion).

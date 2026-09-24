@@ -2,7 +2,8 @@
 #   repo variable  TESTFLIGHT_ENABLED = true
 #   repo secret    EXPO_TOKEN   (EAS robot token, least privilege)
 # and configures EAS credentials (Apple team, ASC API key) in EAS, never in Git.
-# Prerequisites still open: bundle identifier, Apple team, App Store Connect app (D-030).
+# Identifiers are set (D-030): com.belevate.weekwell, team 9D78WTZAD8, ASC app 6815542789.
+# Still needed: `eas init` (owner + projectId in app.json) and EAS signing credentials.
 # UNVERIFIED: written without access to current Expo/EAS docs; verify flags before enabling.
 name: TestFlight daily
 
