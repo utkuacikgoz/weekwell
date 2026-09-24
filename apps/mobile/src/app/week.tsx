@@ -13,6 +13,7 @@ import { TonightCard, WeekRow } from '../components/WeekParts';
 import { Wordmark } from '../components/Wordmark';
 import { GOAL_COPY, householdCopy, timeCopy } from '../copy';
 import { canChangePlan } from '../services/access';
+import { resumable } from '../services/cooking';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
 
@@ -32,7 +33,7 @@ function subscriptionLine(view: EntitlementView): string | null {
 }
 
 export default function Week() {
-  const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo, setDraft } = useStore();
+  const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo, setDraft, setCooking } = useStore();
   const { width, height, fontScale } = useWindowDimensions();
   // Short screens or large text: a shorter hero image so tonight's dish name stays in view.
   const compact = height < 700 || fontScale * scenarios.fontScale > 1.2;
@@ -112,6 +113,33 @@ export default function Week() {
         secondary={{ label: 'Change setup', onPress: () => router.push('/preferences') }}
       />
 
+      {(() => {
+        const all = [...plan.dinners, ...plan.lunches];
+        if (!resumable(data.cooking, all.map((m) => m.id))) return null;
+        const c = data.cooking;
+        const m = all.find((x) => x.id === c.mealId)!;
+        return (
+          <View style={styles.resume} testID="continue-cooking">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Continue cooking ${m.name}, step ${c.step + 1} of ${m.steps.length}`}
+              onPress={() => router.push(`/cook/${m.id}` as Href)}
+              style={({ pressed }) => [styles.resumeMain, pressed && { opacity: 0.8 }]}
+              testID="continue-cooking-open"
+            >
+              <Icon name="timer" size={20} color={color.accent} />
+              <View style={{ flex: 1 }}>
+                <Text variant="label" tone="accent">Continue cooking · step {c.step + 1} of {m.steps.length}</Text>
+                <Text variant="meta" numberOfLines={1}>{m.name}</Text>
+              </View>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Stop cooking" onPress={() => setCooking(null)} style={styles.undoBtn} testID="continue-cooking-dismiss">
+              <Icon name="close" size={18} color={color.inkMuted} />
+            </Pressable>
+          </View>
+        );
+      })()}
+
       <View style={{ height: space.m }} />
       {tonight ? <TonightCard meal={tonight} label={tonightLabel} width={cardWidth} compact={compact} onPress={() => open(tonight.id)} /> : null}
 
@@ -186,6 +214,8 @@ export default function Week() {
 const styles = StyleSheet.create({
   context: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 4, marginTop: space.xs, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
   section: { marginTop: space.l + 4, marginBottom: space.xs },
+  resume: { flexDirection: 'row', alignItems: 'center', backgroundColor: color.accentTint, borderRadius: radius.control, marginTop: space.m },
+  resumeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 8, paddingLeft: space.m - 4 },
   sub: { marginTop: space.l, flexDirection: 'row', alignItems: 'center', gap: space.m },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.s, backgroundColor: color.accentTint, borderRadius: radius.control, paddingLeft: space.m - 4, marginTop: space.s },
   undoBtn: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s },

@@ -19,6 +19,7 @@ import { Text } from '../../components/Text';
 import { LockedSheet } from '../../components/LockedSheet';
 import { Toast } from '../../components/Toast';
 import { canChangePlan } from '../../services/access';
+import { resumable } from '../../services/cooking';
 import { useStore } from '../../state/store';
 import { MIN_TOUCH, color, radius, space } from '../../theme/tokens';
 
@@ -151,7 +152,11 @@ export default function MealDetail() {
             </View>
           </View>
         ) : (
-          <Button label="Start cooking" onPress={() => router.push(`/cook/${meal.id}` as Href)} testID="start-cooking" />
+          <Button
+            label={data.cooking?.mealId === meal.id && resumable(data.cooking, [meal.id]) ? `Continue cooking · step ${data.cooking.step + 1}` : 'Start cooking'}
+            onPress={() => router.push(`/cook/${meal.id}` as Href)}
+            testID="start-cooking"
+          />
         )
       }
     >
