@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
-import { Screen } from '../components/Layout';
+import { FooterAction, Screen } from '../components/Layout';
 import { LockedSheet } from '../components/LockedSheet';
 import { AboutEstimateSheet, RebuildSheet } from '../components/PriceSheets';
-import { PriceStatus } from '../components/PriceStatus';
+import { PriceChip, PriceNotice } from '../components/PriceStatus';
 import { Text } from '../components/Text';
 import { TonightCard, WeekRow } from '../components/WeekParts';
+import { Wordmark } from '../components/Wordmark';
 import { GOAL_COPY, householdCopy, timeCopy } from '../copy';
 import { canChangePlan } from '../services/access';
 import { useStore } from '../state/store';
@@ -33,8 +34,8 @@ function subscriptionLine(view: EntitlementView): string | null {
 export default function Week() {
   const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo, setDraft } = useStore();
   const { width, height, fontScale } = useWindowDimensions();
-  // Short screens or large text: keep the bottom bar small so tonight's meal stays in view.
-  const compactFooter = height < 700 || fontScale * scenarios.fontScale > 1.2;
+  // Short screens or large text: a shorter hero image so tonight's dish name stays in view.
+  const compact = height < 700 || fontScale * scenarios.fontScale > 1.2;
   const [sheet, setSheet] = useState<'about' | 'rebuild' | 'locked' | null>(null);
   const [lockedAction, setLockedAction] = useState('');
   const plan = data.plan;
@@ -49,33 +50,33 @@ export default function Week() {
   const sub = subscriptionLine(entitlementView);
   const open = (id: string) => router.push(`/meal/${id}` as Href);
   const prices = priceCheck.status === 'done' ? priceCheck.prices : priceCheck.status === 'loading' ? priceCheck.previous : undefined;
+  const onPriceAction = (a: 'about' | 'refresh' | 'rebuild') => {
+    if (a === 'refresh') void refreshPrices();
+    else if (a === 'rebuild' && !canChangePlan(entitlementView)) {
+      setLockedAction('rebuild your week');
+      setSheet('locked');
+    } else setSheet(a);
+  };
   const cardWidth = Math.min(width, 560) - 2 * (space.m + 4);
 
   return (
     <Screen
       testID="week-screen"
+      footerRow
       footer={
         <>
-          <PriceStatus
-            priceCheck={priceCheck}
-            budget={p.weeklyBudget}
-            compact={compactFooter}
-            onAction={(a) => {
-              if (a === 'refresh') void refreshPrices();
-              else if (a === 'rebuild' && !canChangePlan(entitlementView)) {
-                setLockedAction('rebuild your week');
-                setSheet('locked');
-              } else setSheet(a);
-            }}
-          />
-          <Button
-            label={checkedCount > 0 ? `Open grocery list · ${checkedCount} of ${groceryItems.length} checked` : 'Open grocery list'}
-            onPress={() => router.push('/grocery')}
-            testID="open-grocery"
-          />
+          <PriceChip priceCheck={priceCheck} budget={p.weeklyBudget} onAbout={() => setSheet('about')} />
+          <FooterAction>
+            <Button
+              label={checkedCount > 0 ? `Grocery list · ${checkedCount} of ${groceryItems.length}` : 'Open grocery list'}
+              onPress={() => router.push('/grocery')}
+              testID="open-grocery"
+            />
+          </FooterAction>
         </>
       }
     >
+      <Wordmark />
       {/* Recognition over recall: the settings that shaped the week, one tap to change. */}
       <Pressable
         testID="edit-preferences"
@@ -104,11 +105,15 @@ export default function Week() {
         </View>
       ) : null}
 
-      <Text variant="title" accessibilityRole="header" style={styles.title}>
-        Your week, well fed.
-      </Text>
+      <PriceNotice
+        priceCheck={priceCheck}
+        budget={p.weeklyBudget}
+        onAction={onPriceAction}
+        secondary={{ label: 'Change setup', onPress: () => router.push('/preferences') }}
+      />
 
-      {tonight ? <TonightCard meal={tonight} label={tonightLabel} width={cardWidth} compact={compactFooter} onPress={() => open(tonight.id)} /> : null}
+      <View style={{ height: space.m }} />
+      {tonight ? <TonightCard meal={tonight} label={tonightLabel} width={cardWidth} compact={compact} onPress={() => open(tonight.id)} /> : null}
 
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         This week
@@ -146,7 +151,7 @@ export default function Week() {
       <View style={styles.sub}>
         {sub ? <Text variant="meta" tone="muted" testID="subscription-status" style={{ flex: 1 }}>{sub}</Text> : <View style={{ flex: 1 }} />}
         <Button
-          kind="secondary"
+          kind="quiet"
           label={entitlementView.state === 'trial' || entitlementView.state === 'active' ? 'Manage subscription' : 'Try a free week'}
           onPress={() => router.push('/trial?trigger=plan_header')}
           testID="open-trial"
@@ -179,8 +184,7 @@ export default function Week() {
 }
 
 const styles = StyleSheet.create({
-  context: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 4, marginTop: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
-  title: { marginTop: space.m, marginBottom: space.m },
+  context: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 4, marginTop: space.xs, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
   section: { marginTop: space.l + 4, marginBottom: space.xs },
   sub: { marginTop: space.l, flexDirection: 'row', alignItems: 'center', gap: space.m },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.s, backgroundColor: color.accentTint, borderRadius: radius.control, paddingLeft: space.m - 4, marginTop: space.s },
