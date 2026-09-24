@@ -4,7 +4,7 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
 import { $, buildWeek } from './helpers';
 
-const OUT = 'docs/review/v2/grocery';
+const OUT = 'docs/review/v3/grocery';
 const REVIEW = process.env.REVIEW === '1';
 if (REVIEW) mkdirSync(OUT, { recursive: true });
 const shot = (page: Page, name: string) => audit(page, name, { primary: 'share-list', out: REVIEW ? `${OUT}/${name}.png` : undefined });

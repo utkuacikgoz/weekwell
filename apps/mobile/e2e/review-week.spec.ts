@@ -8,7 +8,7 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
 import { $, buildWeek } from './helpers';
 
-const OUT = 'docs/review/v2/week';
+const OUT = 'docs/review/v3/week';
 const REVIEW = process.env.REVIEW === '1';
 if (REVIEW) mkdirSync(OUT, { recursive: true });
 const shot = (page: Page, name: string, primary = 'open-grocery') => audit(page, name, { primary, out: REVIEW ? `${OUT}/${name}.png` : undefined });

@@ -4,7 +4,7 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
 import { $, onboard } from './helpers';
 
-const OUT = 'docs/review/v2/onboarding';
+const OUT = 'docs/review/v3/onboarding';
 const REVIEW = process.env.REVIEW === '1';
 if (REVIEW) mkdirSync(OUT, { recursive: true });
 const shot = (page: Page, name: string, primary?: string) => audit(page, name, { primary, out: REVIEW ? `${OUT}/${name}.png` : undefined });
@@ -22,6 +22,9 @@ test.describe('onboarding · 390×844', () => {
     if (REVIEW) await page.screenshot({ path: `${OUT}/03-pressed-store.png` });
     await page.mouse.up();
     await shot(page, '04-store-budget-selected', 'continue');
+    await $(page, 'budget-custom').click();
+    await shot(page, '04b-store-budget-custom', 'continue');
+    await $(page, 'budget-80').click();
     await $(page, 'continue').click();
     await $(page, 'time-20').click();
     await shot(page, '05-your-week', 'continue');

@@ -2,9 +2,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, buildWeek } from './helpers';
+import { $, buildWeek, findTimerStep } from './helpers';
 
-const OUT = 'docs/review/v2/dark';
+const OUT = 'docs/review/v3/dark';
 const REVIEW = process.env.REVIEW === '1';
 if (REVIEW) mkdirSync(OUT, { recursive: true });
 const shot = (page: Page, name: string, primary?: string) => audit(page, name, { primary, out: REVIEW ? `${OUT}/${name}.png` : undefined });
@@ -37,4 +37,21 @@ test('core screens in dark mode', async ({ page }) => {
 test('attention states in dark mode', async ({ page }) => {
   await buildWeek(page, { store: 'walmart', budget: 40, household: '3_4', query: 'today=wed' });
   await shot(page, '08-week-over-budget', 'open-grocery');
+});
+
+for (const [prices, name] of [['stale', '09-week-stale'], ['unavailable', '10-week-unavailable'], ['partial', '11-week-partial']] as const) {
+  test(`price state in dark mode: ${prices}`, async ({ page }) => {
+    await buildWeek(page, { query: `today=wed&prices=${prices}` });
+    await expect($(page, 'price-notice')).toBeVisible();
+    await shot(page, name, 'open-grocery');
+  });
+}
+
+test('cooking timer and continue cooking in dark mode', async ({ page }) => {
+  await buildWeek(page, { query: 'today=wed' });
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'start-cooking').click();
+  await findTimerStep(page);
+  await $(page, 'cook-timer-start').click();
+  await shot(page, '12-cooking-timer', 'cook-next');
 });
