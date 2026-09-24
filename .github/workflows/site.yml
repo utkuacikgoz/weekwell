@@ -1,0 +1,40 @@
+# Public site: privacy policy, consumer health data policy, terms, support (site/).
+# Disabled until the repo variable SITE_ENABLED = true, after:
+#   1. every TODO in site/site.config.json is filled (the build refuses otherwise);
+#   2. repo Settings → Pages → Source is "GitHub Actions" (private repos need a paid plan);
+#   3. a lawyer has reviewed the texts (docs/legal/us-legal-review.md).
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', '.github/workflows/site.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.SITE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node site/build.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/_dist
+      - id: deploy
+        uses: actions/deploy-pages@v4

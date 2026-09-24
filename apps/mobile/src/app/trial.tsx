@@ -12,6 +12,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Banner } from '../components/Banner';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
+import { LegalLinks } from '../components/LegalLinks';
 import { Screen } from '../components/Layout';
 import { NavBar } from '../components/NavBar';
 import { Text } from '../components/Text';
@@ -195,6 +196,7 @@ export default function Trial() {
         {restoreState === 'busy' ? <ActivityIndicator color={color.accent} /> : null}
         <Text variant="meta" tone="accent" style={{ textDecorationLine: 'underline' }}>Restore purchases</Text>
       </Pressable>
+      <LegalLinks pages={[{ page: 'terms', label: 'Terms of use' }, { page: 'privacy', label: 'Privacy policy' }]} testID="paywall-legal-links" />
       {restoreState === 'restored' ? <Text tone="accent" accessibilityLiveRegion="polite">Your subscription is restored.</Text> : null}
       {restoreState === 'nothing_to_restore' ? <Text accessibilityLiveRegion="polite" testID="restore-nothing">We didn’t find a subscription for this Apple ID.</Text> : null}
       {restoreState === 'failed' ? (

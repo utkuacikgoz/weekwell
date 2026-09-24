@@ -25,6 +25,8 @@ jobs:
         run: npm run lint
       - name: Unit tests (domain + mobile)
         run: npm test
+      - name: Site builds (preview; the deploy build also requires every TODO filled)
+        run: node site/build.mjs --preview
       - name: API boot smoke test
         working-directory: apps/api
         run: |
