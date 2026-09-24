@@ -1,5 +1,7 @@
 # US legal self-review: privacy policy, health data policy, terms, and paywall
 
+> **Pilot scope (D-039):** no Weekwell server. Meal data, including foods left out, stays on the phone, and only Apple and RevenueCat receive subscription data under a random app id. The site is built with `"server": false`, which removes the account, email, hosting and log sections. The server-mode rows below apply once a server runs.
+
 **This is not legal advice.** It's an engineering self-review against US laws and App Store rules, written so a lawyer can review quickly. Have a US lawyer review the texts in `site/src/` before public release. A friends-and-family TestFlight is lower risk, but it still needs the privacy policy URL.
 
 Status key: ✅ addressed in the texts or code · ⚠️ needs a decision or confirmation · 🔎 needs a lawyer
@@ -12,7 +14,7 @@ The site build refuses to run while any value is a TODO:
 - **Mailing address** for privacy requests.
 - **Governing-law state.**
 - **Effective date.**
-- **Hosting provider** (the D-013 hosting decision, still open).
+- **Hosting provider**: only when `"server": true` (not needed for the pilot).
 
 ## Privacy law
 
@@ -66,7 +68,12 @@ This screen is `design_pending`, so the product owner should approve the wording
 
 ## App Store privacy "nutrition label" (App Store Connect → App Privacy)
 
-This follows the texts above; confirm it at submission:
+**Pilot (no server, D-039):** only the RevenueCat SDK sends data off the device:
+- **Purchases → Purchase history:** app functionality; not linked to identity; not tracking.
+- **Identifiers → User ID:** RevenueCat's random app user id; app functionality; not linked to identity; not tracking.
+- Nothing else. Meal data and foods left out stay on the device, so they aren't "collected" in Apple's sense.
+
+**With a server,** this follows the texts above; confirm it at submission:
 - **Contact info → Email address:** app functionality; linked to the user; not used for tracking. (It's sent to deliver the code, and a keyed hash is stored.)
 - **Health & fitness → Health:** "foods you leave out" (allergies). App functionality; linked to the user when signed in; not tracking. 🔎 decide whether Apple's "Health" category applies; declaring it is the conservative choice.
 - **Purchases → Purchase history:** app functionality; linked to the user; not tracking.
