@@ -7,6 +7,12 @@ import { BODY_MAX_SCALE, NARROW_WIDTH, SERIF_MAX_SCALE, color, isSerif, narrowTy
  * On the web preview only, `fontScale` simulates 125% / 150% for visual QA.
  */
 const FontScaleContext = createContext(1);
+/** Effective text scale: the system setting on a phone, the simulated one on the web preview. */
+export function useTextScale(): number {
+  const simulated = useContext(FontScaleContext);
+  return useWindowDimensions().fontScale * simulated;
+}
+
 export function FontScaleProvider({ scale, children }: { scale: number; children: ReactNode }) {
   return <FontScaleContext.Provider value={Platform.OS === 'web' ? scale : 1}>{children}</FontScaleContext.Provider>;
 }

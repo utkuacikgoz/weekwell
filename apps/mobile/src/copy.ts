@@ -32,6 +32,9 @@ export const HOUSEHOLD_COPY: Record<string, { label: string; detail?: string }> 
   '2': { label: '2 people' },
   '3_4': { label: '3–4 people', detail: 'We plan 4 servings per dinner.' },
 };
+/** Conversational labels for the onboarding question "Who’s eating?". */
+export const HOUSEHOLD_CHOICE: Record<string, string> = { '1': 'Just me', '2': 'Two of us', '3_4': '3–4 people' };
+
 export const householdCopy = (h: HouseholdSize) => HOUSEHOLD_COPY[String(h)] as (typeof HOUSEHOLD_COPY)[string];
 
 export const STORE_COPY: Record<Retailer, { label: string; detail: string }> = {

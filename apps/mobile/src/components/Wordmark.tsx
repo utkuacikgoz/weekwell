@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { color, fonts } from '../theme/tokens';
+import { color, fonts, space } from '../theme/tokens';
 import { Text } from './Text';
 
 /**
@@ -8,7 +8,7 @@ import { Text } from './Text';
  */
 export function Wordmark() {
   return (
-    <View accessible accessibilityRole="header" accessibilityLabel="Weekwell" testID="wordmark">
+    <View accessible accessibilityRole="header" accessibilityLabel="Weekwell" testID="wordmark" style={{ marginTop: space.s }}>
       <Text variant="heading" style={{ fontFamily: fonts.serif, letterSpacing: -0.2 }}>
         Week<Text variant="heading" style={{ fontFamily: fonts.serif, color: color.accent, fontStyle: 'italic' }}>well</Text>
       </Text>

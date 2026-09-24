@@ -1,5 +1,4 @@
 import {
-  SUBSCRIPTION_PRODUCTS,
   formatMoney,
   formatShortDate,
   getProduct,
@@ -15,7 +14,6 @@ import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Layout';
 import { NavBar } from '../components/NavBar';
-import { ChoiceGroup } from '../components/Segmented';
 import { Text } from '../components/Text';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
@@ -28,11 +26,29 @@ function perWeek(p: SubscriptionProduct): string {
   return formatMoney(Math.round(p.priceCents / WEEKS[p.period]));
 }
 
-const VALUE = [
-  ['A new week of dinners and lunches', 'Planned around your store, budget, and time'],
-  ['Swaps whenever a meal doesn’t fit', 'Only that meal changes, and you can undo'],
-  ['One grocery list', 'Grouped by aisle, with estimated prices'],
-] as const;
+const BENEFITS = ['A new week planned for your store and budget', 'Swap any meal, with undo', 'One grocery list, grouped by aisle'] as const;
+
+/** One plan as a card: name, billed price, and the per-week equivalent in the same unit for every option. */
+function PlanCard({ product, selected, onPress, badge }: { product: SubscriptionProduct; selected: boolean; onPress: () => void; badge?: string }) {
+  return (
+    <Pressable
+      testID={`product-${product.id}`}
+      accessibilityRole="radio"
+      aria-checked={selected}
+      accessibilityLabel={`${product.label}. ${formatMoney(product.priceCents)} a ${PERIOD[product.period]}. About ${perWeek(product)} a week.${badge ? ` ${badge}.` : ''}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.plan, selected && styles.planOn, pressed && { opacity: 0.85 }]}
+    >
+      <View style={styles.planHead}>
+        <Text variant="bodyStrong" tone={selected ? 'accent' : 'ink'}>{product.label}</Text>
+        <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <Icon name="check" size={14} color={color.onAccent} strokeWidth={3} /> : null}</View>
+      </View>
+      <Text variant="heading" style={styles.tabular}>{formatMoney(product.priceCents)}<Text variant="meta" tone="muted">{` a ${PERIOD[product.period]}`}</Text></Text>
+      <Text variant="meta" tone="muted">About {perWeek(product)} a week</Text>
+      {badge ? <Text variant="caption" tone="accent" style={styles.badge}>{badge}</Text> : null}
+    </Pressable>
+  );
+}
 
 export default function Trial() {
   const { entitlementView: view, startTrial, purchase, restorePurchases, refreshEntitlement, analytics } = useStore();
@@ -75,19 +91,23 @@ export default function Trial() {
 
   const showPicker = view.state === 'none' || view.state === 'expired';
 
+  const chargeLine = product
+    ? eligible
+      ? `Free for 7 days, then ${formatMoney(product.priceCents)} a ${PERIOD[product.period]}.`
+      : `${formatMoney(product.priceCents)} a ${PERIOD[product.period]}, charged today.`
+    : eligible
+      ? 'Free for 7 days. Nothing is charged today.'
+      : 'Pick a plan to continue.';
+
   return (
     <Screen
       footer={
         showPicker ? (
           <>
-            <Text variant="meta" tone="muted" testID="charge-line">
-              {product
-                ? eligible
-                  ? `Free for 7 days, then ${formatMoney(product.priceCents)} a ${PERIOD[product.period]}. You’re charged when the free week ends unless you cancel.`
-                  : `${formatMoney(product.priceCents)} a ${PERIOD[product.period]}, charged today. Cancel any time.`
-                : 'Choose a plan to see exactly what you’d pay and when.'}
+            <Text variant="meta" tone="muted" testID="charge-line" style={{ textAlign: 'center' }}>
+              {chargeLine}
             </Text>
-            <Button label={eligible ? 'Start free week' : 'Subscribe'} onPress={start} disabled={!canStart} busy={busy} testID="start-trial" />
+            <Button label={!selected ? 'Choose a plan' : eligible ? 'Start free week' : 'Subscribe'} onPress={start} disabled={!canStart} busy={busy} testID="start-trial" />
           </>
         ) : undefined
       }
@@ -96,17 +116,17 @@ export default function Trial() {
       <Text variant="title" accessibilityRole="header">
         {view.state === 'expired' ? 'Keep planning your weeks' : 'Try Weekwell free for a week'}
       </Text>
+      {view.state === 'expired' ? (
+        <Text tone="muted" style={{ marginTop: space.xs }} testID="trial-ended">
+          Your free week has ended. Your last plan and grocery list are still here.
+        </Text>
+      ) : null}
 
       <View style={styles.value}>
-        {VALUE.map(([title, detail]) => (
-          <View key={title} style={styles.valueRow} accessible accessibilityLabel={`${title}. ${detail}`}>
-            <View style={styles.tick}>
-              <Icon name="check" size={16} color={color.accent} strokeWidth={2.6} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text variant="bodyStrong">{title}</Text>
-              <Text variant="meta" tone="muted">{detail}</Text>
-            </View>
+        {BENEFITS.map((b) => (
+          <View key={b} style={styles.valueRow}>
+            <Icon name="check" size={20} color={color.accent} strokeWidth={2.4} />
+            <Text style={{ flex: 1 }}>{b}</Text>
           </View>
         ))}
       </View>
@@ -136,38 +156,31 @@ export default function Trial() {
           <Text>{view.willRenew ? `Renews ${formatShortDate(view.periodEndsAt)}.` : `Ends ${formatShortDate(view.periodEndsAt)}.`}</Text>
         </Banner>
       ) : null}
-      {view.state === 'expired' ? (
-        <Text tone="muted" style={{ marginTop: space.m }} testID="trial-ended">
-          Your free week has ended. Your last plan and grocery list are still available.
-        </Text>
-      ) : null}
       {result ? <Banner tone="warning" title={result} /> : null}
 
       {showPicker ? (
-        <View style={{ marginTop: space.l }}>
-          <ChoiceGroup
-            label={eligible ? 'After the free week' : 'Choose a plan'}
-            columns={1}
-            value={selected ?? ('' as ProductId)}
-            onChange={setSelected}
-            options={SUBSCRIPTION_PRODUCTS.map((p) => ({
-              value: p.id,
-              testID: `product-${p.id}`,
-              label: `${p.label} · ${formatMoney(p.priceCents)} a ${PERIOD[p.period]}`,
-              detail:
-                p.id === 'yearly'
-                  ? `About ${perWeek(p)} a week, billed yearly. ${formatMoney(savings.savedCents)} less than 12 months of monthly (${formatMoney(savings.monthlyYearCents)}).`
-                  : p.id === 'monthly'
-                    ? `About ${perWeek(p)} a week, billed monthly.`
-                    : 'Billed every week.',
-            }))}
-          />
+        <View style={{ marginTop: space.l }} accessibilityRole="radiogroup" accessibilityLabel={eligible ? 'After the free week' : 'Choose a plan'}>
+          <Text variant="label" style={{ marginBottom: space.s }}>{eligible ? 'After the free week' : 'Choose a plan'}</Text>
+          <View style={styles.plans}>
+            <PlanCard product={getProduct('yearly')} selected={selected === 'yearly'} onPress={() => setSelected('yearly')} badge={`Save ${savings.percent}% vs monthly`} />
+            <PlanCard product={getProduct('monthly')} selected={selected === 'monthly'} onPress={() => setSelected('monthly')} />
+          </View>
+          <Pressable
+            testID="product-weekly"
+            accessibilityRole="radio"
+            aria-checked={selected === 'weekly'}
+            accessibilityLabel={`Weekly. ${formatMoney(getProduct('weekly').priceCents)} a week`}
+            onPress={() => setSelected('weekly')}
+            style={({ pressed }) => [styles.weekly, pressed && { backgroundColor: color.placeholder }]}
+          >
+            <View style={[styles.radio, selected === 'weekly' && styles.radioOn]}>{selected === 'weekly' ? <Icon name="check" size={14} color={color.onAccent} strokeWidth={3} /> : null}</View>
+            <Text variant="meta">Or pay weekly · {formatMoney(getProduct('weekly').priceCents)} a week</Text>
+          </Pressable>
         </View>
       ) : null}
 
-      <Text variant="heading" accessibilityRole="header" style={styles.section}>Cancelling</Text>
-      <Text tone="muted">
-        Cancel any time in your App Store subscription settings. Cancel at least 24 hours before the free week ends and you won’t be charged. No hidden fees.
+      <Text variant="caption" tone="muted" style={{ marginTop: space.l }} testID="legal">
+        {`${eligible ? 'Payment is charged to your Apple ID when the free week ends.' : 'Payment is charged to your Apple ID when you confirm.'} Subscriptions renew automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings. The yearly saving compares with 12 months of monthly (${formatMoney(savings.monthlyYearCents)}), ${formatMoney(savings.savedCents)} less.`}
       </Text>
 
       <Pressable
@@ -178,8 +191,8 @@ export default function Trial() {
         style={({ pressed }) => [styles.restore, pressed && { backgroundColor: color.placeholder }]}
         testID="restore"
       >
-        {restoreState === 'busy' ? <ActivityIndicator color={color.accent} /> : <Icon name="refresh" size={18} color={color.accent} />}
-        <Text variant="bodyStrong" tone="accent">Restore purchases</Text>
+        {restoreState === 'busy' ? <ActivityIndicator color={color.accent} /> : null}
+        <Text variant="meta" tone="accent" style={{ textDecorationLine: 'underline' }}>Restore purchases</Text>
       </Pressable>
       {restoreState === 'restored' ? <Text tone="accent" accessibilityLiveRegion="polite">Your subscription is restored.</Text> : null}
       {restoreState === 'nothing_to_restore' ? <Text accessibilityLiveRegion="polite" testID="restore-nothing">We didn’t find a subscription for this Apple ID.</Text> : null}
@@ -189,7 +202,7 @@ export default function Trial() {
         </Banner>
       ) : null}
 
-      <Text variant="caption" tone="muted" style={{ marginTop: space.l }}>
+      <Text variant="caption" tone="muted" style={{ marginTop: space.m }}>
         Test build: starting a free week here doesn’t charge you or create an App Store subscription.
       </Text>
     </Screen>
@@ -197,10 +210,17 @@ export default function Trial() {
 }
 
 const styles = StyleSheet.create({
-  value: { marginTop: space.l, gap: space.m },
+  value: { marginTop: space.l, gap: space.s + 4 },
   valueRow: { flexDirection: 'row', gap: space.m - 4, alignItems: 'flex-start' },
-  tick: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.accentTint, alignItems: 'center', justifyContent: 'center' },
+  plans: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s },
+  plan: { flexGrow: 1, flexBasis: 140, gap: 2, borderRadius: radius.card, borderWidth: 1.5, borderColor: color.divider, backgroundColor: color.raised, padding: space.m - 4 },
+  planOn: { borderColor: color.accent, borderWidth: 2, backgroundColor: color.accentTint },
+  planHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.xs },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: color.control, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { backgroundColor: color.accent, borderColor: color.accent },
+  badge: { marginTop: space.xs },
+  weekly: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, marginTop: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control, alignSelf: 'flex-start' },
+  tabular: { fontVariant: ['tabular-nums'] },
   status: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH },
-  section: { marginTop: space.l, marginBottom: space.xs },
-  restore: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, alignSelf: 'flex-start', marginTop: space.m, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
+  restore: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, alignSelf: 'flex-start', marginTop: space.xs, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
 });

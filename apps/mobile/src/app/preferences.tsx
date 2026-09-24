@@ -113,7 +113,7 @@ export default function Preferences() {
           options={TIMES.map((m) => ({ value: String(m), label: m === 'batch' ? 'Batch cook' : timeCopy(m).short, testID: `pref-time-${m}` }))}
         />
         <ChoiceGroup
-          label="People eating"
+          label="How many people?"
           value={String(edit.householdSize)}
           onChange={(v) => set({ householdSize: v === '3_4' ? '3_4' : (Number(v) as 1 | 2) })}
           options={PEOPLE.map((h) => ({ value: String(h), label: householdCopy(h).label, testID: `pref-household-${h}` }))}

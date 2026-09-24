@@ -11,7 +11,9 @@ export async function onboard(
   await $(page, 'start').click();
   // Step 1: store and budget
   await $(page, `store-${opts.store ?? 'trader_joes'}`).click();
-  if (opts.budget) {
+  if (opts.budget && [60, 80, 100].includes(opts.budget)) await $(page, `budget-${opts.budget}`).click();
+  else if (opts.budget) {
+    await $(page, 'budget-custom').click();
     const input = $(page, 'budget-input');
     await input.fill(String(opts.budget));
     await input.blur();

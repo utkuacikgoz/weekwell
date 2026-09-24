@@ -83,7 +83,7 @@ export type HouseholdSize = z.infer<typeof HouseholdSizeSchema>;
 export const BUDGET_MIN = 30;
 export const BUDGET_MAX = 400;
 export const BUDGET_STEP = 5;
-export const BUDGET_DEFAULT = 75;
+export const BUDGET_DEFAULT = 80;
 
 /** Preset exclusions offered in onboarding. Custom exclusions are free text. */
 export const PRESET_EXCLUSIONS = ['dairy', 'gluten', 'nuts'] as const;
