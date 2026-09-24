@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { $, buildWeek, onboard, visibleText } from './helpers';
+import { $, buildWeek, onboard, visibleText, findTimerStep } from './helpers';
 
 test('a new user builds a plan in under two minutes', async ({ page }) => {
   const start = Date.now();
@@ -160,4 +160,34 @@ test('about this estimate explains the total in a sheet', async ({ page }) => {
   await expect($(page, 'about-sheet')).toContainText('They weren’t checked in a store');
   await $(page, 'about-done').click();
   await expect($(page, 'about-sheet')).toHaveCount(0);
+});
+
+test('cooking mode: timer from the step, resume after leaving, done clears it', async ({ page }) => {
+  await page.clock.install();
+  await buildWeek(page, { query: 'today=wed' });
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'start-cooking').click();
+  // Find a step with a time in it.
+  await findTimerStep(page);
+  const label = await $(page, 'cook-timer-start').innerText();
+  const minutes = Number(/Start (\d+) min timer/u.exec(label)?.[1]);
+  expect(minutes).toBeGreaterThan(0);
+  await $(page, 'cook-timer-start').click();
+  await expect($(page, 'cook-timer-time')).toHaveText(`${minutes}:00`);
+  const step = await $(page, 'cook-step-count').innerText();
+  // Accidental back: the week offers to continue, at the same step, with the timer still running.
+  await $(page, 'nav-back').click();
+  await $(page, 'nav-back').click();
+  await expect($(page, 'continue-cooking')).toContainText(step.replace('Step', 'step'));
+  await $(page, 'continue-cooking-open').click();
+  await expect($(page, 'cook-step-count')).toHaveText(step);
+  await expect($(page, 'cook-timer')).toBeVisible();
+  await page.clock.fastForward(minutes * 60_000 + 1000);
+  await expect($(page, 'cook-timer-time')).toHaveText('Time’s up');
+  // Finish: the resume prompt goes away.
+  while ((await $(page, 'cook-next').innerText()) !== 'Done') await $(page, 'cook-next').click();
+  await $(page, 'cook-next').click();
+  // Opened from the week, so Done returns to the week.
+  await expect($(page, 'tonight-card')).toBeVisible();
+  await expect($(page, 'continue-cooking')).toHaveCount(0);
 });

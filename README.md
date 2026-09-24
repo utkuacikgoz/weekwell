@@ -8,8 +8,8 @@ This repository holds the **mobile workstream**: the app, its shared domain pack
 
 The app is built end to end, **but nothing is approved and it is not ready to submit.**
 
-- **Design:** every screen was rebuilt after the 2026-09-24 review and is `design_pending`. Start with [the review index](apps/mobile/docs/review/README.md).
-- **Decisions:** D-019 to D-033 in [the decision log](docs/05-decision-log.md) are Proposed, and so is every item in [the overnight run log](docs/06-autonomous-run-log.md).
+- **Design:** every screen was corrected after the 2026-09-24 design audit and is `design_pending`. Start with [review pack v3](apps/mobile/docs/review/v3/README.md). The food-art direction is waiting on a decision: see [food/README](apps/mobile/docs/review/v3/food/README.md).
+- **Decisions:** D-019 to D-037 in [the decision log](docs/05-decision-log.md) are Proposed, and so is every item in [the overnight run log](docs/06-autonomous-run-log.md).
 - **Release:** go/no-go and the remaining blockers are in [the release evidence](apps/mobile/docs/qa/release-evidence-overnight.md) and [the App Store pack](apps/mobile/docs/release/app-store-pack.md).
 
 | Area | State |
@@ -30,7 +30,7 @@ The app is built end to end, **but nothing is approved and it is not ready to su
 | [docs/04-qa-red-team-checklist.md](docs/04-qa-red-team-checklist.md) | QA and red-team gates |
 | [docs/05-decision-log.md](docs/05-decision-log.md) | Decisions |
 | [docs/06-autonomous-run-log.md](docs/06-autonomous-run-log.md) | What the overnight run decided without the product owner |
-| [apps/mobile/docs/review/README.md](apps/mobile/docs/review/README.md) | Design review packs (v2) |
+| [apps/mobile/docs/review/README.md](apps/mobile/docs/review/README.md) | Design review packs (v3 current) |
 | [apps/mobile/docs/sensory.md](apps/mobile/docs/sensory.md) | Motion, sound, haptics |
 | [apps/mobile/docs/release/](apps/mobile/docs/release/) | App Store pack, privacy policy draft, draft store screenshots |
 | [apps/api/README.md](apps/api/README.md) | API endpoints and security notes |
