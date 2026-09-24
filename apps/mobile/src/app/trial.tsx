@@ -15,6 +15,7 @@ import { Icon } from '../components/Icon';
 import { Screen } from '../components/Layout';
 import { NavBar } from '../components/NavBar';
 import { Text } from '../components/Text';
+import { revenueCatEnabled } from '../services/purchases';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
 
@@ -76,10 +77,10 @@ export default function Trial() {
     setBusy(true);
     if (eligible) {
       const r = await startTrial(selected);
-      setResult(r === 'ok' ? null : r === 'trial_already_used' ? 'This account has already used its free week.' : 'We couldn’t start your free week. You haven’t been charged. Try again.');
+      setResult(r === 'ok' || r === 'cancelled' ? null : r === 'trial_already_used' ? 'This account has already used its free week.' : 'We couldn’t start your free week. You haven’t been charged. Try again.');
     } else {
       const r = await purchase(selected);
-      setResult(r === 'ok' ? null : 'We couldn’t complete the purchase. You haven’t been charged. Try again.');
+      setResult(r === 'ok' || r === 'cancelled' ? null : 'We couldn’t complete the purchase. You haven’t been charged. Try again.');
     }
     setBusy(false);
   };
@@ -202,9 +203,11 @@ export default function Trial() {
         </Banner>
       ) : null}
 
-      <Text variant="caption" tone="muted" style={{ marginTop: space.m }}>
-        Test build: starting a free week here doesn’t charge you or create an App Store subscription.
-      </Text>
+      {!revenueCatEnabled ? (
+        <Text variant="caption" tone="muted" style={{ marginTop: space.m }}>
+          Test build: starting a free week here doesn’t charge you or create an App Store subscription.
+        </Text>
+      ) : null}
     </Screen>
   );
 }
