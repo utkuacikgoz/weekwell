@@ -8,7 +8,7 @@ This repository holds the **mobile workstream**: the app, its shared domain pack
 
 The app is built end to end, **but nothing is approved and it is not ready to submit.**
 
-- **Design:** every screen was corrected after the 2026-09-24 design audit and is `design_pending`. Start with [review pack v3](apps/mobile/docs/review/v3/README.md). The food-art direction is waiting on a decision: see [food/README](apps/mobile/docs/review/v3/food/README.md).
+- **Design:** every screen was corrected after the 2026-09-24 design audit and is `design_pending`. Start with [review pack v3](apps/mobile/docs/review/v3/README.md). Meal imagery is photography (D-038): the 22 photos are still needed, see [the checklist](apps/mobile/docs/release/food-photography-checklist.md).
 - **Decisions:** D-019 to D-037 in [the decision log](docs/05-decision-log.md) are Proposed, and so is every item in [the overnight run log](docs/06-autonomous-run-log.md).
 - **Release:** go/no-go and the remaining blockers are in [the release evidence](apps/mobile/docs/qa/release-evidence-overnight.md) and [the App Store pack](apps/mobile/docs/release/app-store-pack.md).
 
