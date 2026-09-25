@@ -1,16 +1,14 @@
 import { View } from 'react-native';
-import { color, fonts, space } from '../theme/tokens';
+import { BRAND_SUN } from '../theme/palette';
+import { fonts, space } from '../theme/tokens';
 import { Text } from './Text';
 
-/**
- * Quiet identity (design audit 2026-09-24, design_pending): the name set in
- * the serif, with "well" in the leaf green. No logo lock-up yet.
- */
+/** Wordmark (D-040, Bold blocks): heavy uppercase, "well" in sun yellow. */
 export function Wordmark() {
   return (
     <View accessible accessibilityRole="header" accessibilityLabel="Weekwell" testID="wordmark" style={{ marginTop: space.s }}>
-      <Text variant="heading" style={{ fontFamily: fonts.serif, letterSpacing: -0.2 }}>
-        Week<Text variant="heading" style={{ fontFamily: fonts.serif, color: color.accent, fontStyle: 'italic' }}>well</Text>
+      <Text variant="heading" style={{ fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: -0.6, fontSize: 22 }}>
+        Week<Text variant="heading" style={{ fontFamily: fonts.display, color: BRAND_SUN, textTransform: 'uppercase', fontSize: 22 }}>well</Text>
       </Text>
     </View>
   );

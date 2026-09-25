@@ -83,7 +83,7 @@ test('grocery items map back to their meals', async ({ page }) => {
   const label = await row.getAttribute('aria-label');
   await row.click();
   await expect($(page, 'meal-name')).toBeVisible();
-  expect(label).toContain(await $(page, 'meal-name').innerText());
+  expect(label).toContain(await ($(page, 'meal-name').textContent()) ?? '');
 });
 
 test('checking an item offers a quick undo', async ({ page }) => {
@@ -101,10 +101,10 @@ test('swap one meal, then undo it', async ({ page }) => {
   await buildWeek(page);
   const before = await page.locator('[data-testid^="meal-"]:visible').allInnerTexts();
   await $(page, 'meal-dinner_wed').click();
-  const original = await $(page, 'meal-name').innerText();
+  const original = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'repair-swap').click();
   await expect($(page, 'swap-pending')).toContainText('Swapped to');
-  expect(await $(page, 'meal-name').innerText()).not.toBe(original);
+  expect(await ($(page, 'meal-name').textContent()) ?? '').not.toBe(original);
   await $(page, 'undo-swap').click();
   await expect($(page, 'meal-name')).toHaveText(original);
   await expect($(page, 'swap-pending')).toHaveCount(0);
@@ -116,7 +116,7 @@ test('keep a swap: the week shows the new meal', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'meal-dinner_wed').click();
   await $(page, 'repair-swap').click();
-  const swapped = await $(page, 'meal-name').innerText();
+  const swapped = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'keep-swap').click();
   await expect($(page, 'meal-toast')).toContainText('Swap kept');
   await expect($(page, 'start-cooking')).toBeVisible();
