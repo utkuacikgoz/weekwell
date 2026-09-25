@@ -152,7 +152,7 @@ describe('freshness', () => {
 
 describe('budgetStatus', () => {
   it('reports under, over, and unknown', () => {
-    const avail = { status: 'available' as const, totalCents: 5700, kind: 'estimated' as const, isSample: false, oldestObservedAt: '', staleItemIds: [], itemCount: 3 };
+    const avail = { status: 'available' as const, totalCents: 5700, kind: 'estimated' as const, isSample: false, isStoreCheck: false, source: '', oldestObservedAt: '', staleItemIds: [], itemCount: 3 };
     expect(budgetStatus(avail, 60)).toEqual({ state: 'under', remainingCents: 300 });
     expect(budgetStatus(avail, 50)).toEqual({ state: 'over', overCents: 700 });
     expect(budgetStatus({ status: 'withheld', reason: 'missing_prices', missingItemIds: [], itemCount: 3 }, 50)).toEqual({ state: 'unknown' });

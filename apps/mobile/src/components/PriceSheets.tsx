@@ -32,7 +32,9 @@ export function AboutEstimateSheet({ visible, onClose, prices, plan, staples, on
     ? `We couldn’t get a complete set of prices from ${store}, so we don’t show a total. Items that do have a price still show it in the grocery list.`
     : t.isSample
       ? `These are sample prices written on ${formatShortDate(t.oldestObservedAt)} for testing. They weren’t checked in a store.`
-      : t.kind === 'verified'
+      : t.isStoreCheck
+        ? `${t.source.replace(/^Checked in store: /u, 'Checked by hand at ')} on ${formatShortDate(t.oldestObservedAt)}. Prices differ between stores and change over time.`
+        : t.kind === 'verified'
         ? `Verified store prices, checked ${formatRelativeTime(t.oldestObservedAt, now)}.`
         : `Estimates from our price source, checked ${formatRelativeTime(t.oldestObservedAt, now)}.`;
   const diff = t?.status === 'available' ? t.totalCents - budget * 100 : null;
@@ -55,7 +57,7 @@ export function AboutEstimateSheet({ visible, onClose, prices, plan, staples, on
       </Section>
       <Section title="Where prices come from">{source}</Section>
       <Section title="Your budget">
-        {diff === null ? `$${budget} a week. We’ll compare once prices are available.` : diff > 0 ? `$${budget} a week. This week is about ${formatMoney(diff, { whole: true })} over.` : `$${budget} a week. This week is about ${formatMoney(-diff, { whole: true })} under.`}
+        {diff === null ? `$${budget} a week. We’ll compare once prices are available.` : diff > 0 ? `$${budget} a week. This week is ${diff < 100 ? 'less than $1' : `about ${formatMoney(diff, { whole: true })}`} over.` : `$${budget} a week. This week is ${-diff < 100 ? 'right on budget' : `about ${formatMoney(-diff, { whole: true })} under`}.`}
       </Section>
       {staples.length ? <Section title="Not included">{`${staples.join(', ')}. We assume you have these at home.`}</Section> : null}
       <Text variant="meta" tone="muted">Prices can change in store.</Text>

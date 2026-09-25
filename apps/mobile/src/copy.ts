@@ -68,7 +68,7 @@ export type PriceModel = {
   variant: PriceVariant;
   /** "$73", or null when no total is shown. */
   amount: string | null;
-  /** What kind of number it is: "sample est.", "estimate", "checked price", "older est.", "no total". */
+  /** What kind of number it is: "sample est.", "store check", "estimate", "checked price", "older est.", "no total". */
   kind: string;
   /** Full sentence for screen readers. */
   summary: string;
@@ -109,10 +109,17 @@ export function priceModel(total: ShopTotal, retailer: Retailer, budget: number,
       notice: { title: `Prices last checked ${age}`, detail: 'They may have changed since then.', action: { kind: 'refresh', label: 'Check prices again' } },
     };
   }
-  const kind = total.isSample ? 'sample est.' : total.kind === 'verified' ? 'checked price' : 'estimate';
-  const spoken = total.isSample ? `${amount} sample estimate at ${store}` : total.kind === 'verified' ? `${amount} at ${store}, checked price` : `${amount} estimated at ${store}`;
+  const kind = total.isSample ? 'sample est.' : total.kind === 'verified' ? 'checked price' : total.isStoreCheck ? 'store check' : 'estimate';
+  const spoken = total.isSample
+    ? `${amount} sample estimate at ${store}`
+    : total.kind === 'verified'
+      ? `${amount} at ${store}, checked price`
+      : total.isStoreCheck
+        ? `${amount} estimated from a store check at ${store}`
+        : `${amount} estimated at ${store}`;
   if (over > 0) {
-    const o = formatMoney(over, { whole: true });
+    // Whole dollars everywhere, so a few cents over reads "less than $1", never "$0".
+    const o = over < 100 ? 'less than $1' : formatMoney(over, { whole: true });
     return {
       variant: 'over_budget',
       amount,
