@@ -8,6 +8,8 @@ export * from './planner';
 export * from './repair';
 export * from './entitlement';
 export * from './revenuecat';
+export * from './price-check';
+export { CHECKED_PRICES } from './fixtures/checked-prices';
 export * from './analytics';
 export * from './model-output';
 export * from './format';
