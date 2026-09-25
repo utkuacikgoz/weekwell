@@ -36,7 +36,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const resendApiKey = env.RESEND_API_KEY ?? '';
   const emailFrom = env.EMAIL_FROM ?? '';
   if (production && (!resendApiKey || !emailFrom)) throw new Error('RESEND_API_KEY and EMAIL_FROM must be set in production');
-  const priceSource = (FIXTURE_PRICE_SCENARIOS as readonly string[]).includes(env.PRICE_SOURCE ?? '') ? (env.PRICE_SOURCE as FixturePriceScenario) : 'sample';
+  const priceSource = (FIXTURE_PRICE_SCENARIOS as readonly string[]).includes(env.PRICE_SOURCE ?? '') ? (env.PRICE_SOURCE as FixturePriceScenario) : 'auto';
   return {
     port: Number(env.PORT ?? 8787),
     databasePath: env.DATABASE_PATH ?? ':memory:',
