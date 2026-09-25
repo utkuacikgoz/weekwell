@@ -109,7 +109,11 @@ This is the lightweight record of decisions that affect product, architecture, s
 
 ### D-011 — Live retailer price source
 
-- Status: Proposed
+- Status: Proposed. The pilot tooling is built (2026-09-25): a hand store check (`docs/price-check/README.md`). The product owner decides whether to do the check or keep labelled sample prices for the friends pilot.
+- Store check rules:
+  - all-or-nothing per store;
+  - label "store check", as an estimate that's never verified;
+  - older after 14 days, and back to sample prices after 45 days.
 - Question: Which compliant provider or partnership supplies Trader Joe’s and Walmart pricing for the first production pilot?
 - Options: approved third-party provider, retailer partnership, manual verified importer, or estimate-only pilot.
 - Required evidence: terms review, freshness behavior, location scope, cost, and failure mode.

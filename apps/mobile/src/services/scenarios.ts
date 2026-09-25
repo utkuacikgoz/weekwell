@@ -11,7 +11,7 @@ export type RestoreScenario = 'ok' | 'error';
 export type EntitlementScenario = 'none' | 'trial' | 'active' | 'expired';
 export type Scenarios = { prices: FixturePriceScenario; generation: GenerationScenario; restore: RestoreScenario; fontScale: number; priceDelayMs: number; today?: number; entitlement?: EntitlementScenario };
 
-export const DEFAULT_SCENARIOS: Scenarios = { prices: 'sample', generation: 'ok', restore: 'ok', fontScale: 1, priceDelayMs: 0 };
+export const DEFAULT_SCENARIOS: Scenarios = { prices: 'auto', generation: 'ok', restore: 'ok', fontScale: 1, priceDelayMs: 0 };
 
 export function scenariosFromUrl(): Partial<Scenarios> {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return {};

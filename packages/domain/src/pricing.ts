@@ -8,7 +8,9 @@
  *   Otherwise it is withheld (fails closed); it is never a silent partial sum.
  */
 import { z } from 'zod';
+import { CHECKED_PRICES } from './fixtures/checked-prices';
 import { SAMPLE_PACKAGES, SAMPLE_PRICES_WRITTEN_AT, SAMPLE_PRICE_SOURCE } from './fixtures/prices';
+import { STORE_CHECK_FRESH_DAYS, STORE_CHECK_MAX_AGE_DAYS, type CheckedStore } from './price-check';
 import { looksLikeInstruction, sanitizeText } from './sanitize';
 import {
   ClaimKindSchema,
@@ -83,7 +85,10 @@ export class ProviderUnavailableError extends Error {
 // ---------------------------------------------------------------------------
 
 /**
- * - `sample`: default for the pilot. Sample prices, clearly labelled.
+ * - `auto`: the default. Prices checked by hand at a store (D-011), while the
+ *   check is under 45 days old; otherwise the labelled sample prices.
+ * - `sample`: always the labelled sample prices.
+ * - `checked`: always the store check (tests; fails if there is none).
  * - `fresh` / `stale` / `expired`: simulate a real estimate feed at different ages.
  * - `verified`: simulate a verified store feed.
  * - `partial`: some products have no price.
@@ -91,7 +96,9 @@ export class ProviderUnavailableError extends Error {
  * - `bad_data`: provider returns impossible values (zero, negative, extreme).
  */
 export const FIXTURE_PRICE_SCENARIOS = [
+  'auto',
   'sample',
+  'checked',
   'fresh',
   'stale',
   'expired',
@@ -105,16 +112,34 @@ export type FixturePriceScenario = (typeof FIXTURE_PRICE_SCENARIOS)[number];
 const HOUR = 3_600_000;
 const PARTIAL_MISSING = new Set(['salmon', 'greek_yogurt', 'chicken_breast', 'ground_turkey']);
 
+const DAY = 24 * HOUR;
+/** Noon UTC on the check date, so the date reads the same in every US time zone. */
+const checkedAt = (c: CheckedStore) => `${c.checkedOn}T12:00:00.000Z`;
+
 export class FixtureRetailerProvider implements RetailerProvider {
   constructor(
     readonly retailer: Retailer,
-    private readonly scenario: FixturePriceScenario = 'sample',
+    private readonly scenario: FixturePriceScenario = 'auto',
     private readonly now: () => Date = () => new Date(),
+    private readonly checked: CheckedStore | null = CHECKED_PRICES[retailer],
   ) {}
+
+  /** The store check in use, or null for sample prices. */
+  private storeCheck(): CheckedStore | null {
+    if (this.scenario === 'checked') return this.checked;
+    if (this.scenario !== 'auto' || !this.checked) return null;
+    const age = this.now().getTime() - Date.parse(checkedAt(this.checked));
+    return age <= STORE_CHECK_MAX_AGE_DAYS * DAY ? this.checked : null;
+  }
+
+  private packageFor(ingredientId: string) {
+    const check = this.storeCheck();
+    return check ? check.items[ingredientId] : SAMPLE_PACKAGES[this.retailer].get(ingredientId);
+  }
 
   async searchProducts({ ingredientId }: ProductSearchInput): Promise<ProductMatch[]> {
     if (this.scenario === 'unavailable') throw new ProviderUnavailableError(this.retailer);
-    const pkg = SAMPLE_PACKAGES[this.retailer].get(ingredientId);
+    const pkg = this.packageFor(ingredientId);
     if (!pkg) return [];
     return [
       {
@@ -131,7 +156,7 @@ export class FixtureRetailerProvider implements RetailerProvider {
   async getPrice(productRef: string): Promise<PackagePrice> {
     if (this.scenario === 'unavailable') throw new ProviderUnavailableError(this.retailer);
     const ingredientId = productRef.split(':')[2] ?? '';
-    const pkg = SAMPLE_PACKAGES[this.retailer].get(ingredientId);
+    const pkg = this.packageFor(ingredientId);
     if (!pkg || (this.scenario === 'partial' && PARTIAL_MISSING.has(ingredientId))) {
       throw new Error(`No price for ${productRef}`);
     }
@@ -146,7 +171,13 @@ export class FixtureRetailerProvider implements RetailerProvider {
       priceCents: pkg.priceCents,
       currency: 'USD' as const,
     };
+    const check = this.storeCheck();
+    if (check) {
+      return { ...base, kind: 'estimated', observedAt: checkedAt(check), source: `Checked in store: ${check.location}`, confidence: 'medium', locationScope: 'store' };
+    }
     switch (this.scenario) {
+      case 'auto':
+      case 'checked':
       case 'sample':
       case 'partial':
         return { ...base, kind: 'estimated', observedAt: SAMPLE_PRICES_WRITTEN_AT, source: SAMPLE_PRICE_SOURCE, confidence: 'low', locationScope: 'sample' };
@@ -181,14 +212,18 @@ const CLOCK_SKEW_MS = 5 * 60_000;
 
 export type Freshness = 'sample' | 'fresh' | 'stale' | 'expired' | 'invalid';
 
+/** A hand check at one store ages on a longer clock than a live feed (D-011). */
+export const isStoreCheck = (quote: Pick<PriceQuote, 'locationScope' | 'unitPrice'>) => quote.locationScope === 'store' && quote.unitPrice.kind === 'estimated';
+
 export function evaluateFreshness(quote: Pick<PriceQuote, 'locationScope' | 'unitPrice'>, now: Date): Freshness {
   if (quote.locationScope === 'sample') return 'sample';
   const observed = quote.unitPrice.observedAt ? Date.parse(quote.unitPrice.observedAt) : Number.NaN;
   if (Number.isNaN(observed)) return 'invalid';
   const age = now.getTime() - observed;
   if (age < -CLOCK_SKEW_MS) return 'invalid';
-  if (age <= FRESH_FOR_MS) return 'fresh';
-  if (age <= USABLE_FOR_MS) return 'stale';
+  const [fresh, usable] = isStoreCheck(quote) ? [STORE_CHECK_FRESH_DAYS * DAY, STORE_CHECK_MAX_AGE_DAYS * DAY] : [FRESH_FOR_MS, USABLE_FOR_MS];
+  if (age <= fresh) return 'fresh';
+  if (age <= usable) return 'stale';
   return 'expired';
 }
 
@@ -231,6 +266,10 @@ export type ShopTotal =
       totalCents: number;
       kind: Exclude<ClaimKind, 'editorial'>;
       isSample: boolean;
+      /** Every line comes from a hand check at one store (D-011). */
+      isStoreCheck: boolean;
+      /** Source of the oldest quote, e.g. "Checked in store: Trader Joe’s, Court St, Brooklyn NY". */
+      source: string;
       /** Oldest observation among quotes, used for "Checked 2 hours ago". */
       oldestObservedAt: string;
       staleItemIds: string[];
@@ -338,8 +377,10 @@ export function computeShopTotal(itemIds: readonly string[], prices: ReadonlyMap
   let total = 0;
   let allVerified = true;
   let isSample = false;
+  let allStoreCheck = true;
   let oldest = Number.POSITIVE_INFINITY;
   let oldestIso = '';
+  let source = '';
   const stale: string[] = [];
   for (const id of itemIds) {
     const p = prices.get(id);
@@ -347,11 +388,13 @@ export function computeShopTotal(itemIds: readonly string[], prices: ReadonlyMap
     total += p.quote.totalContribution.value;
     if (p.quote.unitPrice.kind !== 'verified') allVerified = false;
     if (p.freshness === 'sample') isSample = true;
+    if (!isStoreCheck(p.quote)) allStoreCheck = false;
     if (p.freshness === 'stale') stale.push(id);
     const t = Date.parse(p.quote.unitPrice.observedAt ?? '');
     if (t < oldest) {
       oldest = t;
       oldestIso = p.quote.unitPrice.observedAt ?? '';
+      source = p.quote.unitPrice.source ?? '';
     }
   }
   return {
@@ -360,6 +403,8 @@ export function computeShopTotal(itemIds: readonly string[], prices: ReadonlyMap
     // One estimated line makes the whole total an estimate.
     kind: allVerified && !isSample ? 'verified' : 'estimated',
     isSample,
+    isStoreCheck: allStoreCheck && !isSample,
+    source,
     oldestObservedAt: oldestIso,
     staleItemIds: stale,
     itemCount: itemIds.length,

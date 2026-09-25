@@ -10,7 +10,9 @@
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "e2e": "npm run e2e:build --workspace @weekwell/mobile",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test",
+    "prices:sheet": "tsx scripts/price-check.ts sheet",
+    "prices:import": "tsx scripts/price-check.ts import"
   },
   "engines": {
     "node": ">=20"
