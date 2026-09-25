@@ -1,6 +1,7 @@
 import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -22,7 +23,7 @@ function Navigator() {
     return () => sub.remove();
   }, []);
   const { scenarios, hydrated } = useStore();
-  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, BricolageGrotesque_800ExtraBold });
   // If fonts fail to load, continue with system fonts rather than blocking the app.
   const fontsReady = fontsLoaded || !!fontError;
   // Screens read stored state; rendering them before it loads would redirect deep links to onboarding.
@@ -35,7 +36,8 @@ function Navigator() {
   }
   return (
     <FontScaleProvider scale={scenarios.fontScale}>
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      {/* Bold blocks (D-040): light status bar text on the green ground in both themes. */}
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,

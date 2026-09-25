@@ -16,7 +16,8 @@ export const color = scheme === 'dark' ? dark : light;
 export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 32, xxl: 48 } as const;
 
 export const MIN_TOUCH = 44;
-export const radius = { control: 12, card: 16, thumb: 12, pill: 999 } as const;
+/** Bold blocks (D-040): square blocks; only thumbnails and pills keep a curve. */
+export const radius = { control: 0, card: 0, thumb: 6, pill: 999 } as const;
 
 /**
  * UI sans: Inter (OFL, bundled, loaded in the root layout) so phone and review
@@ -27,6 +28,8 @@ export const fonts = {
   sans: 'Inter_400Regular',
   sansMedium: 'Inter_500Medium',
   sansSemiBold: 'Inter_600SemiBold',
+  /** Display face for titles, dish names and totals (D-040): Bricolage Grotesque ExtraBold (OFL, bundled). */
+  display: 'BricolageGrotesque_800ExtraBold',
   serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' }) as string,
 } as const;
 
@@ -36,16 +39,16 @@ export const fonts = {
  * Serif only for the page title and dish names. Sentence case everywhere.
  */
 export const type = {
-  display: { fontFamily: fonts.serif, fontSize: 32, lineHeight: 38 },
-  title: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 32 },
-  dish: { fontFamily: fonts.serif, fontSize: 20, lineHeight: 24 },
-  heading: { fontFamily: fonts.sansSemiBold, fontSize: 20, lineHeight: 24 },
+  display: { fontFamily: fonts.display, fontSize: 32, lineHeight: 36, textTransform: 'uppercase' as const, letterSpacing: -0.5 },
+  title: { fontFamily: fonts.display, fontSize: 28, lineHeight: 32, textTransform: 'uppercase' as const, letterSpacing: -0.4 },
+  dish: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24, textTransform: 'uppercase' as const, letterSpacing: -0.2 },
+  heading: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24 },
   body: { fontFamily: fonts.sans, fontSize: 16, lineHeight: 22 },
   bodyStrong: { fontFamily: fonts.sansSemiBold, fontSize: 16, lineHeight: 22 },
   meta: { fontFamily: fonts.sans, fontSize: 13, lineHeight: 18 },
   label: { fontFamily: fonts.sansSemiBold, fontSize: 13, lineHeight: 18 },
   caption: { fontFamily: fonts.sansMedium, fontSize: 12, lineHeight: 16 },
-  total: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 32 },
+  total: { fontFamily: fonts.display, fontSize: 28, lineHeight: 32 },
 } as const;
 export type TypeVariant = keyof typeof type;
 

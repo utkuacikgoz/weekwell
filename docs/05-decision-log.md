@@ -378,6 +378,31 @@ The product owner's design audit asked for a correction pass before any further 
   4. update the App Store privacy label.
 - Owner: Product owner
 
+### D-040 — Screen designs picked by the product owner
+
+- Status: Accepted (product owner, 2026-09-25, via the screen picker `docs/review/weekwell-screen-picks.html`)
+- Date: 2026-09-25
+- Workstream: mobile
+- Decision: one pick per screen, built in this order.
+  - **Overall look:** L2 Bold blocks. Green ground, white action blocks, Bricolage Grotesque ExtraBold uppercase titles and dish names, square corners, full-bleed coloured day bands, sun-yellow "well" in the wordmark.
+  - **Welcome:** WE1 photo mosaic (already built).
+  - **Setup 1, store and budget:** SB3, fill in the sentence ("I shop at [store] and spend about [$80] a week").
+  - **Setup 2, goal, time, people:** YW1, three chip groups (already built).
+  - **Setup 3, foods to leave out:** FL2, a switch list.
+  - **Setup 4, review:** RV1, summary rows with Edit. The button reads **"Plan my week"**.
+  - **Building your week:** GN3, dinners appear one by one.
+  - **Your week:** HM1, Tonight card and week list (already built).
+  - **Meal:** MD2, Ingredients and Steps tabs.
+  - **Swapping:** SW2, choose from three, each with time and price change.
+  - **Cooking:** CK3, all steps, current one highlighted.
+  - **Grocery list:** GL1, by aisle with prices (already built).
+  - **Price and budget:** PR1 notice card for now. The owner asked for more options; PR4–PR7 are on the picker page for review.
+  - **Free week and plans:** PW2, one recommended plan (yearly) with "See other plans".
+  - **Preferences:** ST2, a settings list with sub-screens.
+- Guardrails kept: the D-036 layout gate (bar height, no sideways scroll, 150% text), 4.5:1 text contrast on every band (tested), and the price-truth rules.
+- Rollback: the theme lives in `src/theme/palette.ts` and `tokens.ts`; each screen change is its own commit.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
