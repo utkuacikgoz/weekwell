@@ -1,3 +1,8 @@
+# CI (D-043): run only what a change touches, and split the browser tests across machines.
+# - `changes` decides which parts changed; docs-only changes run nothing else.
+# - A newer push to the same PR cancels the older run.
+# - The web app is exported once and shared with 3 E2E shards.
+# - Push to main runs the fast checks only: the E2E suite already ran on the PR.
 name: CI
 
 on:
@@ -8,29 +13,64 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  checks:
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.diff.outputs.app }}
+      api: ${{ steps.diff.outputs.api }}
+      site: ${{ steps.diff.outputs.site }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "No usable base; running everything."
+            files="__all__"
+          else
+            files=$(git diff --name-only "$(git merge-base "$BASE" HEAD)" HEAD)
+          fi
+          echo "$files"
+          has() { [ "$files" = "__all__" ] || printf '%s\n' "$files" | grep -Eq "$1"; }
+          shared='^(package\.json|package-lock\.json|tsconfig[^/]*\.json|eslint[^/]*|\.github/workflows/ci\.yml)$'
+          # App: the mobile app and the domain it uses (its docs don't count).
+          if has "$shared" || has '^packages/domain/' || printf '%s\n' "$files" | grep -Ev '^apps/mobile/docs/' | grep -Eq '^apps/mobile/' || [ "$files" = "__all__" ]; then app=true; else app=false; fi
+          if has "$shared" || has '^packages/domain/' || has '^apps/api/'; then api=true; else api=false; fi
+          if has "$shared" || has '^site/' || has '^vercel\.json$' || has '^apps/mobile/assets/(icon|favicon)\.png$'; then site=true; else site=false; fi
+          echo "app=$app api=$api site=$site"
+          { echo "app=$app"; echo "api=$api"; echo "site=$site"; } >> "$GITHUB_OUTPUT"
+
+  checks:
+    needs: changes
+    if: needs.changes.outputs.app == 'true' || needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
         run: npm run lint
       - name: Unit tests (domain + mobile)
         run: npm test
-      - name: Site builds (preview; the deploy build also requires every TODO filled)
-        run: node site/build.mjs --preview
       - name: API boot smoke test
+        if: needs.changes.outputs.api == 'true'
         working-directory: apps/api
         run: |
-          # Own port, stopped afterwards: the E2E suite starts its own API on 8799.
           ALLOW_DEV_CODES=1 PORT=8798 npx tsx src/server.ts &
           SERVER_PID=$!
           for i in $(seq 1 30); do curl -sf localhost:8798/v1/health && break; sleep 1; done
@@ -38,18 +78,82 @@ jobs:
           kill $SERVER_PID
       - name: Dependency audit (production deps, high+)
         run: npm audit --omit=dev --audit-level=high
-      - name: Web exports for E2E (on-device build and API-connected build)
+
+  site:
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The same strict build Vercel runs: fails on any TODO value.
+      - run: node site/build.mjs
+
+  build-web:
+    needs: changes
+    if: github.event_name == 'pull_request' && (needs.changes.outputs.app == 'true' || needs.changes.outputs.api == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Web exports (on-device build and API-connected build)
         working-directory: apps/mobile
         run: npm run export:web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: |
+            apps/mobile/dist
+            apps/mobile/dist-remote
+          retention-days: 1
+
+  e2e:
+    needs: build-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --prefer-offline --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/mobile
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         working-directory: apps/mobile
         run: npx playwright install --with-deps chromium
-      - name: E2E, visual, and accessibility checks
+      - name: Chromium system libraries
+        if: steps.pw-cache.outputs.cache-hit == 'true'
         working-directory: apps/mobile
-        run: npx playwright test
+        run: npx playwright install-deps chromium
+      - name: E2E, visual, and accessibility checks (shard ${{ matrix.shard }} of 3)
+        working-directory: apps/mobile
+        run: npx playwright test --shard=${{ matrix.shard }}/3
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: qa-artifacts/tmp/playwright-report
           retention-days: 14

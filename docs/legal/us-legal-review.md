@@ -6,6 +6,10 @@
 
 Status key: ✅ addressed in the texts or code · ⚠️ needs a decision or confirmation · 🔎 needs a lawyer
 
+## Publisher details (`site/site.config.json`)
+
+Set 2026-09-26 (D-042): Belevate LLC, Delaware, hello@weekwell.pro, effective September 26, 2026. The site is on Vercel at https://weekwell.pro. The mailing address is still empty; its lines are hidden until it's set.
+
 ## Before publishing: fill in `site/site.config.json`
 
 The site build refuses to run while any value is a TODO:

@@ -27,30 +27,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Cheap check on Linux so the (costlier) macOS build only runs when there is something new.
+  # On Linux (1/10 the cost of Mac minutes): decide whether to build, and run the gate.
+  # Scheduled runs build only when the app itself changed in the last day (docs and tests don't count).
   changes:
     if: vars.TESTFLIGHT_ENABLED == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       build: ${{ steps.check.outputs.build }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 50
+          fetch-depth: 100
       - id: check
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -n "$(git log --since='26 hours ago' --format=%H -1)" ]; then
+          changed=$(git log --since='26 hours ago' --format=%H -1 -- apps/mobile packages/domain package.json package-lock.json ':!apps/mobile/docs' ':!apps/mobile/e2e' ':!apps/mobile/test')
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -n "$changed" ]; then
             echo "build=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No commits in the last day; skipping the build."
+            echo "No app changes in the last day; skipping the build."
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.build == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      # Never upload a build that fails the gate.
+      - if: steps.check.outputs.build == 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund && npm run typecheck && npm run lint && npm test
 
   build:
     needs: changes
     if: needs.changes.outputs.build == 'true'
     runs-on: macos-latest
-    timeout-minutes: 75
+    timeout-minutes: 60
     env:
       CI: '1'
       TEAM_ID: 9D78WTZAD8
@@ -62,11 +73,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      # Never upload a build that fails the gate.
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: App Store Connect API key
         env:
@@ -82,7 +89,20 @@ jobs:
 
       - name: Generate the iOS project
         working-directory: apps/mobile
-        run: npx expo prebuild --platform ios --clean
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      # CocoaPods are the slowest part of setup; reuse them while native dependencies are unchanged.
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/mobile/ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('package-lock.json', 'apps/mobile/app.json') }}
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: pod install
 
       - name: Set the build number
         working-directory: apps/mobile
@@ -100,7 +120,7 @@ jobs:
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Weekwell.xcarchive" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic COMPILER_INDEX_STORE_ENABLE=NO \
             archive | tail -n 200
 
       - name: Export and upload to TestFlight

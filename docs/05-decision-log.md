@@ -396,7 +396,11 @@ The product owner's design audit asked for a correction pass before any further 
   - **Swapping:** SW2, choose from three, each with time and price change.
   - **Cooking:** CK3, all steps, current one highlighted.
   - **Grocery list:** GL1, by aisle with prices (already built).
-  - **Price and budget:** PR1 notice card for now. The owner asked for more options; PR4–PR7 are on the picker page for review.
+  - **Price and budget:** PR5, cost on every dinner (picked 2026-09-26 from PR1–PR7).
+    - Every meal shows its share of the estimated total: each grocery item's cost is split across the meals that use it, in proportion to how much each uses (`mealCostShares`). Shares add up to the total.
+    - A budget line reads "$130 this week · $90 over your $40", with "Rebuild under $40".
+    - When over budget, the priciest dinners get "Swap, save about $X", which opens the cheaper swaps.
+    - Price truth: no total means no shares. Savings numbers come from sample package prices, so they show only when the total is a sample estimate (otherwise the link reads "Swap for a cheaper dinner"). The swap sheet's price deltas follow the same rule.
   - **Free week and plans:** PW2, one recommended plan (yearly) with "See other plans". Yearly is now chosen up front, which **replaces D-037's "nothing preselected"**. To keep the choice honest, the charge line above the button always states the exact price ("Free for 7 days, then $49.99 a year."), and the monthly and weekly prices show beside "See other plans" before it's opened.
   - **Preferences:** ST2, a settings list with sub-screens.
 - Built: all picks above except PR1, which stays until the owner reviews PR4–PR7. Swapping uses `swapOptions()` in the domain; the first choice always equals the old single swap. Settings keep one screen with in-place sub-screens, so a pending change survives moving between them and is applied once.
@@ -419,6 +423,35 @@ The product owner's design audit asked for a correction pass before any further 
 - Cost: Mac minutes. Scheduled runs are skipped when there have been no commits in the last day.
 - Supersedes: the EAS path in D-017 and D-030. `eas.json` stays in case EAS is wanted later.
 - Risk: unverified until the first run. Signing through the API key is the likeliest point of failure; the fix path is in `testflight-setup.md`.
+- Owner: Product owner
+
+### D-042 — Public site on Vercel at weekwell.pro
+
+- Status: Accepted (product owner, 2026-09-26: "do setup for Vercel, weekwell.pro domain is purchased and connected")
+- Date: 2026-09-26
+- Workstream: shared
+- Decision:
+  - **Hosting:** Vercel serves the static site built from `site/` at https://weekwell.pro. `vercel.json` sets the build (`node site/build.mjs`, no dependency install), clean URLs (`/privacy`, `/terms`, `/health-data`, `/support`), security headers and a strict content security policy. An `ignoreCommand` skips deploys when nothing under `site/` changed.
+  - **Replaced:** the GitHub Pages workflow (`site.yml`) is removed.
+  - **Pages:** a landing page in the Bold blocks look, plus the existing privacy, consumer health data, terms and support pages, a 404 page, a sitemap and robots.txt.
+  - **Publisher details:** Belevate LLC, Delaware law, hello@weekwell.pro for support and privacy, effective September 26, 2026. The postal address is optional: its lines appear only once `mailingAddress` is set.
+  - **App:** the legal links default to https://weekwell.pro (`EXPO_PUBLIC_SITE_URL` still overrides it).
+- Still owed: a lawyer's review of the texts (`docs/legal/us-legal-review.md`), a working inbox for hello@weekwell.pro, and the mailing address.
+- Owner: Product owner
+
+### D-043 — Faster, fewer CI and TestFlight runs
+
+- Status: Accepted (product owner, 2026-09-26: "shard the builds, they take so long; make sure we don't do unnecessary runs")
+- Date: 2026-09-26
+- Workstream: shared
+- Decision:
+  - **CI (`ci.yml`), only what changed:** a `changes` job reads the diff. Docs-only changes run nothing more. The app and API checks run only when their code or shared config changes, and the site build only when `site/` changes.
+  - **CI, cancel superseded runs:** a newer push to the same PR cancels the older run.
+  - **CI, shard the browser tests:** the web app is exported once and shared as an artifact. The browser tests run as 3 parallel shards, split per test (`fullyParallel` for the on-device project), with Playwright's browser cached. Locally each shard takes about 2 minutes, against about 7 for the whole suite in one run.
+  - **CI on main:** a push to main runs only the fast checks and the site build, because the browser tests already ran on the PR.
+  - **TestFlight, gate on Linux:** the typecheck, lint and tests run on Linux, where minutes cost a tenth of Mac minutes.
+  - **TestFlight, skip unchanged days:** a scheduled run builds only when app code changed in the last day; docs and tests don't count.
+  - **TestFlight, cache and trim:** CocoaPods are cached, and Xcode's index store is turned off for the archive.
 - Owner: Product owner
 
 ## Decision entry template
