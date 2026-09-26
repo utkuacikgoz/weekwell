@@ -65,11 +65,13 @@ for (const width of WIDTHS) {
       test('preferences and paywall', async ({ page }) => {
         await buildWeek(page, { query: q });
         await $(page, 'edit-preferences').click();
+        await $(page, 'pref-row-store').click();
         await $(page, 'pref-store-walmart').click();
         await expect($(page, 'preference-preview')).toBeVisible();
         await audit(page, name('16-preferences-preview'), { primary: 'apply-preferences' });
         await page.goto(`/trial?${q}`);
         await audit(page, name('17-trial'), { primary: 'start-trial' });
+        await $(page, 'see-other-plans').click();
         await $(page, 'product-monthly').click();
         await audit(page, name('18-trial-selected'), { primary: 'start-trial' });
       });

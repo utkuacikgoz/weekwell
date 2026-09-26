@@ -397,8 +397,9 @@ The product owner's design audit asked for a correction pass before any further 
   - **Cooking:** CK3, all steps, current one highlighted.
   - **Grocery list:** GL1, by aisle with prices (already built).
   - **Price and budget:** PR1 notice card for now. The owner asked for more options; PR4–PR7 are on the picker page for review.
-  - **Free week and plans:** PW2, one recommended plan (yearly) with "See other plans".
+  - **Free week and plans:** PW2, one recommended plan (yearly) with "See other plans". Yearly is now chosen up front, which **replaces D-037's "nothing preselected"**. To keep the choice honest, the charge line above the button always states the exact price ("Free for 7 days, then $49.99 a year."), and the monthly and weekly prices show beside "See other plans" before it's opened.
   - **Preferences:** ST2, a settings list with sub-screens.
+- Built: all picks above except PR1, which stays until the owner reviews PR4–PR7. Swapping uses `swapOptions()` in the domain; the first choice always equals the old single swap. Settings keep one screen with in-place sub-screens, so a pending change survives moving between them and is applied once.
 - Guardrails kept: the D-036 layout gate (bar height, no sideways scroll, 150% text), 4.5:1 text contrast on every band (tested), and the price-truth rules.
 - Rollback: the theme lives in `src/theme/palette.ts` and `tokens.ts`; each screen change is its own commit.
 - Owner: Product owner
