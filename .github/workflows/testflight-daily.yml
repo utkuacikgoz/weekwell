@@ -1,17 +1,22 @@
-# Daily TestFlight build (D-017). Disabled until these are set (apps/mobile/docs/release/testflight-setup.md):
+# TestFlight without Expo/EAS (D-041). GitHub's macOS runner builds the app with Xcode
+# and uploads it to App Store Connect. The only credential is an App Store Connect API key.
+#
+# Switched off until these are set (apps/mobile/docs/release/testflight-setup.md):
+#   repo secrets   ASC_API_KEY_P8, ASC_KEY_ID, ASC_ISSUER_ID  (App Store Connect API key, Admin role)
 #   repo variable  TESTFLIGHT_ENABLED = true
-#   repo secret    EXPO_TOKEN        (EAS robot token, least privilege)
-#   repo secrets   ASC_API_KEY_P8, ASC_KEY_ID, ASC_ISSUER_ID  (App Store Connect API key, App Manager)
-# The ASC key lets EAS create signing credentials and submit without prompts.
-# Nothing secret is written to the repo; the key file lives in the runner's temp dir.
-# Identifiers are set (D-030): com.belevate.weekwell, team 9D78WTZAD8, ASC app 6815542789.
-# Still needed: the EAS project id and owner in app.json (from expo.dev, or `eas init`).
-# UNVERIFIED: written without access to current Expo/EAS docs; verify flags before enabling.
+# Optional:
+#   repo secret    REVENUECAT_IOS_KEY   (public appl_ key; without it the build uses the mock store)
+#   repo variable  SITE_URL             (privacy/terms site, shown on the paywall)
+#
+# Identifiers (D-030): com.belevate.weekwell, team 9D78WTZAD8, ASC app 6815542789.
+# Signing is Xcode "automatic" with the API key (-allowProvisioningUpdates), so there is no
+# certificate or profile to manage by hand. The key file lives only in the runner's temp dir.
+# UNVERIFIED until the first run: written without a Mac or Apple account to test against.
 name: TestFlight daily
 
 on:
   schedule:
-    - cron: '0 10 * * 1-5' # 10:00 UTC weekdays
+    - cron: '0 10 * * 1-5' # 10:00 UTC weekdays, skipped when nothing changed
   workflow_dispatch:
 
 permissions:
@@ -22,10 +27,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # Cheap check on Linux so the (costlier) macOS build only runs when there is something new.
+  changes:
     if: vars.TESTFLIGHT_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -n "$(git log --since='26 hours ago' --format=%H -1)" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No commits in the last day; skipping the build."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      CI: '1'
+      TEAM_ID: 9D78WTZAD8
+      EXPO_PUBLIC_REVENUECAT_IOS_KEY: ${{ secrets.REVENUECAT_IOS_KEY }}
+      EXPO_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,25 +67,65 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - name: App Store Connect API key for non-interactive signing and submit
+
+      - name: App Store Connect API key
         env:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
         run: |
-          if [ -n "$ASC_API_KEY_P8" ]; then
-            umask 077
-            printf '%s\n' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/asc_api_key.p8"
-            echo "EXPO_ASC_API_KEY_PATH=$RUNNER_TEMP/asc_api_key.p8" >> "$GITHUB_ENV"
+          if [ -z "$ASC_API_KEY_P8" ] || [ -z "$ASC_KEY_ID" ]; then
+            echo "::error::ASC_API_KEY_P8, ASC_KEY_ID and ASC_ISSUER_ID secrets are required"; exit 1
           fi
-      - name: Build and submit to TestFlight
+          umask 077
+          printf '%s\n' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      - name: Generate the iOS project
         working-directory: apps/mobile
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Set the build number
+        working-directory: apps/mobile
+        # Each upload needs a new build number; the run number only goes up.
+        run: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/Weekwell/Info.plist
+
+      - name: Archive
+        working-directory: apps/mobile/ios
         env:
-          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          EXPO_APPLE_TEAM_ID: 9D78WTZAD8
-        run: >
-          eas build --platform ios --profile production --non-interactive --auto-submit
-          --message "daily ${{ github.sha }}"
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -workspace Weekwell.xcworkspace -scheme Weekwell -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Weekwell.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            archive | tail -n 200
+
+      - name: Export and upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Weekwell.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "Uploaded build ${{ github.run_number }}. It appears in TestFlight after Apple finishes processing (usually 5–30 minutes)."
+
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8

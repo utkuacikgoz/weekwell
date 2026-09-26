@@ -267,7 +267,7 @@ Everything below was decided provisionally by the mobile agent to complete the f
 - Status: Proposed (tablet); Accepted (identifiers, 2026-09-24)
 - Date: 2026-09-23, updated 2026-09-24
 - Workstream: mobile
-- Decision: `ios.supportsTablet: false` for the pilot. Identifiers from the product owner: bundle id `com.belevate.weekwell`, Apple team `9D78WTZAD8`, App Store Connect app `6815542789` (set in `app.json` and `eas.json`). Still open before the daily TestFlight workflow runs: EAS project link (`eas init`), EAS signing credentials and App Store Connect API key, `EXPO_TOKEN` secret, `TESTFLIGHT_ENABLED` variable.
+- Decision: `ios.supportsTablet: false` for the pilot. Identifiers from the product owner: bundle id `com.belevate.weekwell`, Apple team `9D78WTZAD8`, App Store Connect app `6815542789` (set in `app.json` and `eas.json`). Still open before the daily TestFlight workflow runs: EAS project link (`eas init`), EAS signing credentials and App Store Connect API key, `EXPO_TOKEN` secret, `TESTFLIGHT_ENABLED` variable. (Superseded by D-041: no EAS, no `EXPO_TOKEN`.)
 - Owner: Product owner + release engineering
 
 ## Overnight autonomous-run decisions (2026-09-24)
@@ -402,6 +402,23 @@ The product owner's design audit asked for a correction pass before any further 
 - Built: all picks above except PR1, which stays until the owner reviews PR4–PR7. Swapping uses `swapOptions()` in the domain; the first choice always equals the old single swap. Settings keep one screen with in-place sub-screens, so a pending change survives moving between them and is applied once.
 - Guardrails kept: the D-036 layout gate (bar height, no sideways scroll, 150% text), 4.5:1 text contrast on every band (tested), and the price-truth rules.
 - Rollback: the theme lives in `src/theme/palette.ts` and `tokens.ts`; each screen change is its own commit.
+- Owner: Product owner
+
+### D-041 — TestFlight without Expo: Xcode on GitHub's Mac runner
+
+- Status: Accepted (product owner, 2026-09-26: "I don't need an Expo token setup, I need TestFlight")
+- Date: 2026-09-26
+- Workstream: mobile
+- Decision: `.github/workflows/testflight-daily.yml` no longer uses EAS. On `macos-latest` it:
+  1. runs the gate (typecheck, lint, tests);
+  2. generates the iOS project with `expo prebuild`;
+  3. sets the build number to the run number;
+  4. archives with Xcode automatic signing, using an App Store Connect API key (`-allowProvisioningUpdates`);
+  5. exports with `destination: upload`, which sends the build straight to App Store Connect.
+- Credentials: only the App Store Connect API key, with the Admin role, stored as three GitHub secrets. There is no Expo account or token, and no certificate or profile to handle by hand.
+- Cost: Mac minutes. Scheduled runs are skipped when there have been no commits in the last day.
+- Supersedes: the EAS path in D-017 and D-030. `eas.json` stays in case EAS is wanted later.
+- Risk: unverified until the first run. Signing through the API key is the likeliest point of failure; the fix path is in `testflight-setup.md`.
 - Owner: Product owner
 
 ## Decision entry template
