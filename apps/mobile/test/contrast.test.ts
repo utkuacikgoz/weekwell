@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { dark, light, type Palette } from '../src/theme/palette.ts';
+import { BANDS_DARK, BANDS_LIGHT, dark, light, type Palette } from '../src/theme/palette.ts';
 
 function lum(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
@@ -42,4 +42,13 @@ for (const [mode, color] of [['light', light], ['dark', dark]] as const) {
     assert.ok(contrast(color.control, color.background) >= 3, `${contrast(color.control, color.background).toFixed(2)}:1`);
     assert.ok(contrast(color.accent, color.background) >= 3);
   });
+}
+
+for (const [mode, bands, ink] of [['light', BANDS_LIGHT, light.ink], ['dark', BANDS_DARK, dark.ink]] as const) {
+  for (const band of bands) {
+    test(`${mode}: text on day band ${band} ≥ 4.5`, () => {
+      assert.ok(contrast(ink, band) >= 4.5, `${contrast(ink, band).toFixed(2)}:1`);
+      assert.ok(contrast('#FFFFFF', band) >= 4.5);
+    });
+  }
 }

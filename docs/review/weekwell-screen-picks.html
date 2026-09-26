@@ -1,0 +1,382 @@
+<title>Weekwell Screen Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #F1F3EE; --panel: #FFFFFF; --ink: #1D241F; --muted: #5B665D; --line: #DCE2D8;
+  --accent: #2E6A48; --accent-ink: #FFFFFF; --phone-edge: #151A16; --field: #F6F8F4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111512; --panel: #1A201B; --ink: #E8EEE7; --muted: #A1ADA2; --line: #2C352D;
+    --accent: #86C69C; --accent-ink: #0F1A12; --phone-edge: #000; --field: #141915;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111512; --panel: #1A201B; --ink: #E8EEE7; --muted: #A1ADA2; --line: #2C352D;
+  --accent: #86C69C; --accent-ink: #0F1A12; --phone-edge: #000; --field: #141915;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; padding: 0 16px 150px; margin: 0; }
+.wrap { max-width: 1240px; margin: 0 auto; }
+header.top { padding-block: 40px 8px; display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1, h2 { font-family: "Bricolage Grotesque", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
+h2 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+.lede { max-width: 70ch; color: var(--muted); margin: 0; }
+.lede strong { color: var(--ink); font-weight: 600; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 6px; }
+.toc a { font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 4px 10px; }
+.toc a.done { border-color: var(--accent); color: var(--accent); }
+section.group { margin-top: 48px; display: grid; gap: 14px; scroll-margin-top: 16px; }
+.group-head { display: grid; gap: 4px; max-width: 72ch; }
+.group-head p { margin: 0; color: var(--muted); }
+.group-head .code { font: 700 13px/1 Inter, system-ui, sans-serif; color: var(--muted); letter-spacing: .04em; }
+.options { display: grid; gap: 22px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); align-items: start; }
+.option { display: grid; gap: 12px; padding: 14px; border-radius: 18px; background: var(--panel); border: 2px solid var(--line); transition: border-color .15s; }
+.option.is-chosen { border-color: var(--accent); }
+.option-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tag { font-weight: 700; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.option h3 { margin: 0; font-size: 16px; line-height: 1.3; }
+.option p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.option .now { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.pick { appearance: none; border: 2px solid var(--accent); background: transparent; color: var(--accent); font: 600 14px/1 Inter, system-ui, sans-serif; border-radius: 999px; padding: 10px 14px; cursor: pointer; justify-self: start; }
+.option.is-chosen .pick { background: var(--accent); color: var(--accent-ink); }
+.pick:focus-visible, .btnx:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.notes { display: grid; gap: 4px; max-width: 640px; }
+.notes label { font-size: 13px; font-weight: 600; color: var(--muted); }
+textarea { font: 14px/1.4 Inter, system-ui, sans-serif; color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; resize: vertical; min-height: 40px; }
+
+/* ---------------- phone mockup: 390×844 pt, scaled ---------------- */
+.phone { width: 100%; max-width: 260px; justify-self: center; aspect-ratio: 390 / 844; border-radius: 34px; border: 7px solid var(--phone-edge); overflow: hidden; position: relative; container-type: inline-size;
+  --pt: calc(100cqw / 390);
+  /* Look L1 · Market paper (the current app) */
+  --p-bg: #F5F0E6; --p-card: #FFFBF3; --p-ink: #221D17; --p-muted: #5D554A; --p-line: #E3D9C6; --p-accent: #2E6A48; --p-on: #FFFFFF; --p-tint: #E2ECE2;
+  --p-display: Georgia, "Times New Roman", serif; --p-dweight: 400; --p-case: none; --p-r: calc(14 * var(--pt)); --p-band: transparent;
+  background: var(--p-bg); color: var(--p-ink); font-family: Inter, system-ui, sans-serif; }
+body[data-look="L2"] .phone:not([data-fixed]), .phone[data-look="L2"] {
+  --p-bg: #1F5C40; --p-card: rgba(0,0,0,.16); --p-ink: #FFFFFF; --p-muted: rgba(255,255,255,.8); --p-line: rgba(255,255,255,.22); --p-accent: #FFFFFF; --p-on: #173F2D; --p-tint: rgba(255,255,255,.14);
+  --p-display: "Bricolage Grotesque", system-ui, sans-serif; --p-dweight: 800; --p-case: uppercase; --p-r: 0px; --p-band: rgba(0,0,0,.15);
+}
+body[data-look="L3"] .phone:not([data-fixed]), .phone[data-look="L3"] {
+  --p-bg: #F2F2F7; --p-card: #FFFFFF; --p-ink: #111114; --p-muted: #6D6D72; --p-line: #E3E3E8; --p-accent: #D9531E; --p-on: #FFFFFF; --p-tint: #FCE9E0;
+  --p-display: Inter, system-ui, sans-serif; --p-dweight: 700; --p-case: none; --p-r: calc(12 * var(--pt)); --p-band: transparent;
+}
+.scr { position: absolute; inset: 0; display: flex; flex-direction: column; font-size: calc(15 * var(--pt)); line-height: 1.35; }
+.sb { height: calc(50 * var(--pt)); flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 calc(28 * var(--pt)); font-size: calc(14 * var(--pt)); font-weight: 600; }
+.pad { padding: 0 calc(20 * var(--pt)); }
+.nav { display: flex; justify-content: space-between; align-items: center; padding: calc(4 * var(--pt)) calc(20 * var(--pt)) calc(8 * var(--pt)); font-weight: 600; color: var(--p-accent); font-size: calc(16 * var(--pt)); }
+.ttl { font-family: var(--p-display); font-weight: var(--p-dweight); text-transform: var(--p-case); letter-spacing: -.01em; font-size: calc(28 * var(--pt)); line-height: 1.1; margin: calc(4 * var(--pt)) 0 calc(10 * var(--pt)); }
+.ttl.big { font-size: calc(38 * var(--pt)); }
+.ttl.sm { font-size: calc(22 * var(--pt)); }
+.dish { font-family: var(--p-display); font-weight: var(--p-dweight); font-size: calc(21 * var(--pt)); line-height: 1.15; text-transform: var(--p-case); }
+.m { color: var(--p-muted); font-size: calc(13 * var(--pt)); }
+.lbl { font-size: calc(12 * var(--pt)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--p-muted); margin: calc(12 * var(--pt)) 0 calc(6 * var(--pt)); }
+.acc { color: var(--p-accent); font-weight: 600; }
+.card { background: var(--p-card); border-radius: var(--p-r); padding: calc(14 * var(--pt)); }
+.gap { display: grid; gap: calc(8 * var(--pt)); }
+.row { display: grid; grid-template-columns: calc(54 * var(--pt)) 1fr auto; gap: calc(12 * var(--pt)); align-items: center; padding: calc(8 * var(--pt)) 0; }
+.row b { display: block; font-size: calc(15 * var(--pt)); font-weight: 600; line-height: 1.2; }
+.row .chev { color: var(--p-muted); font-size: calc(18 * var(--pt)); }
+.btn { background: var(--p-accent); color: var(--p-on); text-align: center; font-weight: 700; font-size: calc(16 * var(--pt)); padding: calc(15 * var(--pt)); border-radius: var(--p-r); }
+.btn2 { border: calc(2 * var(--pt)) solid var(--p-ink); text-align: center; font-weight: 600; font-size: calc(15 * var(--pt)); padding: calc(12 * var(--pt)); border-radius: var(--p-r); }
+.foot { margin-top: auto; padding: calc(10 * var(--pt)) calc(20 * var(--pt)) calc(26 * var(--pt)); border-top: 1px solid var(--p-line); display: flex; gap: calc(10 * var(--pt)); align-items: center; background: var(--p-bg); }
+.foot > .btn, .foot > .btn2 { flex: 1; }
+.pchip { font-weight: 700; font-size: calc(16 * var(--pt)); line-height: 1.1; }
+.pchip small { display: block; font-weight: 500; font-size: calc(11 * var(--pt)); color: var(--p-muted); }
+.chips { display: flex; flex-wrap: wrap; gap: calc(8 * var(--pt)); }
+.chip { border: calc(1.5 * var(--pt)) solid var(--p-line); background: var(--p-card); border-radius: 999px; padding: calc(7 * var(--pt)) calc(13 * var(--pt)); font-size: calc(14 * var(--pt)); font-weight: 600; }
+.chip.on { border-color: var(--p-accent); background: var(--p-tint); color: var(--p-accent); }
+.opt { border: calc(1.5 * var(--pt)) solid var(--p-line); background: var(--p-card); border-radius: var(--p-r); padding: calc(12 * var(--pt)); }
+.opt.on { border: calc(2 * var(--pt)) solid var(--p-accent); background: var(--p-tint); }
+.opt b { display: block; font-size: calc(15 * var(--pt)); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: calc(8 * var(--pt)); }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(6 * var(--pt)); }
+.center { text-align: center; }
+.seg { display: grid; grid-auto-flow: column; background: var(--p-line); border-radius: calc(9 * var(--pt)); padding: calc(2 * var(--pt)); font-size: calc(13 * var(--pt)); font-weight: 600; text-align: center; }
+.seg span { padding: calc(6 * var(--pt)); border-radius: calc(7 * var(--pt)); }
+.seg span.on { background: var(--p-card); }
+.bar { height: calc(6 * var(--pt)); background: var(--p-line); border-radius: 99px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--p-accent); }
+.check { width: calc(22 * var(--pt)); height: calc(22 * var(--pt)); border: calc(2 * var(--pt)) solid var(--p-muted); border-radius: calc(6 * var(--pt)); flex: none; }
+.check.on { background: var(--p-accent); border-color: var(--p-accent); }
+.li { display: flex; gap: calc(12 * var(--pt)); align-items: center; padding: calc(9 * var(--pt)) 0; border-bottom: 1px solid var(--p-line); font-size: calc(15 * var(--pt)); }
+.li .grow { flex: 1; }
+.li s { color: var(--p-muted); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-card); border-radius: calc(18 * var(--pt)) calc(18 * var(--pt)) 0 0; padding: calc(16 * var(--pt)) calc(20 * var(--pt)) calc(28 * var(--pt)); box-shadow: 0 -8px 24px rgba(0,0,0,.18); display: grid; gap: calc(10 * var(--pt)); }
+body[data-look="L2"] .phone:not([data-fixed]) .sheet, .phone[data-look="L2"] .sheet { background: #174A33; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+.toast { position: absolute; left: calc(16 * var(--pt)); right: calc(16 * var(--pt)); bottom: calc(96 * var(--pt)); background: #1d1d1f; color: #fff; border-radius: calc(12 * var(--pt)); padding: calc(12 * var(--pt)) calc(14 * var(--pt)); display: flex; justify-content: space-between; font-size: calc(14 * var(--pt)); }
+.toast b { color: #9fe0b5; }
+.note { background: var(--p-tint); border-radius: var(--p-r); padding: calc(12 * var(--pt)); font-size: calc(14 * var(--pt)); }
+.days { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(6 * var(--pt)); text-align: center; font-size: calc(12 * var(--pt)); font-weight: 600; }
+.days span { padding: calc(8 * var(--pt)) 0; border-radius: calc(10 * var(--pt)); background: var(--p-card); }
+.days span.on { background: var(--p-accent); color: var(--p-on); }
+.field { background: var(--p-card); border: calc(1.5 * var(--pt)) solid var(--p-line); border-radius: var(--p-r); padding: calc(11 * var(--pt)) calc(12 * var(--pt)); color: var(--p-muted); font-size: calc(15 * var(--pt)); }
+.inline { border-bottom: calc(2 * var(--pt)) solid var(--p-accent); color: var(--p-accent); font-weight: 700; }
+.sw { width: calc(40 * var(--pt)); height: calc(24 * var(--pt)); border-radius: 99px; background: var(--p-line); position: relative; flex: none; }
+.sw::after { content: ""; position: absolute; top: calc(2 * var(--pt)); left: calc(2 * var(--pt)); width: calc(20 * var(--pt)); height: calc(20 * var(--pt)); border-radius: 50%; background: #fff; }
+.sw.on { background: var(--p-accent); }
+.sw.on::after { left: calc(18 * var(--pt)); }
+.dark { background: #121412; color: #F3F3EE; }
+.stepbig { font-size: calc(27 * var(--pt)); line-height: 1.25; font-weight: 500; }
+.timer { display: flex; align-items: center; justify-content: space-between; background: var(--p-card); border-radius: var(--p-r); padding: calc(12 * var(--pt)) calc(14 * var(--pt)); }
+.timer b { font-size: calc(24 * var(--pt)); font-variant-numeric: tabular-nums; }
+.skel { background: var(--p-line); border-radius: calc(6 * var(--pt)); height: calc(12 * var(--pt)); }
+.tl { display: grid; gap: calc(12 * var(--pt)); }
+.tl div { display: grid; grid-template-columns: calc(24 * var(--pt)) 1fr; gap: calc(10 * var(--pt)); }
+.tl i { width: calc(24 * var(--pt)); height: calc(24 * var(--pt)); border-radius: 50%; background: var(--p-accent); color: var(--p-on); font-style: normal; display: grid; place-items: center; font-size: calc(12 * var(--pt)); font-weight: 700; }
+.tl i.o { background: var(--p-line); color: var(--p-ink); }
+.plan { display: flex; justify-content: space-between; align-items: center; }
+.badge { background: var(--p-accent); color: var(--p-on); font-size: calc(11 * var(--pt)); font-weight: 700; border-radius: 99px; padding: calc(3 * var(--pt)) calc(8 * var(--pt)); }
+.grp { background: var(--p-card); border-radius: var(--p-r); }
+.grp > div { display: flex; justify-content: space-between; padding: calc(12 * var(--pt)) calc(14 * var(--pt)); font-size: calc(15 * var(--pt)); }
+.grp > div + div { border-top: 1px solid var(--p-line); }
+.grp small { color: var(--p-muted); font-size: calc(14 * var(--pt)); }
+.scroll { flex: 1; overflow: hidden; }
+.wm { font-family: Georgia, serif; font-size: calc(20 * var(--pt)); }
+.wm em { color: var(--p-accent); }
+body[data-look="L2"] .phone:not([data-fixed]) .wm, .phone[data-look="L2"] .wm { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: -.03em; }
+body[data-look="L2"] .phone:not([data-fixed]) .wm em, .phone[data-look="L2"] .wm em { color: #F2C14E; font-style: normal; }
+/* Bold blocks: rows become colour bands, the primary action a full-width white band */
+body[data-look="L2"] .phone:not([data-fixed]) .band, .phone[data-look="L2"] .band { margin: 0 calc(-20 * var(--pt)); padding-left: calc(20 * var(--pt)); padding-right: calc(20 * var(--pt)); border-bottom: 0; }
+body[data-look="L2"] .phone:not([data-fixed]) .band:nth-of-type(5n+1), .phone[data-look="L2"] .band:nth-of-type(5n+1) { background: #B8452E; }
+body[data-look="L2"] .phone:not([data-fixed]) .band:nth-of-type(5n+2), .phone[data-look="L2"] .band:nth-of-type(5n+2) { background: #1E6F8C; }
+body[data-look="L2"] .phone:not([data-fixed]) .band:nth-of-type(5n+3), .phone[data-look="L2"] .band:nth-of-type(5n+3) { background: #8A6500; }
+body[data-look="L2"] .phone:not([data-fixed]) .band:nth-of-type(5n+4), .phone[data-look="L2"] .band:nth-of-type(5n+4) { background: #6B3F8E; }
+body[data-look="L2"] .phone:not([data-fixed]) .band:nth-of-type(5n), .phone[data-look="L2"] .band:nth-of-type(5n) { background: #2E7D5B; }
+body[data-look="L2"] .phone:not([data-fixed]) .foot, .phone[data-look="L2"] .foot { border-top: 0; padding: 0; background: transparent; gap: 0; }
+body[data-look="L2"] .phone:not([data-fixed]) .foot .btn, .phone[data-look="L2"] .foot .btn { padding: calc(22 * var(--pt)); font-size: calc(17 * var(--pt)); letter-spacing: .03em; text-transform: uppercase; }
+body[data-look="L2"] .phone:not([data-fixed]) .foot .pchip, .phone[data-look="L2"] .foot .pchip { padding: 0 calc(18 * var(--pt)); }
+body[data-look="L2"] .phone:not([data-fixed]) .btn2, .phone[data-look="L2"] .btn2 { border-color: #fff; }
+body[data-look="L2"] .phone:not([data-fixed]) .dark, .phone[data-look="L2"] .dark { background: #0F2E20; }
+
+/* Meal photos: placeholders until the 22 photos exist (D-038) */
+.photo { position: relative; border-radius: var(--p-r); overflow: hidden; background: #d8c7a6;
+  background-image: radial-gradient(circle at 40% 45%, var(--f1, #C98A45) 0 12%, transparent 13%), radial-gradient(circle at 60% 55%, var(--f2, #4F7F37) 0 11%, transparent 12%), radial-gradient(circle at 52% 38%, var(--f3, #EBD9A8) 0 10%, transparent 11%), radial-gradient(circle at 50% 50%, #F7F2E8 0 30%, #E8DFCE 31% 34%, transparent 35%), linear-gradient(160deg, #cdb792, #a88d63); }
+.photo.t { height: calc(54 * var(--pt)); width: calc(54 * var(--pt)); border-radius: calc(10 * var(--pt)); }
+.photo.h { height: calc(170 * var(--pt)); }
+.photo.hh { height: calc(260 * var(--pt)); border-radius: 0; }
+.photo.v2 { --f1: #E9825F; --f2: #6E9C4B; --f3: #F1D48C; }
+.photo.v3 { --f1: #8A4B2E; --f2: #B63F2A; --f3: #E8B85C; }
+.photo.v4 { --f1: #E2A443; --f2: #2F6A34; --f3: #FBF3DA; }
+.photo.v5 { --f1: #D9472F; --f2: #F0B531; --f3: #CF8D48; }
+.ov { position: absolute; left: 0; right: 0; bottom: 0; padding: calc(16 * var(--pt)) calc(20 * var(--pt)); background: linear-gradient(transparent, rgba(0,0,0,.65)); color: #fff; }
+
+/* picks bar */
+.picks { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--panel); border-top: 1px solid var(--line); }
+.picks .inner { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.picks output { font-weight: 600; font-size: 14px; }
+.status { color: var(--muted); font-size: 13px; }
+.btnx { appearance: none; border: 0; background: var(--accent); color: var(--accent-ink); font: 600 14px/1 Inter, system-ui, sans-serif; padding: 12px 16px; border-radius: 999px; cursor: pointer; }
+#picktext { width: 100%; font: 13px/1.4 ui-monospace, Menlo, monospace; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Weekwell · every screen to approve · mockups</div>
+    <h1>Pick your Weekwell</h1>
+    <p class="lede">Pick one option in each section. Start with <strong>the overall look</strong>: picking one restyles every phone below, so you judge each screen in the look you chose. Option 1 in each section is what the app does today. The food images are placeholders until the 22 meal photos exist. <strong>Decided so far:</strong> look L2, welcome WE1, setup SB3 · YW1 · FL2 · RV1, building GN3, home HM1, meal MD2, swap SW2, cooking CK3, grocery GL1, plans PW2, preferences ST2; meal photography (D-038), no server for the pilot (D-039), RevenueCat (D-014). <strong>Open:</strong> price and budget, with four new options (PR4–PR7). Your picks and notes save as you go; I build each pick and check it with real screenshots.</p>
+    <nav class="toc" id="toc" aria-label="Sections"></nav>
+  </header>
+  <div id="groups"></div>
+</div>
+
+<div class="picks" role="region" aria-label="Your picks">
+  <div class="inner">
+    <output id="summary" aria-live="polite">Pick one in each section.</output>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="status" id="status"></span>
+      <button class="btnx" type="button" id="copy">Copy my picks</button>
+    </div>
+    <input id="picktext" readonly hidden aria-label="Your picks as text">
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---- mockup helpers -------------------------------------------------
+  var SB = '<div class="sb"><span>9:41</span><span>●●● ▮</span></div>';
+  function phone(inner, look) { return '<div class="phone"' + (look ? ' data-fixed data-look="' + look + '"' : '') + ' aria-hidden="true"><div class="scr">' + SB + inner + '</div></div>'; }
+  function row(name, meta, v, day, cls) { return '<div class="row band' + (cls ? ' ' + cls : '') + '"><div class="photo t ' + (v || '') + '"></div><div>' + (day ? '<span class="m">' + day + '</span>' : '') + '<b>' + name + '</b><span class="m">' + meta + '</span></div><span class="chev">›</span></div>'; }
+  var FOOT_HOME = '<div class="foot"><div class="pchip">$78<small>sample est. ⓘ</small></div><div class="btn">Open grocery list</div></div>';
+  var WEEK_ROWS = row('Beef and broccoli over rice', '25 min · 42g protein', 'v3', 'Monday') + row('Garlic chicken rice bowls', '25 min · 50g protein', '', 'Tuesday') + row('Greek chicken thigh salad', '25 min · 40g protein', 'v4', 'Wednesday · Tonight') + row('Chicken sausage and white beans', '20 min · 36g protein', 'v2', 'Thursday');
+
+  var homeL = '<div class="pad"><div class="wm">Week<em>well</em></div><div class="m" style="margin:4px 0 10px"><b>Trader Joe’s</b> · $80 · High protein · 30 min · 1 person ✎</div><div class="card" style="padding:0;overflow:hidden"><div class="photo h" style="border-radius:0"></div><div style="padding:12px 14px"><span class="acc" style="font-size:calc(12*var(--pt))">Tonight · Wednesday</span><div class="dish">Greek chicken thigh salad</div><span class="m">25 min · 40g protein · serves 1</span></div></div><div class="lbl">This week</div>' + row('Beef and broccoli over rice', '25 min · 42g protein', 'v3', 'Monday') + row('Garlic chicken rice bowls', '25 min · 50g protein', '', 'Tuesday') + row('Chicken sausage and white beans', '20 min · 36g protein', 'v2', 'Thursday') + '</div>' + FOOT_HOME;
+
+  // ---- sections --------------------------------------------------------
+  var S = [
+    { key: 'look', code: 'L', title: 'The overall look', blurb: 'Colour, type and shape for the whole app. Picking one restyles every phone on this page.', options: [
+      { id: 'L1', name: 'Market paper', now: true, desc: 'Warm paper, leaf green, a serif for dish names. Calm and kitchen-like; what the app uses today.', html: phone(homeL, 'L1') },
+      { id: 'L2', name: 'Bold blocks', desc: 'Full-bleed colour bands, heavy uppercase type, the main action as a white band across the bottom. Loud and memorable, like your reference.', html: phone(homeL, 'L2') },
+      { id: 'L3', name: 'Clean utility', desc: 'iOS-style grey ground, white cards, tomato accent, one sans-serif. Feels like a built-in Apple app; the least branded.', html: phone(homeL, 'L3') }
+    ]},
+    { key: 'welcome', code: 'WE', title: 'Welcome', blurb: 'The first screen after install. One job: make someone want to set up their week.', options: [
+      { id: 'WE1', name: 'Photo mosaic', now: true, desc: 'Six meal photos, a short promise, one button.', html: phone('<div class="pad"><div class="grid2" style="margin-top:8px"><div class="photo" style="height:calc(120*var(--pt))"></div><div class="photo v2" style="height:calc(120*var(--pt))"></div><div class="photo v3" style="height:calc(120*var(--pt))"></div><div class="photo v4" style="height:calc(120*var(--pt))"></div></div><div class="ttl big">Your week of dinners, planned.</div><p class="m">Five dinners and work lunches around your store, budget and time. One grocery list.</p></div><div class="foot"><div class="btn">Get started</div></div>') },
+      { id: 'WE2', name: 'One big promise', desc: 'Type only: three short lines, the stores it works with, one button. Fastest to read.', html: phone('<div class="pad" style="flex:1;display:flex;flex-direction:column;justify-content:center"><div class="wm" style="font-size:calc(26*var(--pt));margin-bottom:18px">Week<em>well</em></div><div class="ttl big">Five dinners.<br>One list.<br>Your budget.</div><p class="m">Works with Trader Joe’s and Walmart.</p></div><div class="foot"><div class="btn">Plan my week</div></div>') },
+      { id: 'WE3', name: 'Sample week', desc: 'Shows a real example week first, so people see the result before answering questions.', html: phone('<div class="pad"><div class="lbl">A week at Trader Joe’s · $78</div>' + WEEK_ROWS + '<p class="m" style="margin-top:8px">This is an example. Yours fits your store, budget and time.</p></div><div class="foot"><div class="btn">Make mine</div></div>') }
+    ]},
+    { key: 'store', code: 'SB', title: 'Setup 1 · Store and budget', blurb: 'Where they shop and roughly what they spend.', options: [
+      { id: 'SB1', name: 'Both on one screen', now: true, desc: 'Store cards, then $60 / $80 / $100 / Custom. What the app does today.', html: phone('<div class="pad"><div class="m">Step 1 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:25%"></i></div><div class="ttl sm">Where do you shop, and what’s the budget?</div><div class="gap"><div class="opt on"><b>Trader Joe’s</b><span class="m">Smaller store, easy weekly shop</span></div><div class="opt"><b>Walmart</b><span class="m">Broad budget options</span></div></div><div class="lbl">Weekly grocery budget</div><div class="grid2"><div class="opt center">$60</div><div class="opt on center">$80</div><div class="opt center">$100</div><div class="opt center">Custom</div></div></div><div class="foot"><div class="btn">Continue</div></div>') },
+      { id: 'SB2', name: 'One question per screen', desc: 'Store alone, big buttons; budget comes next. Fewer things to read at once, one more tap.', html: phone('<div class="pad"><div class="m">Step 1 of 5</div><div class="bar" style="margin:6px 0 10px"><i style="width:20%"></i></div><div class="ttl">Where do you shop?</div><div class="gap"><div class="opt on" style="padding:calc(20*var(--pt))"><b style="font-size:calc(18*var(--pt))">Trader Joe’s</b></div><div class="opt" style="padding:calc(20*var(--pt))"><b style="font-size:calc(18*var(--pt))">Walmart</b></div></div><p class="m" style="margin-top:10px">More stores later.</p></div><div class="foot"><div class="btn">Continue</div></div>') },
+      { id: 'SB3', name: 'Fill in the sentence', desc: 'One sentence with two blanks you tap to change. Friendly and short; less obvious that it is a form.', html: phone('<div class="pad"><div class="m">Step 1 of 4</div><div class="bar" style="margin:6px 0 16px"><i style="width:25%"></i></div><div class="ttl" style="line-height:1.35">I shop at <span class="inline">Trader Joe’s ▾</span> and spend about <span class="inline">$80 ▾</span> a week.</div><p class="m">$80 covers 5 dinners and 5 lunches: about $8 a meal for one person.</p></div><div class="foot"><div class="btn">Continue</div></div>') }
+    ]},
+    { key: 'yourweek', code: 'YW', title: 'Setup 2 · Goal, time, people', blurb: 'What kind of food, how long to cook, and who’s eating.', options: [
+      { id: 'YW1', name: 'Three chip groups', now: true, desc: 'All three questions on one screen as tappable chips.', html: phone('<div class="pad"><div class="m">Step 2 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:50%"></i></div><div class="ttl sm">How do you like to eat this week?</div><div class="lbl">Main goal</div><div class="chips"><span class="chip on">High protein</span><span class="chip">Low effort</span><span class="chip">Low carb</span><span class="chip">Family</span></div><div class="lbl">Time for dinner</div><div class="chips"><span class="chip">20 min</span><span class="chip on">30 min</span><span class="chip">Batch cook</span></div><div class="lbl">Who’s eating?</div><div class="chips"><span class="chip on">Just me</span><span class="chip">Two of us</span><span class="chip">3–4 people</span></div></div><div class="foot"><div class="btn">Continue</div></div>') },
+      { id: 'YW2', name: 'One question per screen', desc: 'Big stacked answers with a short line each. Easiest to tap; adds two screens.', html: phone('<div class="pad"><div class="m">Step 3 of 6</div><div class="bar" style="margin:6px 0 10px"><i style="width:50%"></i></div><div class="ttl">Who’s eating?</div><div class="gap"><div class="opt on"><b>Just me</b><span class="m">1 serving per dinner</span></div><div class="opt"><b>Two of us</b><span class="m">2 servings</span></div><div class="opt"><b>3–4 people</b><span class="m">We plan 4 servings</span></div></div></div><div class="foot"><div class="btn">Continue</div></div>') },
+      { id: 'YW3', name: 'Sentence builder', desc: 'Same sentence style as SB3: “Cook for 1 in 30 minutes, high protein.”', html: phone('<div class="pad"><div class="m">Step 2 of 4</div><div class="bar" style="margin:6px 0 16px"><i style="width:50%"></i></div><div class="ttl" style="line-height:1.4">Cook for <span class="inline">just me ▾</span> in <span class="inline">30 min ▾</span>, mostly <span class="inline">high protein ▾</span>.</div><p class="m">Change any underlined part.</p></div><div class="foot"><div class="btn">Continue</div></div>') }
+    ]},
+    { key: 'foods', code: 'FL', title: 'Setup 3 · Foods to leave out', blurb: 'Allergies and dislikes. Includes the health-data notice from the legal review.', options: [
+      { id: 'FL1', name: 'Common chips + add your own', now: true, desc: 'Tap common allergens; type anything else. Notice line underneath.', html: phone('<div class="pad"><div class="m">Step 3 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:75%"></i></div><div class="ttl sm">Any foods to leave out?</div><div class="chips"><span class="chip on">Dairy</span><span class="chip">Gluten</span><span class="chip">Nuts</span><span class="chip">Peanuts</span><span class="chip">Fish</span><span class="chip">Shellfish</span><span class="chip">Eggs</span><span class="chip">Soy</span><span class="chip">Pork</span></div><div class="lbl">Something else</div><div class="field">e.g. mushrooms</div><p class="m" style="margin-top:10px">Allergies can be health information. We use them only to plan your meals.</p></div><div class="foot"><div class="btn">Continue</div></div>') },
+      { id: 'FL2', name: 'Switch list', desc: 'One row per allergen with a switch, like iOS Settings. Very clear on/off; longer to scroll.', html: phone('<div class="pad"><div class="m">Step 3 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:75%"></i></div><div class="ttl sm">Leave anything out?</div><div class="grp"><div>Dairy<span class="sw on"></span></div><div>Gluten (wheat)<span class="sw"></span></div><div>Tree nuts<span class="sw"></span></div><div>Peanuts<span class="sw"></span></div><div>Fish<span class="sw"></span></div><div>Shellfish<span class="sw"></span></div></div><p class="acc" style="margin-top:10px">+ Add another food</p></div><div class="foot"><div class="btn">Continue</div></div>') },
+      { id: 'FL3', name: 'Search first', desc: 'A search box with suggestions; chosen foods appear as removable tags. Best when people have unusual dislikes.', html: phone('<div class="pad"><div class="m">Step 3 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:75%"></i></div><div class="ttl sm">Anything you don’t eat?</div><div class="field">🔍 Type a food</div><div class="chips" style="margin:10px 0"><span class="chip on">Dairy ✕</span><span class="chip on">Mushrooms ✕</span></div><div class="lbl">Common</div><div class="chips"><span class="chip">Gluten</span><span class="chip">Peanuts</span><span class="chip">Shellfish</span><span class="chip">Pork</span></div></div><div class="foot"><div class="btn">Continue</div></div>') }
+    ]},
+    { key: 'review', code: 'RV', title: 'Setup 4 · Review and build', blurb: 'Last check before the week is planned.', options: [
+      { id: 'RV1', name: 'Summary rows with Edit', now: true, desc: 'Each answer on its own row with an Edit link.', html: phone('<div class="pad"><div class="m">Step 4 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:100%"></i></div><div class="ttl sm">Ready to plan your week?</div><div class="grp"><div>Trader Joe’s · $80<small class="acc">Edit</small></div><div>High protein · 30 min<small class="acc">Edit</small></div><div>Just me<small class="acc">Edit</small></div><div>No dairy<small class="acc">Edit</small></div></div></div><div class="foot"><div class="btn">Plan my five dinners</div></div>') },
+      { id: 'RV2', name: 'One sentence', desc: 'Everything in one readable sentence; tap it to change. Shortest screen.', html: phone('<div class="pad" style="flex:1;display:flex;flex-direction:column;justify-content:center"><div class="ttl" style="line-height:1.35">Five high-protein dinners for one, 30 minutes each, no dairy, about $80 at Trader Joe’s.</div><p class="acc">Change something</p></div><div class="foot"><div class="btn">Plan my week</div></div>') },
+      { id: 'RV3', name: 'Checklist', desc: 'Ticks next to each answer, plus what you’ll get. Reassuring before a paid feature.', html: phone('<div class="pad"><div class="ttl sm">Here’s your setup</div><div class="tl"><div><i>✓</i><span>Trader Joe’s, about $80 a week</span></div><div><i>✓</i><span>High protein, 30-minute dinners</span></div><div><i>✓</i><span>Cooking for 1, no dairy</span></div></div><div class="lbl">You’ll get</div><p class="m">5 dinners · 2 lunch batches · 1 grocery list sorted by aisle</p></div><div class="foot"><div class="btn">Plan my week</div></div>') }
+    ]},
+    { key: 'building', code: 'GN', title: 'Building your week', blurb: 'The few seconds while the plan is made.', options: [
+      { id: 'GN1', name: 'Step list', now: true, desc: 'Three steps tick off as they finish.', html: phone('<div class="pad" style="flex:1;display:flex;flex-direction:column;justify-content:center"><div class="ttl sm">Planning your week</div><div class="tl"><div><i>✓</i><span>Picking dinners that fit 30 minutes</span></div><div><i>✓</i><span>Leaving out dairy</span></div><div><i class="o">3</i><span class="m">Pricing at Trader Joe’s…</span></div></div></div>') },
+      { id: 'GN2', name: 'One progress bar', desc: 'A single bar and one changing line. Calmer, less detail.', html: phone('<div class="pad" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px"><div class="ttl sm center">Planning your week</div><div class="bar" style="height:calc(10*var(--pt))"><i style="width:66%"></i></div><p class="m center">Pricing at Trader Joe’s…</p></div>') },
+      { id: 'GN3', name: 'Dinners appear', desc: 'The week fills in one dinner at a time, so the wait already shows the result.', html: phone('<div class="pad"><div class="ttl sm">Your week</div>' + row('Beef and broccoli over rice', '25 min', 'v3', 'Monday') + row('Garlic chicken rice bowls', '25 min', '', 'Tuesday') + '<div class="row"><div class="photo t" style="background:var(--p-line)"></div><div class="gap"><div class="skel" style="width:60%"></div><div class="skel" style="width:40%"></div></div><span></span></div><div class="row"><div class="photo t" style="background:var(--p-line)"></div><div class="gap"><div class="skel" style="width:70%"></div><div class="skel" style="width:30%"></div></div><span></span></div></div>') }
+    ]},
+    { key: 'home', code: 'HM', title: 'Your week (home)', blurb: 'The screen people open every day. One question: what’s for dinner tonight?', options: [
+      { id: 'HM1', name: 'Tonight card + week list', now: true, desc: 'Big card for tonight, the rest of the week below, price and grocery list in the bottom bar.', html: phone(homeL) },
+      { id: 'HM2', name: 'Day strip', desc: 'Mon–Fri tabs across the top; one big dish at a time. Great for “what’s tonight”, weaker for seeing the whole week.', html: phone('<div class="pad"><div class="wm" style="margin-bottom:10px">Week<em>well</em></div><div class="days"><span>Mon</span><span>Tue</span><span class="on">Wed</span><span>Thu</span><span>Fri</span></div></div><div class="photo hh" style="margin-top:12px"></div><div class="pad" style="margin-top:10px"><span class="acc">Tonight</span><div class="dish">Greek chicken thigh salad</div><span class="m">25 min · 40g protein · serves 1</span><div class="btn2" style="margin-top:12px">Start cooking</div></div>' + FOOT_HOME) },
+      { id: 'HM3', name: 'Even list', desc: 'All dinners as equal rows, tonight highlighted, lunches below. Most scannable; less hero feeling.', html: phone('<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><div class="wm">Week<em>well</em></div><span class="acc">List</span></div><div class="lbl">Dinners</div>' + row('Beef and broccoli over rice', '25 min · 42g protein', 'v3', 'Mon') + row('Garlic chicken rice bowls', '25 min · 50g protein', '', 'Tue') + '<div class="note" style="margin:4px 0">' + row('Greek chicken thigh salad', '25 min · 40g protein', 'v4', '<b class=acc>Tonight · Wed</b>') + '</div>' + row('Chicken sausage and beans', '20 min · 36g protein', 'v2', 'Thu') + '<div class="lbl">Lunches</div>' + row('Yogurt chicken wraps', 'Mon–Wed · makes 3', 'v5') + '</div>' + FOOT_HOME) }
+    ]},
+    { key: 'meal', code: 'MD', title: 'Meal', blurb: 'A recipe: what’s in it, how long, and cooking it.', options: [
+      { id: 'MD1', name: 'Scroll page', now: true, desc: 'Photo, facts, ingredients, steps, then swap options. Start cooking in the bar.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="photo h"></div><span class="acc" style="font-size:calc(12*var(--pt))">Wednesday dinner</span><div class="ttl sm">Greek chicken thigh salad</div><div class="grid4 m"><span><b style="color:var(--p-ink)">25 min</b><br>total</span><span><b style="color:var(--p-ink)">10</b><br>hands-on</span><span><b style="color:var(--p-ink)">40g</b><br>protein</span><span><b style="color:var(--p-ink)">1</b><br>serving</span></div><div class="lbl">Ingredients</div><div class="li"><b>6 oz</b><span class="grow">Chicken thighs</span></div><div class="li"><b>2 cups</b><span class="grow">Baby spinach</span></div></div><div class="foot"><div class="btn">Start cooking</div></div>') },
+      { id: 'MD2', name: 'Tabs', desc: 'Ingredients and Steps as two tabs under the photo. Less scrolling; one extra tap to see steps.', html: phone('<div class="nav"><span>‹ Week</span><span>Swap</span></div><div class="pad"><div class="photo h"></div><div class="ttl sm" style="margin-top:10px">Greek chicken thigh salad</div><p class="m">25 min · 40g protein · 1 serving</p><div class="seg" style="margin:10px 0"><span class="on">Ingredients</span><span>Steps</span></div><div class="li"><b>6 oz</b><span class="grow">Chicken thighs</span></div><div class="li"><b>2 cups</b><span class="grow">Baby spinach</span></div><div class="li"><b>1</b><span class="grow">Cucumber</span></div></div><div class="foot"><div class="btn">Start cooking</div></div>') },
+      { id: 'MD3', name: 'Full-bleed photo', desc: 'Photo fills the top with the name over it. The most appetising; relies on great photos.', html: phone('<div style="position:relative;margin-top:calc(-50*var(--pt))"><div class="photo hh" style="height:calc(330*var(--pt))"></div><div class="ov"><span style="font-size:calc(12*var(--pt))">Wednesday dinner · 25 min</span><div class="dish" style="color:#fff;font-size:calc(26*var(--pt))">Greek chicken thigh salad</div></div></div><div class="pad" style="margin-top:12px"><div class="lbl" style="margin-top:0">Ingredients · 7</div><div class="li"><b>6 oz</b><span class="grow">Chicken thighs</span></div><div class="li"><b>2 cups</b><span class="grow">Baby spinach</span></div></div><div class="foot"><div class="btn2" style="flex:0 0 auto;padding-inline:calc(16*var(--pt))">Swap</div><div class="btn">Start cooking</div></div>') }
+    ]},
+    { key: 'swap', code: 'SW', title: 'Swapping a meal', blurb: 'When tonight’s dinner doesn’t appeal.', options: [
+      { id: 'SW1', name: 'Swap, then keep or undo', now: true, desc: 'Swaps straight away; a banner says what changed, with Keep swap and Undo.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="note"><b>Swapped to Garlic chicken rice bowls</b><br><span class="m">9 grocery items changed · was Greek chicken salad</span></div><div class="photo h" style="margin-top:10px"></div><div class="ttl sm" style="margin-top:8px">Garlic chicken rice bowls</div></div><div class="foot"><div class="btn">Keep swap</div><div class="btn2" style="flex:0 0 38%">Undo</div></div>') },
+      { id: 'SW2', name: 'Choose from three', desc: 'A sheet offers three alternatives with price and time; nothing changes until you pick.', html: phone('<div class="pad"><div class="photo h"></div><div class="ttl sm" style="margin-top:8px">Greek chicken thigh salad</div></div><div class="dim"></div><div class="sheet"><b style="font-size:calc(17*var(--pt))">Swap Wednesday for…</b>' + row('Garlic chicken rice bowls', '25 min · +$1', '') + row('Sheet-pan salmon', '30 min · +$4', 'v2') + row('Egg and edamame fried rice', '20 min · −$3', 'v4') + '</div>') },
+      { id: 'SW3', name: 'Quick swap with undo toast', desc: 'Swaps instantly; a toast offers Undo for a few seconds. Fastest; easiest to miss what changed.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="photo h v3"></div><div class="ttl sm" style="margin-top:8px">Garlic chicken rice bowls</div><p class="m">25 min · 50g protein</p></div><div class="toast"><span>Swapped · 9 items changed</span><b>Undo</b></div><div class="foot"><div class="btn">Start cooking</div></div>') }
+    ]},
+    { key: 'cook', code: 'CK', title: 'Cooking mode', blurb: 'Readable at arm’s length with busy hands. Screen stays on.', options: [
+      { id: 'CK1', name: 'One step + timer', now: true, desc: 'Large step text, a timer when the step has a time, Back and Next.', html: phone('<div class="nav"><span>‹ Recipe</span></div><div class="pad"><span class="acc">Step 2 of 4</span><div class="bar" style="margin:6px 0 14px"><i style="width:50%"></i></div><div class="stepbig">Cook in oil over medium-high heat, 5–6 minutes per side, until cooked through.</div><div class="timer" style="margin-top:16px"><b>6:00</b><span class="acc">Pause</span></div><div class="lbl">Next</div><p class="m">Chop cucumber and halve tomatoes.</p></div><div class="foot"><div class="btn2" style="flex:0 0 35%">Back</div><div class="btn">Next step</div></div>') },
+      { id: 'CK2', name: 'Dark full screen', desc: 'High contrast on dark, bigger text, tap the right half for next. Best in a bright kitchen or at night.', html: phone('<div class="dark" style="flex:1;display:flex;flex-direction:column;padding:calc(10*var(--pt)) calc(20*var(--pt)) calc(28*var(--pt))"><span style="opacity:.7">2 / 4 · Greek chicken salad</span><div class="stepbig" style="font-size:calc(32*var(--pt));margin-top:auto">Cook 5–6 minutes per side.</div><div style="margin:18px 0;font-size:calc(40*var(--pt));font-variant-numeric:tabular-nums">6:00</div><div style="display:flex;justify-content:space-between;opacity:.7"><span>‹ Tap left</span><span>Tap right ›</span></div></div>') },
+      { id: 'CK3', name: 'All steps, current highlighted', desc: 'The whole method as a checklist; the current step is large. Easy to look ahead.', html: phone('<div class="nav"><span>‹ Recipe</span></div><div class="pad"><div class="li"><span class="check on"></span><s>Season the chicken</s></div><div class="note" style="margin:8px 0"><b style="font-size:calc(18*var(--pt))">Cook 5–6 minutes per side, until cooked through.</b><div class="timer" style="margin-top:8px"><b>6:00</b><span class="acc">Start timer</span></div></div><div class="li"><span class="check"></span>Chop cucumber, halve tomatoes</div><div class="li"><span class="check"></span>Toss with spinach and lemon</div></div><div class="foot"><div class="btn">Done with this step</div></div>') }
+    ]},
+    { key: 'grocery', code: 'GL', title: 'Grocery list', blurb: 'Used in the store, one hand, quick glances.', options: [
+      { id: 'GL1', name: 'By aisle with prices', now: true, desc: 'Grouped by aisle, price and “used in N meals” on each row.', html: phone('<div class="nav"><span>‹ Week</span><span>Share</span></div><div class="pad"><div class="ttl sm">Grocery list</div><div style="display:flex;justify-content:space-between" class="m"><span>0 of 21 checked</span><span><b style="color:var(--p-ink)">$78</b> sample est.</span></div><div class="lbl">Produce · 6</div><div class="li"><span class="check"></span><span class="grow"><b>Baby spinach</b><br><span class="m">Need 10 oz · buy 2 × 6 oz</span></span><span>$4.58</span></div><div class="li"><span class="check on"></span><span class="grow"><s>Broccoli florets</s></span><span class="m">$2.79</span></div><div class="li"><span class="check"></span><span class="grow"><b>Cherry tomatoes</b><br><span class="m">Need 8 oz · buy 1</span></span><span>$2.99</span></div></div>') },
+      { id: 'GL2', name: 'Plain checklist', desc: 'Just names and amounts, big tap targets; the total at the top, prices behind a tap. Fastest in the store.', html: phone('<div class="nav"><span>‹ Week</span><span>Share</span></div><div class="pad"><div class="ttl sm">Shopping · $78 est.</div><div class="bar" style="margin-bottom:8px"><i style="width:14%"></i></div><div class="lbl">Produce</div><div class="li"><span class="check"></span><span class="grow"><b>Baby spinach</b> · 2 bags</span></div><div class="li"><span class="check on"></span><span class="grow"><s>Broccoli · 1 bag</s></span></div><div class="li"><span class="check"></span><span class="grow"><b>Cherry tomatoes</b> · 1</span></div><div class="li"><span class="check"></span><span class="grow"><b>Cucumbers</b> · 2</span></div><div class="li"><span class="check"></span><span class="grow"><b>Lemons</b> · 2</span></div></div>') },
+      { id: 'GL3', name: 'Aisle or meal toggle', desc: 'Switch between shopping by aisle and by meal (handy when skipping a dinner).', html: phone('<div class="nav"><span>‹ Week</span><span>Share</span></div><div class="pad"><div class="ttl sm">Grocery list</div><div class="seg" style="margin-bottom:10px"><span>By aisle</span><span class="on">By meal</span></div><div class="lbl">Wednesday · Greek chicken salad</div><div class="li"><span class="check"></span><span class="grow">Chicken thighs · 1 pack</span><span class="m">$6.49</span></div><div class="li"><span class="check"></span><span class="grow">Feta · 1</span><span class="m">$3.49</span></div><div class="lbl">Thursday · Sausage and beans</div><div class="li"><span class="check"></span><span class="grow">Chicken sausage · 1</span><span class="m">$4.49</span></div></div>') }
+    ]},
+    { key: 'price', code: 'PR', title: 'Price and budget', blurb: 'How the week’s cost and budget show up, including going over. Round 2: you picked PR1 and asked for more options, so PR4–PR7 are new.', options: [
+      { id: 'PR1', name: 'Notice card', now: true, desc: 'Only when something needs attention: a neutral card with “Rebuild under $80”.', html: phone('<div class="pad"><div class="wm">Week<em>well</em></div><div class="card" style="margin-top:10px"><b>Estimated total $92 · $12 over your $80 target</b><p class="m" style="margin:6px 0 10px">Rebuild swaps in lower-cost meals and you can undo it.</p><div class="btn2">Rebuild under $80</div></div>' + WEEK_ROWS + '</div>' + FOOT_HOME.replace('$78', '$92')) },
+      { id: 'PR2', name: 'Budget meter', desc: 'A thin meter under the header all the time: $92 of $80. Always visible; can feel like nagging.', html: phone('<div class="pad"><div class="wm">Week<em>well</em></div><div style="margin:10px 0 4px;display:flex;justify-content:space-between"><b>$92 of $80</b><span class="acc">Fix</span></div><div class="bar" style="height:calc(8*var(--pt))"><i style="width:100%;background:#B8452E"></i></div><p class="m">$12 over · sample prices</p>' + WEEK_ROWS + '</div>' + FOOT_HOME.replace('$78', '$92')) },
+      { id: 'PR3', name: 'Suggested swaps', desc: 'Over budget shows specific swaps with savings (“Salmon → chicken, save $6”). Most helpful; takes more space.', html: phone('<div class="pad"><div class="wm">Week<em>well</em></div><div class="card" style="margin-top:10px"><b>$12 over your $80 target</b><div class="li" style="border:0"><span class="grow">Salmon → Garlic chicken</span><b class="acc">−$6</b></div><div class="li" style="border:0;padding-top:0"><span class="grow">Sirloin → Turkey chili</span><b class="acc">−$7</b></div><div class="btn2" style="margin-top:6px">Make both swaps</div></div>' + row('Beef and broccoli over rice', '25 min', 'v3', 'Monday') + '</div>' + FOOT_HOME.replace('$78', '$92')) }
+    
+      ,{ id: 'PR4', name: 'Over budget in the price bar', desc: 'No card on the home screen: the bottom bar turns to “$92 · $12 over”. Tapping it opens a sheet with Rebuild, cheaper swaps and change budget. The quietest option.', html: phone('<div class="pad"><div class="wm">Week<em>well</em></div><div class="m" style="margin:4px 0 10px"><b>Trader Joe’s</b> · $80 · High protein</div>' + WEEK_ROWS + '</div><div class="dim"></div><div class="sheet"><b style="font-size:calc(17*var(--pt))">$92 · $12 over your $80 target</b><div class="btn">Rebuild under $80</div><div class="btn2">See cheaper swaps</div><p class="acc center">Change my budget</p></div>') },
+      { id: 'PR5', name: 'Cost on every dinner', desc: 'Each dinner shows its own cost; when over, the priciest ones get a “swap to save $6” link right on the row. Shows where the money goes.', html: phone('<div class="pad"><div class="wm">Week<em>well</em></div><div class="m" style="margin:4px 0 8px">$92 this week · <b style="color:#E8A08E">$12 over</b></div>' + row('Sheet-pan salmon', '$24 · <span class=acc>swap, save $6</span>', 'v2', 'Monday') + row('Garlic chicken rice bowls', '$11', '', 'Tuesday') + row('Sirloin with green beans', '$21 · <span class=acc>swap, save $7</span>', 'v3', 'Wednesday') + row('Chicken sausage and beans', '$12', 'v4', 'Thursday') + '</div>' + FOOT_HOME.replace('$78', '$92')) },
+      { id: 'PR6', name: 'Budget band', desc: 'A full-width band at the top: “This week $92 · Target $80”, filling left to right. Bold and always on; tap it for fixes.', html: phone('<div class="band" style="padding:calc(16*var(--pt)) calc(20*var(--pt));margin:0;background:var(--p-tint)"><div style="display:flex;justify-content:space-between"><b>This week $92</b><span>Target $80</span></div><div class="bar" style="margin-top:8px;height:calc(10*var(--pt))"><i style="width:100%"></i></div><span class="m">$12 over · tap for ways to save</span></div><div class="pad" style="margin-top:8px">' + WEEK_ROWS + '</div>' + FOOT_HOME.replace('$78', '$92')) },
+      { id: 'PR7', name: 'Stop it at setup', desc: 'Before building, the review step checks the budget: “These choices come to about $92”. You pick cheaper meals or raise the budget there, so the week rarely lands over.', html: phone('<div class="pad"><div class="m">Step 4 of 4</div><div class="bar" style="margin:6px 0 10px"><i style="width:100%"></i></div><div class="ttl sm">Ready to plan your week?</div><div class="card"><b>These choices come to about $92, $12 over $80.</b><div class="gap" style="margin-top:10px"><div class="opt on"><b>Pick cheaper meals</b><span class="m">Stays under $80</span></div><div class="opt"><b>Raise budget to $95</b><span class="m">Keeps your choices</span></div></div></div></div><div class="foot"><div class="btn">Plan my week</div></div>') }
+]},
+    { key: 'paywall', code: 'PW', title: 'Free week and plans', blurb: 'Where people start the free week. Must show price, renewal, and links to terms and privacy.', options: [
+      { id: 'PW1', name: 'Two plan cards', now: true, desc: 'Yearly and monthly side by side with per-week price; weekly as a small option.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="ttl sm">Try Weekwell free for a week</div><div class="m">✓ A new week for your store and budget<br>✓ Swap any meal, with undo<br>✓ One grocery list by aisle</div><div class="grid2" style="margin-top:12px"><div class="opt on"><b>Yearly</b>$49.99<br><span class="m">$0.96/wk</span><br><span class="badge">Save 58%</span></div><div class="opt"><b>Monthly</b>$9.99<br><span class="m">$2.31/wk</span></div></div><p class="m" style="margin-top:8px">Or pay weekly · $4.99</p><p class="m" style="font-size:calc(10*var(--pt))">Renews automatically unless cancelled 24 h before. Terms · Privacy</p></div><div class="foot"><div class="btn">Start free week</div></div>') },
+      { id: 'PW2', name: 'One recommended plan', desc: 'Yearly shown alone with “See other plans”. Simplest decision; hides choice a little.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad" style="flex:1;display:flex;flex-direction:column;justify-content:center"><div class="ttl">Your first week is free</div><div class="card"><div class="plan"><b>Yearly</b><span class="badge">Best value</span></div><div style="font-size:calc(26*var(--pt));font-weight:700;margin-top:6px">$49.99<span class="m"> a year</span></div><span class="m">About $0.96 a week</span></div><p class="acc" style="margin-top:12px">See other plans</p><p class="m" style="font-size:calc(10*var(--pt))">Renews automatically unless cancelled 24 h before. Terms · Privacy</p></div><div class="foot"><div class="btn">Start free week</div></div>') },
+      { id: 'PW3', name: 'Trial timeline', desc: 'A timeline: today free, reminder on day 5, charged on day 7. Most trustworthy about when you pay.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="ttl sm">How your free week works</div><div class="tl"><div><i>1</i><span><b>Today</b><br><span class="m">Full access, nothing charged</span></span></div><div><i>5</i><span><b>Sep 30</b><br><span class="m">We remind you the free week ends soon</span></span></div><div><i class="o">7</i><span><b>Oct 2</b><br><span class="m">$49.99/year starts. Cancel before to pay nothing.</span></span></div></div><div class="seg" style="margin-top:14px"><span class="on">Yearly $49.99</span><span>Monthly $9.99</span></div><p class="m" style="font-size:calc(10*var(--pt));margin-top:8px">Terms · Privacy · Restore</p></div><div class="foot"><div class="btn">Start free week</div></div>') }
+    ]},
+    { key: 'settings', code: 'ST', title: 'Preferences', blurb: 'Changing store, budget, foods, and deleting data.', options: [
+      { id: 'ST1', name: 'One page of choices', now: true, desc: 'All preferences on one scrolling page; a preview says what will change before applying.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="ttl sm">Preferences</div><div class="lbl">Store</div><div class="chips"><span class="chip on">Trader Joe’s</span><span class="chip">Walmart</span></div><div class="lbl">Budget</div><div class="chips"><span class="chip">$60</span><span class="chip on">$80</span><span class="chip">$100</span></div><div class="lbl">Time for dinner</div><div class="chips"><span class="chip">20</span><span class="chip on">30 min</span><span class="chip">Batch</span></div><div class="note" style="margin-top:12px">Changing to Walmart may change 14 prices.</div></div><div class="foot"><div class="btn">Apply changes</div></div>') },
+      { id: 'ST2', name: 'Settings list', desc: 'iOS-style rows; each opens its own small screen. Familiar and tidy; more taps.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="ttl sm">Settings</div><div class="lbl">Your week</div><div class="grp"><div>Store<small>Trader Joe’s ›</small></div><div>Budget<small>$80 ›</small></div><div>Goal<small>High protein ›</small></div><div>Cooking time<small>30 min ›</small></div><div>Foods left out<small>Dairy ›</small></div></div><div class="lbl">App</div><div class="grp"><div>Vibration<span class="sw on"></span></div><div>Subscription<small>Free week ›</small></div><div style="color:#B8452E">Delete my data</div></div></div>') },
+      { id: 'ST3', name: 'Setup cards', desc: 'Your setup as a few cards, each with Edit that reopens that setup step.', html: phone('<div class="nav"><span>‹ Week</span></div><div class="pad"><div class="ttl sm">Your setup</div><div class="gap"><div class="card"><div class="plan"><b>Trader Joe’s · $80</b><span class="acc">Edit</span></div><span class="m">About $8 a meal</span></div><div class="card"><div class="plan"><b>High protein · 30 min</b><span class="acc">Edit</span></div><span class="m">Cooking for 1</span></div><div class="card"><div class="plan"><b>No dairy</b><span class="acc">Edit</span></div><span class="m">1 food left out</span></div></div><p class="m" style="margin-top:14px">Changes apply to next week, or rebuild this week now.</p></div>') }
+    ]}
+  ];
+
+  // ---- render ------------------------------------------------------------
+  var groupsEl = document.getElementById('groups'), toc = document.getElementById('toc');
+  S.forEach(function (s) {
+    var sec = document.createElement('section');
+    sec.className = 'group'; sec.id = s.key; sec.setAttribute('aria-labelledby', s.key + '-h');
+    sec.innerHTML = '<div class="group-head"><span class="code">' + s.code + '</span><h2 id="' + s.key + '-h">' + s.title + '</h2><p>' + s.blurb + '</p></div>' +
+      '<div class="options" data-group="' + s.key + '">' + s.options.map(function (o) {
+        return '<article class="option" data-id="' + o.id + '" data-name="' + o.name + '">' + o.html +
+          '<div class="option-head"><h3>' + o.name + '</h3><span class="tag">' + o.id + '</span></div>' +
+          (o.now ? '<span class="now">In the app today</span>' : '') + '<p>' + o.desc + '</p>' +
+          '<button class="pick" type="button">Pick ' + o.id + '</button></article>';
+      }).join('') + '</div>' +
+      '<div class="notes"><label for="note-' + s.key + '">Changes you want (optional)</label><textarea id="note-' + s.key + '" data-note="' + s.key + '" rows="1" placeholder="e.g. HM1 but with the day strip from HM2"></textarea></div>';
+    groupsEl.appendChild(sec);
+    var a = document.createElement('a'); a.href = '#' + s.key; a.textContent = s.code; a.dataset.key = s.key; a.title = s.title; toc.appendChild(a);
+  });
+
+  // ---- state: picks + notes ---------------------------------------------
+  var state = { picks: {}, notes: {} };
+  try { var saved = JSON.parse(localStorage.getItem('weekwell-picks-1') || 'null'); if (saved) state = { picks: saved.picks || {}, notes: saved.notes || {} }; } catch (e) {}
+  var statusEl = document.getElementById('status'), db = null, saveTimer = null;
+
+  function render() {
+    S.forEach(function (s) {
+      document.querySelectorAll('.options[data-group="' + s.key + '"] .option').forEach(function (opt) {
+        var on = state.picks[s.key] === opt.dataset.id;
+        opt.classList.toggle('is-chosen', on);
+        opt.querySelector('.pick').setAttribute('aria-pressed', on ? 'true' : 'false');
+        opt.querySelector('.pick').textContent = on ? 'Picked ' + opt.dataset.id : 'Pick ' + opt.dataset.id;
+      });
+      var t = toc.querySelector('[data-key="' + s.key + '"]'); t.classList.toggle('done', !!state.picks[s.key]);
+      var ta = document.getElementById('note-' + s.key); if (ta && document.activeElement !== ta) ta.value = state.notes[s.key] || '';
+    });
+    document.body.dataset.look = state.picks.look || 'L1';
+    var n = S.filter(function (s) { return state.picks[s.key]; }).length;
+    document.getElementById('summary').textContent = n === 0 ? 'Pick one in each section.' : n + ' of ' + S.length + ' sections picked';
+  }
+  function pickText() {
+    return S.map(function (s) {
+      var id = state.picks[s.key], o = id && s.options.filter(function (x) { return x.id === id; })[0];
+      var note = (state.notes[s.key] || '').trim();
+      return s.title + ': ' + (o ? o.id + ' (' + o.name + ')' : 'no pick') + (note ? ' — note: ' + note : '');
+    }).join('\n');
+  }
+  function persist() {
+    try { localStorage.setItem('weekwell-picks-1', JSON.stringify(state)); } catch (e) {}
+    if (!db) { statusEl.textContent = 'Saved in this browser. Use Copy to send them.'; return; }
+    clearTimeout(saveTimer);
+    statusEl.textContent = 'Saving…';
+    saveTimer = setTimeout(function () {
+      db.doc('picks/current').set({ picks: state.picks, notes: state.notes, summary: pickText(), updatedAt: new Date().toISOString() })
+        .then(function () { statusEl.textContent = 'Saved. Claude can read your picks.'; })
+        .catch(function () { statusEl.textContent = 'Couldn’t save online. Use Copy my picks.'; });
+    }, 500);
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.pick'); if (!btn) return;
+    var opt = btn.closest('.option');
+    state.picks[opt.closest('.options').dataset.group] = opt.dataset.id;
+    render(); persist();
+  });
+  document.addEventListener('change', function (e) {
+    var key = e.target.dataset && e.target.dataset.note; if (!key) return;
+    state.notes[key] = e.target.value; persist();
+  });
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = pickText(), field = document.getElementById('picktext');
+    function fallback() { field.value = text.replace(/\n/g, ' · '); field.hidden = false; field.select(); statusEl.textContent = 'Select and copy the text below.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { statusEl.textContent = 'Copied. Paste it in the chat.'; }, fallback);
+    else fallback();
+  });
+  render();
+
+  // Shared save: picks land where Claude can read them. Without it, the page still works (browser + Copy).
+  if (window.claude && window.claude.use) {
+    window.claude.use('db').then(function (d) {
+      if (!d) return;
+      db = d;
+      d.doc('picks/current').get().then(function (snap) {
+        var data = snap && snap.data && snap.data();
+        if (data && data.picks && !Object.keys(state.picks).length) { state = { picks: data.picks || {}, notes: data.notes || {} }; render(); }
+        statusEl.textContent = 'Picks save automatically.';
+      }).catch(function () {});
+    }).catch(function () {});
+  }
+})();
+</script>

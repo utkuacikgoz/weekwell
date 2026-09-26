@@ -146,15 +146,15 @@ export default function Week() {
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         This week
       </Text>
-      {plan.dinners.map((d) => (
-        <WeekRow key={d.id} meal={d} tonight={d.day === tonightDay} offList={data.skippedMealIds.includes(d.id)} onPress={() => open(d.id)} />
+      {plan.dinners.map((d, i) => (
+        <WeekRow key={d.id} band={i} meal={d} tonight={d.day === tonightDay} offList={data.skippedMealIds.includes(d.id)} onPress={() => open(d.id)} />
       ))}
 
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         Work lunches
       </Text>
-      {plan.lunches.map((l) => (
-        <WeekRow key={l.id} meal={l} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} />
+      {plan.lunches.map((l, i) => (
+        <WeekRow key={l.id} band={plan.dinners.length + i} meal={l} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} />
       ))}
 
       <Text variant="meta" tone="muted" style={{ marginTop: space.l, marginBottom: space.l }}>

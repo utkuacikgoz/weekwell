@@ -37,15 +37,15 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#F5F0E6",
+          "backgroundColor": "#1F5C40",
           "dark": {
-            "backgroundColor": "#171511",
+            "backgroundColor": "#0F2A1E",
             "image": "./assets/splash-icon.png"
           }
         }
       ]
     ],
     "scheme": "weekwell",
-    "backgroundColor": "#F5F0E6"
+    "backgroundColor": "#1F5C40"
   }
 }

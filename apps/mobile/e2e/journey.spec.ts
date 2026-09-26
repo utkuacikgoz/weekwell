@@ -35,6 +35,8 @@ test('the review screen reflects every choice and edits return to review', async
 
 test('budget input is bounded and explains corrections', async ({ page }) => {
   await page.goto('/onboarding/store');
+  await expect($(page, 'budget-pick')).toContainText('$80');
+  await $(page, 'budget-pick').click();
   // Presets first; the number field only appears for Custom.
   await expect($(page, 'budget-80')).toHaveAttribute('aria-checked', 'true');
   await expect($(page, 'budget-input')).toHaveCount(0);
@@ -83,7 +85,7 @@ test('grocery items map back to their meals', async ({ page }) => {
   const label = await row.getAttribute('aria-label');
   await row.click();
   await expect($(page, 'meal-name')).toBeVisible();
-  expect(label).toContain(await $(page, 'meal-name').innerText());
+  expect(label).toContain(await ($(page, 'meal-name').textContent()) ?? '');
 });
 
 test('checking an item offers a quick undo', async ({ page }) => {
@@ -101,10 +103,11 @@ test('swap one meal, then undo it', async ({ page }) => {
   await buildWeek(page);
   const before = await page.locator('[data-testid^="meal-"]:visible').allInnerTexts();
   await $(page, 'meal-dinner_wed').click();
-  const original = await $(page, 'meal-name').innerText();
+  const original = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'repair-swap').click();
+  await $(page, 'swap-option-0').click();
   await expect($(page, 'swap-pending')).toContainText('Swapped to');
-  expect(await $(page, 'meal-name').innerText()).not.toBe(original);
+  expect(await ($(page, 'meal-name').textContent()) ?? '').not.toBe(original);
   await $(page, 'undo-swap').click();
   await expect($(page, 'meal-name')).toHaveText(original);
   await expect($(page, 'swap-pending')).toHaveCount(0);
@@ -116,7 +119,8 @@ test('keep a swap: the week shows the new meal', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'meal-dinner_wed').click();
   await $(page, 'repair-swap').click();
-  const swapped = await $(page, 'meal-name').innerText();
+  await $(page, 'swap-option-0').click();
+  const swapped = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'keep-swap').click();
   await expect($(page, 'meal-toast')).toContainText('Swap kept');
   await expect($(page, 'start-cooking')).toBeVisible();
@@ -138,6 +142,7 @@ test('cooking mode walks through the steps', async ({ page }) => {
 test('changing store previews exactly what will change before applying', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'edit-preferences').click();
+  await $(page, 'pref-row-store').click();
   await $(page, 'pref-store-walmart').click();
   await expect($(page, 'preference-preview')).toContainText(/Changing to Walmart may change \d+ prices/u);
   await $(page, 'apply-preferences').click();
@@ -190,4 +195,47 @@ test('cooking mode: timer from the step, resume after leaving, done clears it', 
   // Opened from the week, so Done returns to the week.
   await expect($(page, 'tonight-card')).toBeVisible();
   await expect($(page, 'continue-cooking')).toHaveCount(0);
+});
+
+test('swap sheet: pick the second choice and get exactly that meal', async ({ page }) => {
+  await buildWeek(page, { query: 'today=wed' });
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'repair-swap').click();
+  const options = page.getByTestId(/^swap-option-/u).filter({ visible: true });
+  const count = await options.count();
+  expect(count).toBeGreaterThan(1);
+  expect(count).toBeLessThanOrEqual(3);
+  await expect($(page, 'swap-option-1')).toContainText(/min · .* · (about|same)/u);
+  const label = (await $(page, 'swap-option-1').getAttribute('aria-label')) ?? '';
+  const chosen = label.split('. ')[0]!;
+  await $(page, 'swap-option-1').click();
+  await expect($(page, 'swap-pending')).toContainText(`Swapped to ${chosen}`);
+  expect(((await $(page, 'meal-name').textContent()) ?? '').trim()).toBe(chosen);
+});
+
+test('meal tabs: ingredients first, steps one tap away', async ({ page }) => {
+  await buildWeek(page, { query: 'today=wed' });
+  await $(page, 'meal-dinner_wed').click();
+  await expect($(page, 'tab-ingredients')).toHaveAttribute('aria-selected', 'true');
+  await expect($(page, 'ingredients-panel')).toBeVisible();
+  await expect($(page, 'steps-panel')).toHaveCount(0);
+  await $(page, 'tab-steps').click();
+  await expect($(page, 'steps-panel')).toBeVisible();
+  await expect($(page, 'ingredients-panel')).toHaveCount(0);
+});
+
+test('settings list: rows show current values and open their own screen', async ({ page }) => {
+  await buildWeek(page, { budget: 100 });
+  await $(page, 'edit-preferences').click();
+  await expect($(page, 'pref-row-store')).toContainText('Trader Joe’s');
+  await expect($(page, 'pref-row-budget')).toContainText('$100 a week');
+  await expect($(page, 'pref-row-subscription')).toBeVisible();
+  await $(page, 'pref-row-household').click();
+  await expect($(page, 'pref-page-household')).toBeVisible();
+  await $(page, 'pref-household-2').click();
+  await expect($(page, 'preference-preview')).toBeVisible();
+  await $(page, 'nav-back').click();
+  // The pending change is kept on the list and still needs applying.
+  await expect($(page, 'pref-row-household')).toContainText('2 people');
+  await expect($(page, 'apply-preferences')).toBeVisible();
 });

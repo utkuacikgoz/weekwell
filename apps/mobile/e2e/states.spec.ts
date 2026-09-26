@@ -62,22 +62,28 @@ test('a generation timeout explains what to do', async ({ page }) => {
   await expect($(page, 'generation-error')).toContainText('took too long', { timeout: 15_000 });
 });
 
-test('paywall: nothing preselected, exact prices, truthful yearly saving', async ({ page }) => {
+test('paywall: one recommended plan, exact prices, truthful yearly saving', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'open-trial').click();
-  await expect($(page, 'start-trial')).toHaveAttribute('aria-disabled', 'true');
-  for (const id of ['product-weekly', 'product-monthly', 'product-yearly']) {
+  // D-040 PW2: yearly is recommended and chosen; the charge line states exactly what happens.
+  await expect($(page, 'product-yearly')).toHaveAttribute('aria-checked', 'true');
+  await expect($(page, 'charge-line')).toHaveText('Free for 7 days, then $49.99 a year.');
+  await expect($(page, 'start-trial')).toHaveText('Start free week');
+  await expect($(page, 'product-monthly')).toHaveCount(0);
+  // The other prices are visible before expanding.
+  await expect($(page, 'see-other-plans')).toContainText('Monthly $9.99 · weekly $4.99');
+  await $(page, 'see-other-plans').click();
+  for (const id of ['product-weekly', 'product-monthly']) {
     await expect($(page, id)).toHaveAttribute('aria-checked', 'false');
   }
   const text = await visibleText(page);
   expect(text).toContain('$4.99 a week');
   expect(text).toContain('$9.99 a month');
   expect(text).toContain('$49.99 a year');
-  expect(text).toContain('Save 58% vs monthly');
+  expect(text).toContain('Best value · save 58% vs monthly');
   expect(text).toContain('12 months of monthly ($119.88), $69.89 less');
   expect(text).toContain('About $2.31 a week');
   expect(text).toContain('About $0.96 a week');
-  await expect($(page, 'start-trial')).toHaveText('Choose a plan');
   await expect($(page, 'legal')).toContainText('renew automatically unless cancelled at least 24 hours before');
   await $(page, 'product-monthly').click();
   await expect($(page, 'charge-line')).toHaveText('Free for 7 days, then $9.99 a month.');
