@@ -10,6 +10,7 @@ import {
   replaceMeal,
   restoreMeal,
   sampleCostCents,
+  swapOptions,
 } from '../src';
 import { CTX, allMeals, planFor } from './helpers';
 
@@ -27,6 +28,24 @@ describe('meal swap', () => {
       else expect(m.recipeId).toBe(allMeals(plan)[i]!.recipeId);
     });
     expect(next.dinners[2]!.day).toBe(target.day);
+  });
+
+  it('offers up to three distinct swaps, best first, with honest deltas', () => {
+    const target = plan.dinners[1]!;
+    const opts = swapOptions(plan, target.id);
+    expect(opts.length).toBeGreaterThan(0);
+    expect(opts.length).toBeLessThanOrEqual(3);
+    expect(opts[0]!.recipe.id).toBe(findReplacement(plan, target.id, 'swap')!.id);
+    const ids = opts.map((o) => o.recipe.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const inPlan = new Set(allMeals(plan).map((m) => m.recipeId));
+    const current = getRecipe(target.recipeId);
+    for (const o of opts) {
+      expect(inPlan.has(o.recipe.id)).toBe(false);
+      expect(o.recipe.slot).toBe(target.slot);
+      expect(o.minutesDelta).toBe(o.recipe.totalMinutes - current.totalMinutes);
+    }
+    expect(swapOptions(plan, 'nope')).toEqual([]);
   });
 
   it('updates the affected groceries and can be undone exactly', () => {

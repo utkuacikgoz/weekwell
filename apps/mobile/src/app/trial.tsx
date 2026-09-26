@@ -55,7 +55,10 @@ function PlanCard({ product, selected, onPress, badge }: { product: Subscription
 export default function Trial() {
   const { entitlementView: view, startTrial, purchase, restorePurchases, refreshEntitlement, analytics } = useStore();
   const { trigger } = useLocalSearchParams<{ trigger?: string }>();
-  const [selected, setSelected] = useState<ProductId | null>(null); // never preselected
+  // D-040 PW2: one recommended plan (yearly), chosen up front; the others are one tap away.
+  // This replaces D-037's "nothing preselected"; the charge line always states the exact price.
+  const [selected, setSelected] = useState<ProductId | null>('yearly');
+  const [showAll, setShowAll] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [restoreState, setRestoreState] = useState<'idle' | 'busy' | 'restored' | 'nothing_to_restore' | 'failed'>('idle');
@@ -116,7 +119,7 @@ export default function Trial() {
     >
       <NavBar backLabel="Week" />
       <Text variant="title" accessibilityRole="header">
-        {view.state === 'expired' ? 'Keep planning your weeks' : 'Try Weekwell free for a week'}
+        {view.state === 'expired' ? 'Keep planning your weeks' : 'Your first week is free'}
       </Text>
       {view.state === 'expired' ? (
         <Text tone="muted" style={{ marginTop: space.xs }} testID="trial-ended">
@@ -164,20 +167,31 @@ export default function Trial() {
         <View style={{ marginTop: space.l }} accessibilityRole="radiogroup" accessibilityLabel={eligible ? 'After the free week' : 'Choose a plan'}>
           <Text variant="label" style={{ marginBottom: space.s }}>{eligible ? 'After the free week' : 'Choose a plan'}</Text>
           <View style={styles.plans}>
-            <PlanCard product={getProduct('yearly')} selected={selected === 'yearly'} onPress={() => setSelected('yearly')} badge={`Save ${savings.percent}% vs monthly`} />
-            <PlanCard product={getProduct('monthly')} selected={selected === 'monthly'} onPress={() => setSelected('monthly')} />
+            <PlanCard product={getProduct('yearly')} selected={selected === 'yearly'} onPress={() => setSelected('yearly')} badge={`Best value · save ${savings.percent}% vs monthly`} />
+            {showAll ? <PlanCard product={getProduct('monthly')} selected={selected === 'monthly'} onPress={() => setSelected('monthly')} /> : null}
           </View>
-          <Pressable
-            testID="product-weekly"
-            accessibilityRole="radio"
-            aria-checked={selected === 'weekly'}
-            accessibilityLabel={`Weekly. ${formatMoney(getProduct('weekly').priceCents)} a week`}
-            onPress={() => setSelected('weekly')}
-            style={({ pressed }) => [styles.weekly, pressed && { backgroundColor: color.placeholder }]}
-          >
-            <View style={[styles.radio, selected === 'weekly' && styles.radioOn]}>{selected === 'weekly' ? <Icon name="check" size={14} color={color.onAccent} strokeWidth={3} /> : null}</View>
-            <Text variant="meta">Or pay weekly · {formatMoney(getProduct('weekly').priceCents)} a week</Text>
-          </Pressable>
+          {showAll ? (
+            <Pressable
+              testID="product-weekly"
+              accessibilityRole="radio"
+              aria-checked={selected === 'weekly'}
+              accessibilityLabel={`Weekly. ${formatMoney(getProduct('weekly').priceCents)} a week`}
+              onPress={() => setSelected('weekly')}
+              style={({ pressed }) => [styles.weekly, pressed && { backgroundColor: color.placeholder }]}
+            >
+              <View style={[styles.radio, selected === 'weekly' && styles.radioOn]}>{selected === 'weekly' ? <Icon name="check" size={14} color={color.onAccent} strokeWidth={3} /> : null}</View>
+              <Text variant="meta">Or pay weekly · {formatMoney(getProduct('weekly').priceCents)} a week</Text>
+            </Pressable>
+          ) : (
+            <Pressable accessibilityRole="button" onPress={() => setShowAll(true)} style={({ pressed }) => [styles.weekly, styles.others, pressed && { backgroundColor: color.placeholder }]} testID="see-other-plans">
+              <Text variant="bodyStrong" tone="accent" style={{ textDecorationLine: 'underline' }}>
+                See other plans
+              </Text>
+              <Text variant="meta" tone="muted">
+                Monthly {formatMoney(getProduct('monthly').priceCents)} · weekly {formatMoney(getProduct('weekly').priceCents)}
+              </Text>
+            </Pressable>
+          )}
         </View>
       ) : null}
 
@@ -225,6 +239,7 @@ const styles = StyleSheet.create({
   radioOn: { backgroundColor: color.accent, borderColor: color.accent },
   badge: { marginTop: space.xs },
   weekly: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, marginTop: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control, alignSelf: 'flex-start' },
+  others: { flexWrap: 'wrap', columnGap: space.s, rowGap: 0, alignSelf: 'stretch' },
   tabular: { fontVariant: ['tabular-nums'] },
   status: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH },
   restore: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, alignSelf: 'flex-start', marginTop: space.xs, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },

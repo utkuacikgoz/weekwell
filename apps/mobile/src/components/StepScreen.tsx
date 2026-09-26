@@ -39,7 +39,8 @@ export function StepScreen({
   footerNote,
 }: {
   step: OnboardingStep;
-  title: string;
+  /** Omit when the step's content is its own heading (the store sentence). */
+  title?: string;
   children: ReactNode;
   canContinue?: boolean;
   onContinue?: () => void;
@@ -64,9 +65,11 @@ export function StepScreen({
     >
       <NavBar backLabel={index === 0 ? 'Welcome' : STEP_NAME[ONBOARDING_STEPS[index - 1] ?? 'store']} />
       <StepProgress step={step} />
-      <Text variant="title" accessibilityRole="header" style={{ marginBottom: space.l }}>
-        {title}
-      </Text>
+      {title ? (
+        <Text variant="title" accessibilityRole="header" style={{ marginBottom: space.l }}>
+          {title}
+        </Text>
+      ) : null}
       {children}
     </Screen>
   );

@@ -2,11 +2,12 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 import { color as palette } from '../theme/tokens';
 
-export type IconName = 'chevron-right' | 'chevron-left' | 'info' | 'edit' | 'check' | 'close' | 'refresh' | 'cart' | 'share' | 'timer';
+export type IconName = 'chevron-right' | 'chevron-left' | 'chevron-down' | 'info' | 'edit' | 'check' | 'close' | 'refresh' | 'cart' | 'share' | 'timer';
 
 const PATHS: Record<IconName, string> = {
   'chevron-right': 'M9 5l7 7-7 7',
   'chevron-left': 'M15 5l-7 7 7 7',
+  'chevron-down': 'M5 9l7 7 7-7',
   info: 'M12 11v6M12 7.5v.5',
   edit: 'M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4',
   check: 'M5 12.5l4.5 4.5L19 7.5',

@@ -10,7 +10,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { $, buildWeek, onboard } from './helpers';
+import { $, buildWeek, onboard, pickStore } from './helpers';
 import { audit as baseAudit } from './audit';
 
 const OUT = 'docs/review/screens';
@@ -35,7 +35,7 @@ for (const width of WIDTHS) {
         await audit(page, name('01-welcome'), { primary: 'start' });
         await $(page, 'start').click();
         await audit(page, name('02-store-budget-empty'), { primary: 'continue' });
-        await $(page, 'store-trader_joes').click();
+        await pickStore(page);
         await audit(page, name('03-store-budget-selected'), { primary: 'continue' });
         await $(page, 'continue').click();
         await audit(page, name('04-your-week'), { primary: 'continue' });
@@ -51,6 +51,7 @@ for (const width of WIDTHS) {
         await $(page, 'meal-dinner_wed').click();
         await audit(page, name('12-meal-detail'));
         await $(page, 'repair-swap').click();
+        await $(page, 'swap-option-0').click();
         await expect($(page, 'swap-pending')).toBeVisible();
         await audit(page, name('13-meal-swapped'));
         await page.goBack();
@@ -64,11 +65,13 @@ for (const width of WIDTHS) {
       test('preferences and paywall', async ({ page }) => {
         await buildWeek(page, { query: q });
         await $(page, 'edit-preferences').click();
+        await $(page, 'pref-row-store').click();
         await $(page, 'pref-store-walmart').click();
         await expect($(page, 'preference-preview')).toBeVisible();
         await audit(page, name('16-preferences-preview'), { primary: 'apply-preferences' });
         await page.goto(`/trial?${q}`);
         await audit(page, name('17-trial'), { primary: 'start-trial' });
+        await $(page, 'see-other-plans').click();
         await $(page, 'product-monthly').click();
         await audit(page, name('18-trial-selected'), { primary: 'start-trial' });
       });

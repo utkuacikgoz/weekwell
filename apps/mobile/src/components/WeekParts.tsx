@@ -1,9 +1,12 @@
 import { DAY_LABEL, DAY_SHORT, type Meal } from '@weekwell/domain';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
+import { BANDS_DARK, BANDS_LIGHT } from '../theme/palette';
+import { MIN_TOUCH, color, radius, scheme, space } from '../theme/tokens';
 import { Icon } from './Icon';
 import { MealImage } from './MealImage';
 import { Text } from './Text';
+
+export const BANDS = scheme === 'dark' ? BANDS_DARK : BANDS_LIGHT;
 
 const ingredientIds = (m: Meal) => m.ingredients.map((i) => i.ingredientId);
 
@@ -44,7 +47,8 @@ export function TonightCard({ meal, label, onPress, width, compact }: { meal: Me
 }
 
 /** One day in the week list: image, day, dish, facts, and a clear trailing affordance. */
-export function WeekRow({ meal, onPress, tonight, offList }: { meal: Meal; onPress: () => void; tonight?: boolean; offList?: boolean }) {
+/** `band`: the row's position in the week; it becomes a full-width colour band (D-040). */
+export function WeekRow({ meal, onPress, tonight, offList, band }: { meal: Meal; onPress: () => void; tonight?: boolean; offList?: boolean; band?: number }) {
   const when =
     meal.slot === 'dinner'
       ? DAY_LABEL[meal.day]
@@ -56,18 +60,18 @@ export function WeekRow({ meal, onPress, tonight, offList }: { meal: Meal; onPre
       accessibilityLabel={`${when}${tonight ? ', tonight' : ''}: ${meal.name}. ${mealFacts(meal)}.${offList ? ' Not on your grocery list.' : ''}`}
       accessibilityHint="Opens the recipe"
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      style={({ pressed }) => [styles.row, band !== undefined && [styles.band, { backgroundColor: BANDS[band % BANDS.length] }], pressed && styles.rowPressed]}
     >
       <MealImage recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={60} radius={radius.thumb} />
       <View style={{ flex: 1 }}>
-        <Text variant="caption" tone={tonight ? 'accent' : 'muted'}>
+        <Text variant="caption" tone={tonight ? 'accent' : 'muted'} style={band !== undefined ? { color: '#FFFFFF', opacity: 0.9 } : undefined}>
           {tonight ? `${when} · Tonight` : when}
         </Text>
         <Text variant="bodyStrong">{meal.name}</Text>
-        <Text variant="meta" tone="muted">{offList ? 'Not on grocery list' : mealFacts(meal)}</Text>
+        <Text variant="meta" tone="muted" style={band !== undefined ? { color: '#FFFFFF', opacity: 0.9 } : undefined}>{offList ? 'Not on grocery list' : mealFacts(meal)}</Text>
       </View>
       <View style={styles.chevron}>
-        <Icon name="chevron-right" size={20} color={color.inkMuted} />
+        <Icon name="chevron-right" size={20} color={color.ink} />
       </View>
     </Pressable>
   );
@@ -79,6 +83,8 @@ const styles = StyleSheet.create({
   cardBody: { padding: space.m },
   cta: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: MIN_TOUCH, marginTop: space.xs, marginBottom: -space.s },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, paddingVertical: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control, minHeight: 76 },
-  rowPressed: { backgroundColor: color.placeholder },
-  chevron: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.raised },
+  rowPressed: { opacity: 0.85 },
+  // Full-bleed: cancels the screen's side padding so the colour runs edge to edge.
+  band: { marginHorizontal: -(space.m + 4), paddingHorizontal: space.m + 4, borderRadius: 0, marginVertical: 0 },
+  chevron: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.18)' },
 });

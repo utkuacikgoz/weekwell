@@ -46,10 +46,11 @@ test('wrong code is refused with a clear message', async ({ page }) => {
 test('swap and undo go through the API', async ({ page }) => {
   await signInAndPlan(page, `c${Date.now()}@example.com`);
   await $(page, 'meal-dinner_wed').click();
-  const original = await $(page, 'meal-name').innerText();
+  const original = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'repair-swap').click();
+  await $(page, 'swap-option-0').click();
   await expect($(page, 'swap-pending')).toBeVisible();
-  expect(await $(page, 'meal-name').innerText()).not.toBe(original);
+  expect(await ($(page, 'meal-name').textContent()) ?? '').not.toBe(original);
   await $(page, 'undo-swap').click();
   await expect($(page, 'meal-name')).toHaveText(original);
   await page.reload();

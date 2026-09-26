@@ -40,6 +40,10 @@ test.describe('meal · 390×844', () => {
     await $(page, 'meal-dinner_wed').click();
     await scrollDown(page);
     await $(page, 'repair-swap').click();
+    await expect($(page, 'swap-option-0')).toBeVisible();
+    await page.waitForTimeout(400);
+    await shot(page, '05a-swap-choices');
+    await $(page, 'swap-option-0').click();
     await expect($(page, 'swap-pending')).toBeVisible();
     await shot(page, '05-swap-pending', 'keep-swap');
     await $(page, 'keep-swap').click();
@@ -52,6 +56,7 @@ test.describe('meal · 390×844', () => {
     await $(page, 'meal-dinner_wed').click();
     await scrollDown(page);
     await $(page, 'repair-swap').click();
+    await $(page, 'swap-option-0').click();
     await $(page, 'undo-swap').click();
     await expect($(page, 'meal-toast')).toContainText('Swap undone');
     await shot(page, '07-swap-undone', 'start-cooking');
@@ -121,6 +126,7 @@ test.describe('recording', () => {
       await page.waitForTimeout(100);
     }
     await $(page, 'repair-swap').click();
+    await $(page, 'swap-option-0').click();
     await page.waitForTimeout(1800);
     await $(page, 'keep-swap').click();
     await page.waitForTimeout(1200);

@@ -7,6 +7,15 @@ import { Text, useTextScale } from './Text';
 
 export const BUDGET_PRESETS = [60, 80, 100] as const;
 
+/** What a budget buys, in meals. Before "Who’s eating?" is answered, it's per person and says so. */
+export function budgetExplainer(value: number, householdSize: HouseholdSize, householdKnown = true): string {
+  if (!householdKnown) return `$${value} a week covers 5 dinners and 5 lunches: about $${(value / 10).toFixed(2)} a meal for one person. You’ll say who’s eating next, and we’ll check the fit before planning.`;
+  const servings = servingsFor(householdSize);
+  const perMeal = value / (10 * servings); // 5 dinners + 5 lunches per person
+  const who = servings === 1 ? 'one person' : `${servings} people`;
+  return `$${value} a week is about $${perMeal.toFixed(2)} a meal for ${who}, across 5 dinners and 5 lunches.`;
+}
+
 function clamp(n: number) {
   return Math.min(BUDGET_MAX, Math.max(BUDGET_MIN, Math.round(n / BUDGET_STEP) * BUDGET_STEP));
 }
@@ -19,7 +28,7 @@ function clamp(n: number) {
  * `householdKnown`: in onboarding the number of people comes on the next
  * step, so the explanation says so instead of guessing.
  */
-export function BudgetControl({ value, onChange, householdSize, householdKnown = true }: { value: number; onChange: (n: number) => void; householdSize: HouseholdSize; householdKnown?: boolean }) {
+export function BudgetControl({ value, onChange, householdSize, householdKnown = true, explain = true }: { value: number; onChange: (n: number) => void; householdSize: HouseholdSize; householdKnown?: boolean; explain?: boolean }) {
   const [custom, setCustom] = useState(() => !(BUDGET_PRESETS as readonly number[]).includes(value));
   // Text being typed; null when the field shows the committed value.
   const [draft, setDraft] = useState<string | null>(null);
@@ -45,10 +54,6 @@ export function BudgetControl({ value, onChange, householdSize, householdKnown =
     else setNote(null);
     onChange(c);
   };
-
-  const servings = servingsFor(householdSize);
-  const perMeal = value / (10 * servings); // 5 dinners + 5 lunches per person
-  const who = servings === 1 ? 'one person' : `${servings} people`;
 
   return (
     <View>
@@ -92,11 +97,11 @@ export function BudgetControl({ value, onChange, householdSize, householdKnown =
           {note}
         </Text>
       ) : null}
-      <Text variant="meta" tone="muted" style={{ marginTop: custom ? space.m : 0 }} testID="budget-explainer">
-        {householdKnown
-          ? `$${value} a week is about $${perMeal.toFixed(2)} a meal for ${who}, across 5 dinners and 5 lunches.`
-          : `$${value} a week covers 5 dinners and 5 lunches: about $${(value / 10).toFixed(2)} a meal for one person. You’ll say who’s eating next, and we’ll check the fit before planning.`}
-      </Text>
+      {explain ? (
+        <Text variant="meta" tone="muted" style={{ marginTop: custom ? space.m : 0 }} testID="budget-explainer">
+          {budgetExplainer(value, householdSize, householdKnown)}
+        </Text>
+      ) : null}
     </View>
   );
 }
