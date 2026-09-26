@@ -421,6 +421,20 @@ The product owner's design audit asked for a correction pass before any further 
 - Risk: unverified until the first run. Signing through the API key is the likeliest point of failure; the fix path is in `testflight-setup.md`.
 - Owner: Product owner
 
+### D-042 — Public site on Vercel at weekwell.pro
+
+- Status: Accepted (product owner, 2026-09-26: "do setup for Vercel, weekwell.pro domain is purchased and connected")
+- Date: 2026-09-26
+- Workstream: shared
+- Decision:
+  - **Hosting:** Vercel serves the static site built from `site/` at https://weekwell.pro. `vercel.json` sets the build (`node site/build.mjs`, no dependency install), clean URLs (`/privacy`, `/terms`, `/health-data`, `/support`), security headers and a strict content security policy. An `ignoreCommand` skips deploys when nothing under `site/` changed.
+  - **Replaced:** the GitHub Pages workflow (`site.yml`) is removed.
+  - **Pages:** a landing page in the Bold blocks look, plus the existing privacy, consumer health data, terms and support pages, a 404 page, a sitemap and robots.txt.
+  - **Publisher details:** Belevate LLC, Delaware law, hello@weekwell.pro for support and privacy, effective September 26, 2026. The postal address is optional: its lines appear only once `mailingAddress` is set.
+  - **App:** the legal links default to https://weekwell.pro (`EXPO_PUBLIC_SITE_URL` still overrides it).
+- Still owed: a lawyer's review of the texts (`docs/legal/us-legal-review.md`), a working inbox for hello@weekwell.pro, and the mailing address.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
