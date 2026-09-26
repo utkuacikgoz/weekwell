@@ -105,6 +105,7 @@ test('swap one meal, then undo it', async ({ page }) => {
   await $(page, 'meal-dinner_wed').click();
   const original = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'repair-swap').click();
+  await $(page, 'swap-option-0').click();
   await expect($(page, 'swap-pending')).toContainText('Swapped to');
   expect(await ($(page, 'meal-name').textContent()) ?? '').not.toBe(original);
   await $(page, 'undo-swap').click();
@@ -118,6 +119,7 @@ test('keep a swap: the week shows the new meal', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'meal-dinner_wed').click();
   await $(page, 'repair-swap').click();
+  await $(page, 'swap-option-0').click();
   const swapped = await ($(page, 'meal-name').textContent()) ?? '';
   await $(page, 'keep-swap').click();
   await expect($(page, 'meal-toast')).toContainText('Swap kept');
@@ -192,4 +194,31 @@ test('cooking mode: timer from the step, resume after leaving, done clears it', 
   // Opened from the week, so Done returns to the week.
   await expect($(page, 'tonight-card')).toBeVisible();
   await expect($(page, 'continue-cooking')).toHaveCount(0);
+});
+
+test('swap sheet: pick the second choice and get exactly that meal', async ({ page }) => {
+  await buildWeek(page, { query: 'today=wed' });
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'repair-swap').click();
+  const options = page.getByTestId(/^swap-option-/u).filter({ visible: true });
+  const count = await options.count();
+  expect(count).toBeGreaterThan(1);
+  expect(count).toBeLessThanOrEqual(3);
+  await expect($(page, 'swap-option-1')).toContainText(/min · .* · (about|same)/u);
+  const label = (await $(page, 'swap-option-1').getAttribute('aria-label')) ?? '';
+  const chosen = label.split('. ')[0]!;
+  await $(page, 'swap-option-1').click();
+  await expect($(page, 'swap-pending')).toContainText(`Swapped to ${chosen}`);
+  expect(((await $(page, 'meal-name').textContent()) ?? '').trim()).toBe(chosen);
+});
+
+test('meal tabs: ingredients first, steps one tap away', async ({ page }) => {
+  await buildWeek(page, { query: 'today=wed' });
+  await $(page, 'meal-dinner_wed').click();
+  await expect($(page, 'tab-ingredients')).toHaveAttribute('aria-selected', 'true');
+  await expect($(page, 'ingredients-panel')).toBeVisible();
+  await expect($(page, 'steps-panel')).toHaveCount(0);
+  await $(page, 'tab-steps').click();
+  await expect($(page, 'steps-panel')).toBeVisible();
+  await expect($(page, 'ingredients-panel')).toHaveCount(0);
 });

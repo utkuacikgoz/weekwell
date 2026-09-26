@@ -13,6 +13,7 @@ import {
   checkFeasibility,
   diffGroceryLists,
   findReplacement,
+  swapOptions,
   preferencesCompletedProps,
   priceGroceryList,
   reconcileChecks,
@@ -120,7 +121,8 @@ type Ctx = {
   refreshPrices: () => Promise<void>;
   toggleChecked: (itemId: string) => void;
   toggleMealOnList: (mealId: string) => void;
-  repairMeal: (mealId: string, action: RepairAction) => Promise<SwapRecord | null>;
+  /** `recipeId`: the swap the person chose from the options (D-040 SW2); otherwise the best match for `action`. */
+  repairMeal: (mealId: string, action: RepairAction, recipeId?: string) => Promise<SwapRecord | null>;
   undoSwap: () => Promise<void>;
   dismissSwap: () => void;
   applyPlan: (change: PlanChange, undoMessage?: string) => Promise<'ok' | 'failed'>;
@@ -390,13 +392,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const repairMeal = useCallback(
-    async (mealId: string, action: RepairAction): Promise<SwapRecord | null> => {
+    async (mealId: string, action: RepairAction, recipeId?: string): Promise<SwapRecord | null> => {
       const plan = data.plan;
       if (!plan) return null;
       let res: { plan: Plan; previous: Meal; next: Meal; diff: GroceryDiff };
       if (remote) {
         try {
-          const out = await api.repair(plan.id, mealId, action);
+          const out = recipeId ? await api.setMeal(plan.id, mealId, recipeId) : await api.repair(plan.id, mealId, action);
           const meals = (p: Plan) => [...p.dinners, ...p.lunches];
           const index = meals(plan).findIndex((m) => m.id === mealId);
           res = {
@@ -410,7 +412,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return null;
         }
       } else {
-        const recipe = findReplacement(plan, mealId, action);
+        const recipe = recipeId ? (swapOptions(plan, mealId).find((o) => o.recipe.id === recipeId)?.recipe ?? null) : findReplacement(plan, mealId, action);
         if (!recipe) {
           haptic.warning();
           return null;

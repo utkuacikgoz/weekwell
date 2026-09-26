@@ -12,13 +12,17 @@ import { Text } from './Text';
  * e2e/footer.spec.ts at 320px and 150% text). Keep the bar to one primary
  * action plus at most the price chip (`footerRow`, with the action in <FooterAction>).
  */
-export function Screen({ children, footer, footerRow, overlay, testID, scrollToTopKey }: { children: ReactNode; footer?: ReactNode; footerRow?: boolean; overlay?: ReactNode; testID?: string; scrollToTopKey?: unknown }) {
+export function Screen({ children, footer, footerRow, overlay, testID, scrollToTopKey, scrollToY }: { children: ReactNode; footer?: ReactNode; footerRow?: boolean; overlay?: ReactNode; testID?: string; scrollToTopKey?: unknown; scrollToY?: number }) {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollView>(null);
   // Bring a result (e.g. a swap confirmation at the top) into view after an action lower on the page.
   useEffect(() => {
     if (scrollToTopKey) scroll.current?.scrollTo({ y: 0, animated: false });
   }, [scrollToTopKey]);
+  // Keep a moving focus (the current cooking step) in view.
+  useEffect(() => {
+    if (scrollToY !== undefined) scroll.current?.scrollTo({ y: Math.max(0, scrollToY), animated: true });
+  }, [scrollToY]);
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}

@@ -3,6 +3,7 @@ import {
   findReplacement,
   formatQuantity,
   getIngredient,
+  swapOptions,
   type Meal,
   type RepairAction,
 } from '@weekwell/domain';
@@ -17,6 +18,7 @@ import { mealWhen } from '../../components/MealRow';
 import { NavBar } from '../../components/NavBar';
 import { Text } from '../../components/Text';
 import { LockedSheet } from '../../components/LockedSheet';
+import { Sheet } from '../../components/Sheet';
 import { Toast } from '../../components/Toast';
 import { canChangePlan } from '../../services/access';
 import { resumable } from '../../services/cooking';
@@ -68,6 +70,14 @@ function Disclosure({ title, summary, open, onToggle, children, testID }: { titl
   );
 }
 
+/** "25 min · 5 min quicker · about $1.20 less": what changes if you pick this swap. */
+function swapFacts(o: ReturnType<typeof swapOptions>[number]): string {
+  const time = o.minutesDelta === 0 ? 'same time' : `${Math.abs(o.minutesDelta)} min ${o.minutesDelta < 0 ? 'quicker' : 'longer'}`;
+  const cents = Math.abs(o.costDeltaCents);
+  const cost = cents < 50 ? 'about the same price' : `about $${(cents / 100).toFixed(2)} ${o.costDeltaCents < 0 ? 'less' : 'more'}`;
+  return `${o.recipe.totalMinutes} min · ${time} · ${cost}`;
+}
+
 export default function MealDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, analytics, repairMeal, undoSwap, lastSwap, dismissSwap, toggleMealOnList, entitlementView } = useStore();
@@ -78,6 +88,8 @@ export default function MealDetail() {
   const meal = meals.find((m) => m.id === id);
   const [nutritionOpen, setNutritionOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [tab, setTab] = useState<'ingredients' | 'steps'>('ingredients');
+  const [swapOpen, setSwapOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: 'ink' | 'warning' } | null>(null);
 
   useEffect(() => {
@@ -104,12 +116,12 @@ export default function MealDetail() {
   if (!meal) return <Redirect href="/week" />;
 
   const showToast = (message: string, tone: 'ink' | 'warning' = 'ink') => setToast({ message, tone });
-  const repair = async (action: RepairAction) => {
+  const repair = async (action: RepairAction, recipeId?: string) => {
     if (!canChangePlan(entitlementView)) {
       setLocked(true);
       return;
     }
-    const res = await repairMeal(meal.id, action);
+    const res = await repairMeal(meal.id, action, recipeId);
     if (!res) showToast(UNAVAILABLE[action], 'warning');
     else setToast(null);
   };
@@ -118,6 +130,7 @@ export default function MealDetail() {
   const heroWidth = Math.min(width, 560) - 2 * (space.m + 4);
   const changedItems = pending ? pending.diff.added.length + pending.diff.removed.length + pending.diff.changed.length : 0;
   const swapOption = options?.find((o) => o.action === 'swap');
+  const choices = swapOpen ? swapOptions(plan, meal.id) : [];
 
   return (
     <Screen
@@ -199,29 +212,50 @@ export default function MealDetail() {
         {!onList ? <Text variant="caption" tone="warning">Not on list</Text> : null}
       </Pressable>
 
-      <Text variant="heading" accessibilityRole="header" style={styles.section}>Ingredients</Text>
-      {meal.ingredients.map((q) => {
-        const ing = getIngredient(q.ingredientId);
-        const others = ing.staple ? [] : usedElsewhere(q.ingredientId);
-        return (
-          <View key={q.ingredientId} style={styles.ingredient} accessible accessibilityLabel={`${formatQuantity(q.amount, q.unit)} ${ing.name}${others.length ? `. Also in ${others.length} other meal${others.length === 1 ? '' : 's'}` : ''}`}>
-            <Text variant="bodyStrong" style={styles.qty}>{formatQuantity(q.amount, q.unit)}</Text>
-            <View style={{ flex: 1 }}>
-              <Text>{ing.name}</Text>
-              {others.length ? <Text variant="caption" tone="accent">Also in {others.length === 1 ? mealWhen(others[0]!) : `${others.length} other meals`}</Text> : null}
-              {ing.staple ? <Text variant="caption" tone="muted">Assumed at home</Text> : null}
-            </View>
-          </View>
-        );
-      })}
-
-      <Text variant="heading" accessibilityRole="header" style={styles.section}>Steps</Text>
-      {meal.steps.map((s, i) => (
-        <View key={i} style={styles.step}>
-          <View style={styles.stepNo}><Text variant="label">{i + 1}</Text></View>
-          <Text style={{ flex: 1 }}>{s}</Text>
+      {/* D-040 MD2: Ingredients and Steps as tabs, so each list starts near the top. */}
+      <View style={styles.tabs} accessibilityRole="tablist">
+        {(['ingredients', 'steps'] as const).map((t) => (
+          <Pressable
+            key={t}
+            testID={`tab-${t}`}
+            accessibilityRole="tab"
+            aria-selected={tab === t}
+            onPress={() => setTab(t)}
+            style={({ pressed }) => [styles.tab, tab === t && styles.tabOn, pressed && { opacity: 0.85 }]}
+          >
+            <Text variant="bodyStrong" tone={tab === t ? 'onAccent' : 'ink'}>
+              {t === 'ingredients' ? `Ingredients · ${meal.ingredients.length}` : `Steps · ${meal.steps.length}`}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {tab === 'ingredients' ? (
+        <View testID="ingredients-panel">
+          {meal.ingredients.map((q) => {
+            const ing = getIngredient(q.ingredientId);
+            const others = ing.staple ? [] : usedElsewhere(q.ingredientId);
+            return (
+              <View key={q.ingredientId} style={styles.ingredient} accessible accessibilityLabel={`${formatQuantity(q.amount, q.unit)} ${ing.name}${others.length ? `. Also in ${others.length} other meal${others.length === 1 ? '' : 's'}` : ''}`}>
+                <Text variant="bodyStrong" style={styles.qty}>{formatQuantity(q.amount, q.unit)}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text>{ing.name}</Text>
+                  {others.length ? <Text variant="caption" tone="accent">Also in {others.length === 1 ? mealWhen(others[0]!) : `${others.length} other meals`}</Text> : null}
+                  {ing.staple ? <Text variant="caption" tone="muted">Assumed at home</Text> : null}
+                </View>
+              </View>
+            );
+          })}
         </View>
-      ))}
+      ) : (
+        <View testID="steps-panel">
+          {meal.steps.map((s, i) => (
+            <View key={i} style={styles.step}>
+              <View style={styles.stepNo}><Text variant="label">{i + 1}</Text></View>
+              <Text style={{ flex: 1 }}>{s}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       <Disclosure
         title="Nutrition and allergens"
@@ -236,7 +270,7 @@ export default function MealDetail() {
 
       <Text variant="heading" accessibilityRole="header" style={styles.section}>Not feeling it?</Text>
       <Text variant="meta" tone="muted" style={{ marginBottom: space.s }}>Only this meal changes, and you can undo.</Text>
-      <Button label={REPAIR_ACTION_LABEL.swap} kind="secondary" disabled={!swapOption?.available || !!pending} onPress={() => repair('swap')} testID="repair-swap" />
+      <Button label={REPAIR_ACTION_LABEL.swap} kind="secondary" disabled={!swapOption?.available || !!pending} onPress={() => (canChangePlan(entitlementView) ? setSwapOpen(true) : setLocked(true))} testID="repair-swap" />
       {!swapOption?.available ? <Text variant="meta" tone="muted">{UNAVAILABLE.swap}</Text> : null}
       <Disclosure title="More changes" summary="Cheaper, more protein, or quicker" open={moreOpen} onToggle={() => setMoreOpen((v) => !v)} testID="more-changes">
         {options
@@ -248,6 +282,29 @@ export default function MealDetail() {
             </View>
           ))}
       </Disclosure>
+      <Sheet visible={swapOpen} title="Choose a swap" onClose={() => setSwapOpen(false)} testID="swap-sheet">
+        <Text variant="meta" tone="muted">Only this meal changes, and you can undo. Price changes are rough estimates.</Text>
+        {choices.map((o, i) => (
+          <Pressable
+            key={o.recipe.id}
+            testID={`swap-option-${i}`}
+            accessibilityRole="button"
+            accessibilityLabel={`${o.recipe.name}. ${swapFacts(o)}`}
+            onPress={() => {
+              setSwapOpen(false);
+              void repair('swap', o.recipe.id);
+            }}
+            style={({ pressed }) => [styles.choice, pressed && { backgroundColor: color.placeholder }]}
+          >
+            <MealImage recipeId={o.recipe.id} ingredientIds={o.recipe.perServing.map((p) => p.ingredientId)} width={64} radius={radius.thumb} />
+            <View style={{ flex: 1 }}>
+              <Text variant="bodyStrong">{o.recipe.name}</Text>
+              <Text variant="meta" tone="muted">{swapFacts(o)}</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={color.ink} />
+          </Pressable>
+        ))}
+      </Sheet>
       <LockedSheet visible={locked} onClose={() => setLocked(false)} action="swap meals" />
     </Screen>
   );
@@ -267,6 +324,10 @@ const styles = StyleSheet.create({
   qty: { width: 80 },
   step: { flexDirection: 'row', gap: space.m - 4, paddingVertical: space.s },
   stepNo: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.raised, alignItems: 'center', justifyContent: 'center' },
+  tabs: { flexDirection: 'row', gap: space.s, marginTop: space.l + 4, marginBottom: space.s },
+  tab: { flex: 1, minHeight: MIN_TOUCH + 4, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: color.accent, paddingHorizontal: space.s },
+  tabOn: { backgroundColor: color.accent },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, minHeight: MIN_TOUCH + 24, paddingVertical: space.s, borderBottomWidth: 1, borderBottomColor: color.divider },
   disclosureWrap: { marginTop: space.l },
   disclosure: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.s, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
 });
