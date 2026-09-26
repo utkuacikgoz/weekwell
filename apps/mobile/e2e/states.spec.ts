@@ -35,7 +35,9 @@ test('a user can inspect pricing caveats in the list', async ({ page }) => {
 
 test('over budget is stated, can be rebuilt, and the rebuild can be undone', async ({ page }) => {
   await buildWeek(page, { store: 'walmart', budget: 40, household: '3_4' });
-  await expect($(page, 'price-notice')).toContainText(/Estimated total \$\d+ · \$\d+ over your \$40 target/u);
+  // D-040 PR5: a budget line above the dinners instead of a notice card.
+  await expect($(page, 'budget-line')).toContainText(/\$\d+ this week · \$\d+ over your \$40/u);
+  await expect($(page, 'price-notice')).toHaveCount(0);
   await expect($(page, 'price-action-rebuild')).toHaveText('Rebuild under $40');
   const before = await page.locator('[data-testid^="meal-"]:visible').allInnerTexts();
   await $(page, 'price-action-rebuild').click();
@@ -132,4 +134,27 @@ test('plan a new week from the week screen', async ({ page }) => {
   await $(page, 'generate').click();
   await expect($(page, 'tonight-card')).toBeVisible({ timeout: 15_000 });
   await expect($(page, 'meal-dinner_mon')).not.toContainText('Not on grocery list');
+});
+
+test('PR5: every meal shows its share, the shares add up to the total, and a swap link saves money', async ({ page }) => {
+  await buildWeek(page, { store: 'walmart', budget: 40, household: '3_4' });
+  const line = (await $(page, 'budget-line').textContent()) ?? '';
+  const total = Number(/\$(\d+) this week/u.exec(line)?.[1]);
+  const costs = await page.getByTestId(/^cost-/u).filter({ visible: true }).allTextContents();
+  expect(costs.length).toBe(7);
+  const sum = costs.map((c) => Number(c.replace(/[^0-9.]/gu, ''))).reduce((a, b) => a + b, 0);
+  // Each share is rounded to whole dollars for display, so allow rounding drift.
+  expect(Math.abs(sum - total)).toBeLessThanOrEqual(costs.length);
+  const link = page.getByTestId(/^swap-save-/u).filter({ visible: true }).first();
+  await expect(link).toContainText(/Swap, save about \$\d+/u);
+  await link.click();
+  await expect($(page, 'swap-sheet')).toContainText('Cheaper swaps');
+  await $(page, 'swap-option-0').click();
+  await expect($(page, 'swap-pending')).toContainText('Swapped to');
+});
+
+test('PR5: no total, no costs', async ({ page }) => {
+  await buildWeek(page, { query: 'prices=unavailable' });
+  await expect(page.getByTestId(/^cost-/u).filter({ visible: true })).toHaveCount(0);
+  await expect($(page, 'budget-line')).toHaveCount(0);
 });

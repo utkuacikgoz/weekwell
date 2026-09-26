@@ -9,6 +9,7 @@ export * from './repair';
 export * from './entitlement';
 export * from './revenuecat';
 export * from './price-check';
+export * from './meal-costs';
 export { CHECKED_PRICES } from './fixtures/checked-prices';
 export * from './analytics';
 export * from './model-output';
