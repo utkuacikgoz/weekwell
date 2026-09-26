@@ -30,6 +30,7 @@ test('core screens in dark mode', async ({ page }) => {
   await page.waitForTimeout(400);
   if (REVIEW) await page.screenshot({ path: `${OUT}/06-about-sheet.png` });
   await page.goto('/trial?today=wed');
+  await $(page, 'see-other-plans').click();
   await $(page, 'product-monthly').click();
   await shot(page, '07-paywall', 'start-trial');
 });

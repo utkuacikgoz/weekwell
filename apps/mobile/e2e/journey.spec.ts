@@ -142,6 +142,7 @@ test('cooking mode walks through the steps', async ({ page }) => {
 test('changing store previews exactly what will change before applying', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'edit-preferences').click();
+  await $(page, 'pref-row-store').click();
   await $(page, 'pref-store-walmart').click();
   await expect($(page, 'preference-preview')).toContainText(/Changing to Walmart may change \d+ prices/u);
   await $(page, 'apply-preferences').click();
@@ -221,4 +222,20 @@ test('meal tabs: ingredients first, steps one tap away', async ({ page }) => {
   await $(page, 'tab-steps').click();
   await expect($(page, 'steps-panel')).toBeVisible();
   await expect($(page, 'ingredients-panel')).toHaveCount(0);
+});
+
+test('settings list: rows show current values and open their own screen', async ({ page }) => {
+  await buildWeek(page, { budget: 100 });
+  await $(page, 'edit-preferences').click();
+  await expect($(page, 'pref-row-store')).toContainText('Trader Joe’s');
+  await expect($(page, 'pref-row-budget')).toContainText('$100 a week');
+  await expect($(page, 'pref-row-subscription')).toBeVisible();
+  await $(page, 'pref-row-household').click();
+  await expect($(page, 'pref-page-household')).toBeVisible();
+  await $(page, 'pref-household-2').click();
+  await expect($(page, 'preference-preview')).toBeVisible();
+  await $(page, 'nav-back').click();
+  // The pending change is kept on the list and still needs applying.
+  await expect($(page, 'pref-row-household')).toContainText('2 people');
+  await expect($(page, 'apply-preferences')).toBeVisible();
 });
