@@ -1,4 +1,4 @@
-import { DAY_LABEL, RETAILER_LABEL, getProduct, type Day, type EntitlementView } from '@weekwell/domain';
+import { DAY_LABEL, RETAILER_LABEL, formatMoney, getProduct, mealCostShares, swapOptions, type Day, type EntitlementView, type Meal } from '@weekwell/domain';
 import { Redirect, router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -60,6 +60,35 @@ export default function Week() {
   };
   const cardWidth = Math.min(width, 560) - 2 * (space.m + 4);
 
+  // D-040 PR5: each meal's share of the displayed estimate, and cheaper-swap links when over budget.
+  const listMeals = [...plan.dinners, ...plan.lunches].filter((m) => !data.skippedMealIds.includes(m.id));
+  const total = prices && prices.retailer === p.retailer && prices.total.status === 'available' ? prices.total : null;
+  const shares = total && prices ? mealCostShares(listMeals, groceryItems, new Map(prices.items)) : null;
+  const overCents = total ? total.totalCents - p.weeklyBudget * 100 : 0;
+  const swapLinks = new Map<string, { label: string; onPress: () => void }>();
+  if (shares && overCents > 0) {
+    let covered = 0;
+    const byCost = plan.dinners.filter((d) => shares.has(d.id)).sort((a, b) => (shares.get(b.id) ?? 0) - (shares.get(a.id) ?? 0));
+    for (const d of byCost) {
+      if (covered >= overCents || swapLinks.size >= 2) break;
+      const best = swapOptions(plan, d.id, 1, 'cheaper')[0];
+      const saving = best ? -best.costDeltaCents : 0;
+      if (saving < 100) continue;
+      covered += saving;
+      swapLinks.set(d.id, {
+        // Savings come from sample package prices, so the number shows only when the total does too.
+        label: total?.isSample ? `Swap, save about ${formatMoney(saving, { whole: true })}` : 'Swap for a cheaper dinner',
+        onPress: () => {
+          if (!canChangePlan(entitlementView)) {
+            setLockedAction('swap meals');
+            setSheet('locked');
+          } else router.push(`/meal/${d.id}?swap=cheaper` as Href);
+        },
+      });
+    }
+  }
+  const costOf = (m: Meal) => (shares?.has(m.id) ? formatMoney(shares.get(m.id)!, { whole: true }) : undefined);
+
   return (
     <Screen
       testID="week-screen"
@@ -111,6 +140,7 @@ export default function Week() {
         budget={p.weeklyBudget}
         onAction={onPriceAction}
         secondary={{ label: 'Change setup', onPress: () => router.push('/preferences') }}
+        skip={shares ? ['over_budget'] : undefined}
       />
 
       {(() => {
@@ -146,19 +176,33 @@ export default function Week() {
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         This week
       </Text>
+      {total && shares ? (
+        <View style={styles.budgetLine} testID="budget-line" accessibilityLiveRegion="polite">
+          <Text variant="meta" style={{ flexShrink: 1 }}>
+            <Text variant="label">{formatMoney(total.totalCents, { whole: true })} this week</Text>
+            {overCents > 0 ? (
+              <Text variant="label" tone="warning">{` · ${overCents < 100 ? 'less than $1' : formatMoney(overCents, { whole: true })} over`}</Text>
+            ) : (
+              <Text variant="meta" tone="muted">{` · ${formatMoney(-overCents, { whole: true })} under`}</Text>
+            )}
+            <Text variant="meta" tone="muted">{` your $${p.weeklyBudget}`}</Text>
+          </Text>
+          {overCents > 0 ? <Button kind="quiet" label={`Rebuild under $${p.weeklyBudget}`} onPress={() => onPriceAction('rebuild')} testID="price-action-rebuild" /> : null}
+        </View>
+      ) : null}
       {plan.dinners.map((d, i) => (
-        <WeekRow key={d.id} band={i} meal={d} tonight={d.day === tonightDay} offList={data.skippedMealIds.includes(d.id)} onPress={() => open(d.id)} />
+        <WeekRow key={d.id} band={i} meal={d} tonight={d.day === tonightDay} offList={data.skippedMealIds.includes(d.id)} onPress={() => open(d.id)} cost={costOf(d)} swap={swapLinks.get(d.id)} />
       ))}
 
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         Work lunches
       </Text>
       {plan.lunches.map((l, i) => (
-        <WeekRow key={l.id} band={plan.dinners.length + i} meal={l} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} />
+        <WeekRow key={l.id} band={plan.dinners.length + i} meal={l} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} cost={costOf(l)} />
       ))}
 
       <Text variant="meta" tone="muted" style={{ marginTop: space.l, marginBottom: space.l }}>
-        Protein estimate · check package labels for exact values
+        {shares ? 'A meal’s cost is its share of the estimated total. ' : ''}Protein is an estimate · check package labels for exact values
       </Text>
 
       <Button
@@ -216,6 +260,7 @@ const styles = StyleSheet.create({
   section: { marginTop: space.l + 4, marginBottom: space.xs },
   resume: { flexDirection: 'row', alignItems: 'center', backgroundColor: color.accentTint, borderRadius: radius.control, marginTop: space.m },
   resumeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 8, paddingLeft: space.m - 4 },
+  budgetLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space.s, marginBottom: space.xs },
   sub: { marginTop: space.l, flexDirection: 'row', alignItems: 'center', gap: space.m },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.s, backgroundColor: color.accentTint, borderRadius: radius.control, paddingLeft: space.m - 4, marginTop: space.s },
   undoBtn: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s },

@@ -412,7 +412,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return null;
         }
       } else {
-        const recipe = recipeId ? (swapOptions(plan, mealId).find((o) => o.recipe.id === recipeId)?.recipe ?? null) : findReplacement(plan, mealId, action);
+        const recipe = recipeId ? (swapOptions(plan, mealId, Number.MAX_SAFE_INTEGER).find((o) => o.recipe.id === recipeId)?.recipe ?? null) : findReplacement(plan, mealId, action);
         if (!recipe) {
           haptic.warning();
           return null;
