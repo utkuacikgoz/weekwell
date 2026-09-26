@@ -25,3 +25,4 @@ apps/mobile/android/
 
 # QA artifacts are regenerated; approved captures are committed under mobile/docs/review/
 qa-artifacts/tmp/
+site/_dist/

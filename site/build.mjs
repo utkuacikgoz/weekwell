@@ -75,6 +75,7 @@ ${site && page.file !== '404.html' ? `<link rel="canonical" href="${esc(site + p
 <meta property="og:type" content="website">
 ${site ? `<meta property="og:image" content="${esc(site)}/icon.png">` : ''}
 <meta name="theme-color" content="#1F5C40">
+${page.file === '404.html' ? '<meta name="robots" content="noindex">' : ''}
 <link rel="icon" href="/favicon.png">
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
