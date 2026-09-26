@@ -85,7 +85,7 @@ The app requests no device permissions (no camera, location, contacts, notificat
 ## Open before submission
 
 1. Product-owner approval of every screen and sensory state (D-016, D-018).
-2. D-030: EAS project link and credentials, `EXPO_TOKEN` secret; then enable the daily TestFlight workflow (bundle id, team and App Store Connect record are set).
+2. D-041: add the App Store Connect API key as three GitHub secrets, then set `TESTFLIGHT_ENABLED` (see `testflight-setup.md`; no Expo account needed).
 3. D-014 real purchases (StoreKit/RevenueCat) and store webhooks.
 4. D-013 auth provider and email delivery (API build), plus a hosted API.
 5. D-011 price source, or explicit acceptance of labelled sample prices.
