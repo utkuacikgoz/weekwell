@@ -19,7 +19,7 @@ const CASES: Case[] = [
     name: 'week-over-budget',
     open: async (page, q) => {
       await buildWeek(page, { budget: 40, query: q });
-      await expect($(page, 'price-notice')).toBeVisible();
+      await expect($(page, 'budget-line')).toBeVisible();
     },
   },
   {

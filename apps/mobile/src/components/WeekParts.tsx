@@ -48,19 +48,21 @@ export function TonightCard({ meal, label, onPress, width, compact }: { meal: Me
 
 /** One day in the week list: image, day, dish, facts, and a clear trailing affordance. */
 /** `band`: the row's position in the week; it becomes a full-width colour band (D-040). */
-export function WeekRow({ meal, onPress, tonight, offList, band }: { meal: Meal; onPress: () => void; tonight?: boolean; offList?: boolean; band?: number }) {
+/** `cost`: this meal's share of the week's estimate, e.g. "$24"; `swap`: a cheaper-swap link shown under the row (PR5). */
+export function WeekRow({ meal, onPress, tonight, offList, band, cost, swap }: { meal: Meal; onPress: () => void; tonight?: boolean; offList?: boolean; band?: number; cost?: string; swap?: { label: string; onPress: () => void } }) {
   const when =
     meal.slot === 'dinner'
       ? DAY_LABEL[meal.day]
       : `${DAY_SHORT[meal.coversDays[0] ?? 'mon']}–${DAY_SHORT[meal.coversDays[meal.coversDays.length - 1] ?? 'fri']} lunches`;
-  return (
+  const bandStyle = band !== undefined ? [styles.band, { backgroundColor: BANDS[band % BANDS.length] }] : null;
+  const row = (
     <Pressable
       testID={`meal-${meal.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`${when}${tonight ? ', tonight' : ''}: ${meal.name}. ${mealFacts(meal)}.${offList ? ' Not on your grocery list.' : ''}`}
+      accessibilityLabel={`${when}${tonight ? ', tonight' : ''}: ${meal.name}. ${mealFacts(meal)}.${cost ? ` About ${cost} of this week’s estimate.` : ''}${offList ? ' Not on your grocery list.' : ''}`}
       accessibilityHint="Opens the recipe"
       onPress={onPress}
-      style={({ pressed }) => [styles.row, band !== undefined && [styles.band, { backgroundColor: BANDS[band % BANDS.length] }], pressed && styles.rowPressed]}
+      style={({ pressed }) => [styles.row, bandStyle, swap && styles.rowWithSwap, pressed && styles.rowPressed]}
     >
       <MealImage recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={60} radius={radius.thumb} />
       <View style={{ flex: 1 }}>
@@ -70,10 +72,28 @@ export function WeekRow({ meal, onPress, tonight, offList, band }: { meal: Meal;
         <Text variant="bodyStrong">{meal.name}</Text>
         <Text variant="meta" tone="muted" style={band !== undefined ? { color: '#FFFFFF', opacity: 0.9 } : undefined}>{offList ? 'Not on grocery list' : mealFacts(meal)}</Text>
       </View>
+      {cost ? (
+        <Text variant="label" style={styles.cost} testID={`cost-${meal.id}`}>
+          {cost}
+        </Text>
+      ) : null}
       <View style={styles.chevron}>
         <Icon name="chevron-right" size={20} color={color.ink} />
       </View>
     </Pressable>
+  );
+  if (!swap) return row;
+  return (
+    <>
+      {row}
+      <Pressable accessibilityRole="button" onPress={swap.onPress} style={({ pressed }) => [styles.swapLink, bandStyle, pressed && styles.rowPressed]} testID={`swap-save-${meal.id}`}>
+        {/* White, not sun-yellow: yellow falls under 4.5:1 on the brown and green bands. */}
+        <Text variant="label" style={styles.swapText}>
+          {swap.label}
+        </Text>
+        <Icon name="chevron-right" size={16} color={color.ink} />
+      </Pressable>
+    </>
   );
 }
 
@@ -86,5 +106,9 @@ const styles = StyleSheet.create({
   rowPressed: { opacity: 0.85 },
   // Full-bleed: cancels the screen's side padding so the colour runs edge to edge.
   band: { marginHorizontal: -(space.m + 4), paddingHorizontal: space.m + 4, borderRadius: 0, marginVertical: 0 },
+  cost: { fontVariant: ['tabular-nums'] },
+  rowWithSwap: { paddingBottom: 0 },
+  swapLink: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: MIN_TOUCH, paddingLeft: 60 + 2 * space.m, paddingBottom: space.xs },
+  swapText: { textDecorationLine: 'underline' },
   chevron: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.18)' },
 });

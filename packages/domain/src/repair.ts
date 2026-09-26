@@ -53,16 +53,17 @@ export type SwapOption = {
 
 /**
  * The best few swaps for one meal (D-040 SW2: "choose from three"), best first.
- * The first is always what `findReplacement(plan, mealId, 'swap')` would pick.
+ * The first is always what `findReplacement(plan, mealId, action)` would pick.
+ * `cheaper` (PR5 "swap, save $6") lists only lower-cost meals, cheapest first.
  */
-export function swapOptions(plan: Plan, mealId: string, count = 3): SwapOption[] {
+export function swapOptions(plan: Plan, mealId: string, count = 3, action: 'swap' | 'cheaper' = 'swap'): SwapOption[] {
   const meal = allMeals(plan).find((m) => m.id === mealId);
   if (!meal) return [];
   const current = getRecipe(meal.recipeId);
   const prefs = plan.preferences;
   const cost = recipeCost(current, prefs);
   const protein = proteinPerServing(current.perServing);
-  return rankedReplacements(plan, mealId, 'swap')
+  return rankedReplacements(plan, mealId, action)
     .slice(0, count)
     .map((recipe) => ({
       recipe,

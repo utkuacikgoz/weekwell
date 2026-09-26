@@ -71,16 +71,16 @@ function Disclosure({ title, summary, open, onToggle, children, testID }: { titl
 }
 
 /** "25 min · 5 min quicker · about $1.20 less": what changes if you pick this swap. */
-function swapFacts(o: ReturnType<typeof swapOptions>[number]): string {
+function swapFacts(o: ReturnType<typeof swapOptions>[number], withPrice: boolean): string {
   const time = o.minutesDelta === 0 ? 'same time' : `${Math.abs(o.minutesDelta)} min ${o.minutesDelta < 0 ? 'quicker' : 'longer'}`;
   const cents = Math.abs(o.costDeltaCents);
   const cost = cents < 50 ? 'about the same price' : `about $${(cents / 100).toFixed(2)} ${o.costDeltaCents < 0 ? 'less' : 'more'}`;
-  return `${o.recipe.totalMinutes} min · ${time} · ${cost}`;
+  return withPrice ? `${o.recipe.totalMinutes} min · ${time} · ${cost}` : `${o.recipe.totalMinutes} min · ${time}`;
 }
 
 export default function MealDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, analytics, repairMeal, undoSwap, lastSwap, dismissSwap, toggleMealOnList, entitlementView } = useStore();
+  const { id, swap } = useLocalSearchParams<{ id: string; swap?: string }>();
+  const { data, analytics, repairMeal, undoSwap, lastSwap, dismissSwap, toggleMealOnList, entitlementView, priceCheck } = useStore();
   const [locked, setLocked] = useState(false);
   const { width } = useWindowDimensions();
   const plan = data.plan;
@@ -89,7 +89,9 @@ export default function MealDetail() {
   const [nutritionOpen, setNutritionOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tab, setTab] = useState<'ingredients' | 'steps'>('ingredients');
-  const [swapOpen, setSwapOpen] = useState(false);
+  // From the week's "Swap, save $6" link (PR5): open straight onto the cheaper choices.
+  const [swapOpen, setSwapOpen] = useState(swap === 'cheaper');
+  const cheaperOnly = swap === 'cheaper';
   const [toast, setToast] = useState<{ message: string; tone: 'ink' | 'warning' } | null>(null);
 
   useEffect(() => {
@@ -130,7 +132,10 @@ export default function MealDetail() {
   const heroWidth = Math.min(width, 560) - 2 * (space.m + 4);
   const changedItems = pending ? pending.diff.added.length + pending.diff.removed.length + pending.diff.changed.length : 0;
   const swapOption = options?.find((o) => o.action === 'swap');
-  const choices = swapOpen ? swapOptions(plan, meal.id) : [];
+  const choices = swapOpen ? swapOptions(plan, meal.id, 3, cheaperOnly ? 'cheaper' : 'swap') : [];
+  // Price changes come from sample package prices, so they show only while the displayed total does too.
+  const shown = priceCheck.status === 'done' ? priceCheck.prices : priceCheck.status === 'loading' ? priceCheck.previous : undefined;
+  const showPriceDelta = shown?.total.status === 'available' && shown.total.isSample;
 
   return (
     <Screen
@@ -282,14 +287,15 @@ export default function MealDetail() {
             </View>
           ))}
       </Disclosure>
-      <Sheet visible={swapOpen} title="Choose a swap" onClose={() => setSwapOpen(false)} testID="swap-sheet">
-        <Text variant="meta" tone="muted">Only this meal changes, and you can undo. Price changes are rough estimates.</Text>
+      <Sheet visible={swapOpen} title={cheaperOnly ? 'Cheaper swaps' : 'Choose a swap'} onClose={() => setSwapOpen(false)} testID="swap-sheet">
+        <Text variant="meta" tone="muted">Only this meal changes, and you can undo.{showPriceDelta ? ' Price changes are rough estimates.' : ''}</Text>
+        {choices.length === 0 ? <Text testID="swap-none">{cheaperOnly ? 'No cheaper meal fits your choices right now.' : UNAVAILABLE.swap}</Text> : null}
         {choices.map((o, i) => (
           <Pressable
             key={o.recipe.id}
             testID={`swap-option-${i}`}
             accessibilityRole="button"
-            accessibilityLabel={`${o.recipe.name}. ${swapFacts(o)}`}
+            accessibilityLabel={`${o.recipe.name}. ${swapFacts(o, showPriceDelta)}`}
             onPress={() => {
               setSwapOpen(false);
               void repair('swap', o.recipe.id);
@@ -299,7 +305,7 @@ export default function MealDetail() {
             <MealImage recipeId={o.recipe.id} ingredientIds={o.recipe.perServing.map((p) => p.ingredientId)} width={64} radius={radius.thumb} />
             <View style={{ flex: 1 }}>
               <Text variant="bodyStrong">{o.recipe.name}</Text>
-              <Text variant="meta" tone="muted">{swapFacts(o)}</Text>
+              <Text variant="meta" tone="muted">{swapFacts(o, showPriceDelta)}</Text>
             </View>
             <Icon name="chevron-right" size={20} color={color.ink} />
           </Pressable>

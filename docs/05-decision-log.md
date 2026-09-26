@@ -396,7 +396,11 @@ The product owner's design audit asked for a correction pass before any further 
   - **Swapping:** SW2, choose from three, each with time and price change.
   - **Cooking:** CK3, all steps, current one highlighted.
   - **Grocery list:** GL1, by aisle with prices (already built).
-  - **Price and budget:** PR1 notice card for now. The owner asked for more options; PR4–PR7 are on the picker page for review.
+  - **Price and budget:** PR5, cost on every dinner (picked 2026-09-26 from PR1–PR7).
+    - Every meal shows its share of the estimated total: each grocery item's cost is split across the meals that use it, in proportion to how much each uses (`mealCostShares`). Shares add up to the total.
+    - A budget line reads "$130 this week · $90 over your $40", with "Rebuild under $40".
+    - When over budget, the priciest dinners get "Swap, save about $X", which opens the cheaper swaps.
+    - Price truth: no total means no shares. Savings numbers come from sample package prices, so they show only when the total is a sample estimate (otherwise the link reads "Swap for a cheaper dinner"). The swap sheet's price deltas follow the same rule.
   - **Free week and plans:** PW2, one recommended plan (yearly) with "See other plans". Yearly is now chosen up front, which **replaces D-037's "nothing preselected"**. To keep the choice honest, the charge line above the button always states the exact price ("Free for 7 days, then $49.99 a year."), and the monthly and weekly prices show beside "See other plans" before it's opened.
   - **Preferences:** ST2, a settings list with sub-screens.
 - Built: all picks above except PR1, which stays until the owner reviews PR4–PR7. Swapping uses `swapOptions()` in the domain; the first choice always equals the old single swap. Settings keep one screen with in-place sub-screens, so a pending change survives moving between them and is applied once.
