@@ -7,10 +7,12 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
   retries: 0,
+  forbidOnly: !!process.env.CI,
   reporter: [['list'], ['html', { outputFolder: '../../qa-artifacts/tmp/playwright-report', open: 'never' }]],
   projects: [
     // The pilot build: everything on-device.
-    { name: 'local', testIgnore: /remote\.spec\.ts/u, use: { ...device, baseURL: 'http://127.0.0.1:8081' } },
+    // Tests are independent (fresh browser context each), so CI shards split them by test, not by file.
+    { name: 'local', testIgnore: /remote\.spec\.ts/u, fullyParallel: true, use: { ...device, baseURL: 'http://127.0.0.1:8081' } },
     // A build connected to the API (EXPO_PUBLIC_API_URL), against a real API process.
     { name: 'remote', testMatch: /remote\.spec\.ts/u, use: { ...device, baseURL: 'http://127.0.0.1:8082' } },
   ],

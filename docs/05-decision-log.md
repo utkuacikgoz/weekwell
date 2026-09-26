@@ -439,6 +439,21 @@ The product owner's design audit asked for a correction pass before any further 
 - Still owed: a lawyer's review of the texts (`docs/legal/us-legal-review.md`), a working inbox for hello@weekwell.pro, and the mailing address.
 - Owner: Product owner
 
+### D-043 — Faster, fewer CI and TestFlight runs
+
+- Status: Accepted (product owner, 2026-09-26: "shard the builds, they take so long; make sure we don't do unnecessary runs")
+- Date: 2026-09-26
+- Workstream: shared
+- Decision:
+  - **CI (`ci.yml`), only what changed:** a `changes` job reads the diff. Docs-only changes run nothing more. The app and API checks run only when their code or shared config changes, and the site build only when `site/` changes.
+  - **CI, cancel superseded runs:** a newer push to the same PR cancels the older run.
+  - **CI, shard the browser tests:** the web app is exported once and shared as an artifact. The browser tests run as 3 parallel shards, split per test (`fullyParallel` for the on-device project), with Playwright's browser cached. Locally each shard takes about 2 minutes, against about 7 for the whole suite in one run.
+  - **CI on main:** a push to main runs only the fast checks and the site build, because the browser tests already ran on the PR.
+  - **TestFlight, gate on Linux:** the typecheck, lint and tests run on Linux, where minutes cost a tenth of Mac minutes.
+  - **TestFlight, skip unchanged days:** a scheduled run builds only when app code changed in the last day; docs and tests don't count.
+  - **TestFlight, cache and trim:** CocoaPods are cached, and Xcode's index store is turned off for the archive.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
