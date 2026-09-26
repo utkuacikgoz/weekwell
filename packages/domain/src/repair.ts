@@ -39,8 +39,42 @@ function reuseWith(recipe: Recipe, others: readonly Meal[]): number {
  * Candidates respect exclusions and time and are not already in the plan.
  */
 export function findReplacement(plan: Plan, mealId: string, action: RepairAction): Recipe | null {
+  return rankedReplacements(plan, mealId, action)[0] ?? null;
+}
+
+export type SwapOption = {
+  recipe: Recipe;
+  /** Positive is longer than the current meal. */
+  minutesDelta: number;
+  /** Sample-price estimate for the whole household; positive costs more. */
+  costDeltaCents: number;
+  proteinDelta: number;
+};
+
+/**
+ * The best few swaps for one meal (D-040 SW2: "choose from three"), best first.
+ * The first is always what `findReplacement(plan, mealId, 'swap')` would pick.
+ */
+export function swapOptions(plan: Plan, mealId: string, count = 3): SwapOption[] {
   const meal = allMeals(plan).find((m) => m.id === mealId);
-  if (!meal) return null;
+  if (!meal) return [];
+  const current = getRecipe(meal.recipeId);
+  const prefs = plan.preferences;
+  const cost = recipeCost(current, prefs);
+  const protein = proteinPerServing(current.perServing);
+  return rankedReplacements(plan, mealId, 'swap')
+    .slice(0, count)
+    .map((recipe) => ({
+      recipe,
+      minutesDelta: recipe.totalMinutes - current.totalMinutes,
+      costDeltaCents: recipeCost(recipe, prefs) - cost,
+      proteinDelta: proteinPerServing(recipe.perServing) - protein,
+    }));
+}
+
+function rankedReplacements(plan: Plan, mealId: string, action: RepairAction): Recipe[] {
+  const meal = allMeals(plan).find((m) => m.id === mealId);
+  if (!meal) return [];
   const prefs = plan.preferences;
   const inPlan = new Set(allMeals(plan).map((m) => m.recipeId));
   const current = getRecipe(meal.recipeId);
@@ -68,8 +102,7 @@ export function findReplacement(plan: Plan, mealId: string, action: RepairAction
         return (r.goals.includes(prefs.proteinGoal) ? 10 : 0) + reuseWith(r, others) * 2;
     }
   };
-  const sorted = [...filtered].sort((a, b) => rank(b) - rank(a) || a.id.localeCompare(b.id));
-  return sorted[0] ?? null;
+  return [...filtered].sort((a, b) => rank(b) - rank(a) || a.id.localeCompare(b.id));
 }
 
 export type ReplaceResult = { plan: Plan; previous: Meal; next: Meal; diff: GroceryDiff };

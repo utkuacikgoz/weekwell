@@ -44,6 +44,7 @@ const CASES: Case[] = [
       await buildWeek(page, { query: q });
       await $(page, 'tonight-card').click();
       await $(page, 'repair-swap').click();
+      await $(page, 'swap-option-0').click();
       await expect($(page, 'keep-swap')).toBeVisible();
     },
   },
