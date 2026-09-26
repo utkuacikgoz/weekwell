@@ -2,7 +2,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, buildWeek, findTimerStep } from './helpers';
+import { $, buildWeek, findTimerStep, pickStore } from './helpers';
 
 const OUT = 'docs/review/v3/dark';
 const REVIEW = process.env.REVIEW === '1';
@@ -15,7 +15,7 @@ test('core screens in dark mode', async ({ page }) => {
   await page.goto('/onboarding');
   await shot(page, '01-welcome', 'start');
   await $(page, 'start').click();
-  await $(page, 'store-trader_joes').click();
+  await pickStore(page);
   await shot(page, '02-store-budget', 'continue');
   await buildWeek(page, { query: 'today=wed' });
   await shot(page, '03-week', 'open-grocery');

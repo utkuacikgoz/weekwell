@@ -9,7 +9,7 @@
  * FOOTER_SHOTS=1 saves each case to qa-artifacts/tmp/footer/.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { $, buildWeek, onboard } from './helpers';
+import { $, buildWeek, onboard, pickStore } from './helpers';
 
 type Case = { name: string; open: (page: Page, q: string) => Promise<void> };
 
@@ -52,7 +52,7 @@ const CASES: Case[] = [
     open: async (page, q) => {
       await page.goto(`/onboarding?${q}`);
       await $(page, 'start').click();
-      await $(page, 'store-trader_joes').click();
+      await pickStore(page);
     },
   },
   {

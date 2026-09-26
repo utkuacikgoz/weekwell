@@ -10,13 +10,17 @@ export async function onboard(
   await page.goto(`/onboarding${opts.query ? `?${opts.query}` : ''}`);
   await $(page, 'start').click();
   // Step 1: store and budget
-  await $(page, `store-${opts.store ?? 'trader_joes'}`).click();
-  if (opts.budget && [60, 80, 100].includes(opts.budget)) await $(page, `budget-${opts.budget}`).click();
-  else if (opts.budget) {
-    await $(page, 'budget-custom').click();
-    const input = $(page, 'budget-input');
-    await input.fill(String(opts.budget));
-    await input.blur();
+  await pickStore(page, opts.store ?? 'trader_joes');
+  if (opts.budget) {
+    await $(page, 'budget-pick').click();
+    if ([60, 80, 100].includes(opts.budget)) await $(page, `budget-${opts.budget}`).click();
+    else {
+      await $(page, 'budget-custom').click();
+      const input = $(page, 'budget-input');
+      await input.fill(String(opts.budget));
+      await input.blur();
+    }
+    await $(page, 'budget-done').click();
   }
   await $(page, 'continue').click();
   // Step 2: goal (default High protein), time, people
@@ -27,6 +31,13 @@ export async function onboard(
   for (const e of opts.exclusions ?? []) await $(page, `exclusion-${e}`).click();
   await $(page, 'continue').click();
   await expect($(page, 'generate')).toBeVisible();
+}
+
+/** Setup 1 is a sentence (D-040 SB3): tap the store blank, then pick in the sheet, which closes on choice. */
+export async function pickStore(page: Page, store: 'trader_joes' | 'walmart' = 'trader_joes') {
+  await $(page, 'store-pick').click();
+  await $(page, `store-${store}`).click();
+  await expect($(page, 'store-sheet')).toHaveCount(0);
 }
 
 export async function buildWeek(page: Page, opts: Parameters<typeof onboard>[1] = {}) {

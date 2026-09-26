@@ -10,7 +10,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { $, buildWeek, onboard } from './helpers';
+import { $, buildWeek, onboard, pickStore } from './helpers';
 import { audit as baseAudit } from './audit';
 
 const OUT = 'docs/review/screens';
@@ -35,7 +35,7 @@ for (const width of WIDTHS) {
         await audit(page, name('01-welcome'), { primary: 'start' });
         await $(page, 'start').click();
         await audit(page, name('02-store-budget-empty'), { primary: 'continue' });
-        await $(page, 'store-trader_joes').click();
+        await pickStore(page);
         await audit(page, name('03-store-budget-selected'), { primary: 'continue' });
         await $(page, 'continue').click();
         await audit(page, name('04-your-week'), { primary: 'continue' });

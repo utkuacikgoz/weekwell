@@ -35,6 +35,8 @@ test('the review screen reflects every choice and edits return to review', async
 
 test('budget input is bounded and explains corrections', async ({ page }) => {
   await page.goto('/onboarding/store');
+  await expect($(page, 'budget-pick')).toContainText('$80');
+  await $(page, 'budget-pick').click();
   // Presets first; the number field only appears for Custom.
   await expect($(page, 'budget-80')).toHaveAttribute('aria-checked', 'true');
   await expect($(page, 'budget-input')).toHaveCount(0);

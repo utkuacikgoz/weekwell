@@ -2,7 +2,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, onboard } from './helpers';
+import { $, onboard, pickStore } from './helpers';
 
 const OUT = 'docs/review/v3/onboarding';
 const REVIEW = process.env.REVIEW === '1';
@@ -15,6 +15,8 @@ test.describe('onboarding · 390×844', () => {
     await shot(page, '01-welcome', 'start');
     await $(page, 'start').click();
     await shot(page, '02-store-budget-empty', 'continue');
+    await $(page, 'store-pick').click();
+    await page.waitForTimeout(500); // let the sheet finish sliding up before measuring
     const b = await $(page, 'store-walmart').boundingBox();
     await page.mouse.move(b!.x + 40, b!.y + 20);
     await page.mouse.down();
@@ -22,9 +24,11 @@ test.describe('onboarding · 390×844', () => {
     if (REVIEW) await page.screenshot({ path: `${OUT}/03-pressed-store.png` });
     await page.mouse.up();
     await shot(page, '04-store-budget-selected', 'continue');
+    await $(page, 'budget-pick').click();
     await $(page, 'budget-custom').click();
-    await shot(page, '04b-store-budget-custom', 'continue');
+    await shot(page, '04b-store-budget-custom');
     await $(page, 'budget-80').click();
+    await $(page, 'budget-done').click();
     await $(page, 'continue').click();
     await $(page, 'time-20').click();
     await shot(page, '05-your-week', 'continue');
@@ -60,7 +64,7 @@ test.describe('onboarding · 320×568 at 150% text', () => {
   test('store and your week', async ({ page }) => {
     await page.goto('/onboarding?fontScale=1.5');
     await $(page, 'start').click();
-    await $(page, 'store-trader_joes').click();
+    await pickStore(page);
     await shot(page, '12-store-budget-320-150', 'continue');
     await $(page, 'continue').click();
     await shot(page, '13-your-week-320-150', 'continue');
@@ -77,7 +81,7 @@ test.describe('recording', () => {
     await pause();
     await $(page, 'start').click();
     await pause();
-    await $(page, 'store-trader_joes').click();
+    await pickStore(page);
     await pause();
     await $(page, 'continue').click();
     await pause();

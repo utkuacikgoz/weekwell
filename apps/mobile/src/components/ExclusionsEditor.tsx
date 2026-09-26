@@ -16,7 +16,7 @@ import { SectionLabel } from './Layout';
 import { Text } from './Text';
 
 /**
- * Exclusions: none, presets, and custom words. Conflicts that would leave too
+ * Exclusions: a switch per common allergen (D-040 FL2), plus custom words. Conflicts that would leave too
  * few meals are shown here, before generation (constraints).
  */
 export function ExclusionsEditor({ value, onChange, maxMinutes }: { value: string[]; onChange: (v: string[]) => void; maxMinutes: MaxMinutes }) {
@@ -40,12 +40,11 @@ export function ExclusionsEditor({ value, onChange, maxMinutes }: { value: strin
 
   return (
     <View>
-      <ChoiceRow testID="exclusion-none" mode="radio" label="No exclusions" selected={value.length === 0} onPress={() => onChange([])} />
       {PRESET_EXCLUSIONS.map((p) => (
-        <ChoiceRow key={p} testID={`exclusion-${p}`} mode="checkbox" label={PRESET_EXCLUSION_LABEL[p]} selected={presets.includes(p)} onPress={() => toggle(p)} />
+        <ChoiceRow key={p} testID={`exclusion-${p}`} mode="switch" label={PRESET_EXCLUSION_LABEL[p]} selected={presets.includes(p)} onPress={() => toggle(p)} />
       ))}
 
-      <SectionLabel>Something else</SectionLabel>
+      <SectionLabel>Another food</SectionLabel>
       <View style={styles.addRow}>
         <TextInput
           testID="exclusion-input"

@@ -6,7 +6,7 @@ import { Icon } from './Icon';
 import { MealImage } from './MealImage';
 import { Text } from './Text';
 
-const BANDS = scheme === 'dark' ? BANDS_DARK : BANDS_LIGHT;
+export const BANDS = scheme === 'dark' ? BANDS_DARK : BANDS_LIGHT;
 
 const ingredientIds = (m: Meal) => m.ingredients.map((i) => i.ingredientId);
 
