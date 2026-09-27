@@ -2,7 +2,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, buildWeek } from './helpers';
+import { $, buildWeek, addFoods, CONFLICT_FOODS } from './helpers';
 
 const OUT = 'docs/review/v3/account';
 const REVIEW = process.env.REVIEW === '1';
@@ -25,8 +25,7 @@ test.describe('preferences · 390×844', () => {
     await $(page, 'nav-back').click();
     await $(page, 'pref-row-exclusions').click();
     for (const e of ['dairy', 'gluten', 'nuts']) await $(page, `exclusion-${e}`).click();
-    await $(page, 'exclusion-input').fill('fish');
-    await $(page, 'exclusion-add').click();
+    await addFoods(page, CONFLICT_FOODS);
     await expect($(page, 'preference-preview')).toContainText('doesn’t fit');
     await shot(page, '03-preferences-blocked');
     await $(page, 'discard-preferences').click();
@@ -44,7 +43,6 @@ test.describe('paywall · 390×844', () => {
     await buildWeek(page, { query: 'today=wed' });
     await $(page, 'open-trial').click();
     await shot(page, '05-paywall-idle', 'start-trial');
-    await $(page, 'see-other-plans').click();
     await $(page, 'product-monthly').click();
     await shot(page, '06-paywall-selected', 'start-trial');
     await $(page, 'start-trial').click();

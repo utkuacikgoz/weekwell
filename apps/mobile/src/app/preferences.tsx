@@ -13,7 +13,7 @@ import {
 import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { BudgetControl } from '../components/BudgetControl';
+import { BudgetControl, dollars } from '../components/BudgetControl';
 import { Button } from '../components/Button';
 import { ExclusionsEditor } from '../components/ExclusionsEditor';
 import { Icon } from '../components/Icon';
@@ -41,7 +41,7 @@ function pageValue(k: SettingsPage, p: UserPreferences): string {
     case 'store':
       return RETAILER_LABEL[p.retailer];
     case 'budget':
-      return `$${p.weeklyBudget} a week`;
+      return `${dollars(p.weeklyBudget)} a week`;
     case 'goal':
       return GOAL_COPY[p.proteinGoal].label;
     case 'time':
@@ -137,7 +137,7 @@ export default function Preferences() {
           <NavBar backLabel="Week" />
           <Text variant="title" accessibilityRole="header">Settings</Text>
           <Text tone="muted" style={{ marginTop: space.s }}>
-            Change anything. You’ll see what changes before your plan is updated.
+            Tweak anything. You’ll see exactly what changes before your plan does.
           </Text>
 
           <Text variant="label" tone="muted" style={styles.groupLabel}>YOUR WEEK</Text>
@@ -152,14 +152,14 @@ export default function Preferences() {
             <Pressable
               accessibilityRole="switch"
               aria-checked={data.hapticsEnabled}
-              accessibilityLabel="Vibration. A light tap when you check an item or a plan is ready."
+              accessibilityLabel="Vibration. A soft tap when you tick something off."
               onPress={() => setHaptics(!data.hapticsEnabled)}
               style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.placeholder }]}
               testID="haptics-toggle"
             >
               <View style={{ flex: 1 }}>
                 <Text variant="bodyStrong">Vibration</Text>
-                <Text variant="meta" tone="muted">A light tap when you check an item. Never sounds.</Text>
+                <Text variant="meta" tone="muted">A soft tap when you tick something off.</Text>
               </View>
               <View style={[styles.track, data.hapticsEnabled && styles.trackOn]}>
                 <View style={[styles.thumb, data.hapticsEnabled && styles.thumbOn]} />
@@ -185,7 +185,7 @@ export default function Preferences() {
           </View>
           {deleteError ? <Text variant="meta" tone="warning" accessibilityLiveRegion="polite" testID="delete-error">{deleteError}</Text> : null}
           <Text variant="meta" tone="muted" style={{ marginTop: space.m }}>
-            {remote ? 'Your plan, preferences, and foods you leave out are saved to your Weekwell account so they sync between devices.' : 'Your plan, preferences, and foods you leave out are stored on this device only.'}
+            {remote ? 'Your plan, preferences, and foods you leave out are saved to your Weekwell account so they sync between devices.' : 'Your plan and preferences live on this phone, and only here.'}
           </Text>
         </>
       ) : (

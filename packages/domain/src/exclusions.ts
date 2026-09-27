@@ -136,7 +136,11 @@ export function exclusionMatchesNothing(term: string): boolean {
   return true;
 }
 
+export function isPresetExclusion(term: string): term is PresetExclusion {
+  return (PRESET_EXCLUSIONS as readonly string[]).includes(term);
+}
+
 export function exclusionLabel(term: string): string {
-  if ((PRESET_EXCLUSIONS as readonly string[]).includes(term)) return PRESET_EXCLUSION_LABEL[term as PresetExclusion];
+  if (isPresetExclusion(term)) return PRESET_EXCLUSION_LABEL[term];
   return `No ${term}`;
 }
