@@ -209,6 +209,17 @@ export default function Week() {
         {shares ? 'A meal’s cost is its share of the estimated total. ' : ''}Protein is an estimate · check package labels for exact values
       </Text>
 
+      {!data.shopping.remind ? (
+        // D-047: the nudge to actually go shopping, set once.
+        <Pressable accessibilityRole="button" accessibilityLabel="When do you shop? Pick a day and we'll remind you with your list. Set shopping day" onPress={() => router.push('/shopping')} style={({ pressed }) => [styles.nudge, pressed && { opacity: 0.9 }]} testID="shopping-nudge">
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="bodyStrong">When do you shop?</Text>
+            <Text variant="meta" tone="muted">Pick a day. We’ll send your list, what it should cost, and the way to your store.</Text>
+          </View>
+          <Icon name="chevron-right" size={20} color={color.accent} />
+        </Pressable>
+      ) : null}
+
       <Button
         kind="secondary"
         label="Plan a new week"
@@ -279,6 +290,7 @@ const styles = StyleSheet.create({
   resume: { flexDirection: 'row', alignItems: 'center', backgroundColor: color.accentTint, borderRadius: radius.control, marginTop: space.m },
   resumeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 8, paddingLeft: space.m - 4 },
   budgetLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space.s, marginBottom: space.xs },
+  nudge: { flexDirection: 'row', alignItems: 'center', gap: space.m, minHeight: MIN_TOUCH + 20, marginBottom: space.m, padding: space.m - 4, borderWidth: 1.5, borderColor: color.accent },
   sub: { marginTop: space.l, flexDirection: 'row', alignItems: 'center', gap: space.m },
   offer: { marginTop: space.l, backgroundColor: SUN, padding: space.m + 4, gap: space.xs },
   offerKicker: { color: ON_SUN, textTransform: 'uppercase', letterSpacing: 1.4 },
