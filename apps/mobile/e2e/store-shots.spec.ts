@@ -7,7 +7,8 @@
  *
  * Writes docs/release/screenshots/app-store/{6.9,6.5}/NN-name.png (raw captures are git-ignored).
  */
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { deflateSync } from 'node:zlib';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { $, buildWeek, pickStore } from './helpers';
 
@@ -182,6 +183,30 @@ const page_ = (s: Slide, w: number, h: number, plates: string[]) => `<!doctype h
   <div class="head"><div class="kicker">${s.kicker}</div><h1>${s.title[0]}<span>${s.title[1]}</span></h1><p>${s.sub}</p></div>
 </body></html>`;
 
+const CRC = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+const chunk = (type: string, data: Buffer) => {
+  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+  let c = 0xffffffff;
+  for (const b of body) c = CRC[(c ^ b) & 0xff]! ^ (c >>> 8);
+  const out = Buffer.alloc(body.length + 8);
+  out.writeUInt32BE(data.length, 0);
+  body.copy(out, 4);
+  out.writeUInt32BE((c ^ 0xffffffff) >>> 0, body.length + 4);
+  return out;
+};
+/** An 8-bit RGB PNG from filtered scanlines. */
+const rgbPng = (w: number, h: number, rows: Buffer) => {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr.set([8, 2, 0, 0, 0], 8);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(rows, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
+};
+
 test('app store screenshots', async ({ browser }) => {
   test.setTimeout(240_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
@@ -189,15 +214,49 @@ test('app store screenshots', async ({ browser }) => {
   await ctx.close();
   expect(plates.length).toBeGreaterThan(4);
 
-  const out = await browser.newContext({ deviceScaleFactor: 1 });
-  const p = await out.newPage();
   for (const [w, h, dir] of [[1320, 2868, '6.9'], [1284, 2778, '6.5']] as const) {
     mkdirSync(`${OUT}/${dir}`, { recursive: true });
-    await p.setViewportSize({ width: w, height: h });
     for (const s of SLIDES) {
+      // Chromium sometimes returns a slide one row short, and App Store Connect rejects even a 1-pixel
+      // difference, so each capture is redrawn onto a canvas of the exact size.
+      const out = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+      const p = await out.newPage();
       await p.setContent(page_(s, w, h, plates));
-      await p.screenshot({ path: `${OUT}/${dir}/${s.name}.png` });
+      const shot = (await p.screenshot()).toString('base64');
+      const exact = await p.evaluate(
+        async ({ src, w, h }) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${src}`;
+          await img.decode();
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          const g = c.getContext('2d')!;
+          g.drawImage(img, 0, 0, w, h);
+          const rgba = g.getImageData(0, 0, w, h).data;
+          // PNG scanlines of RGB (filter byte 0 per row), without the alpha channel.
+          const rows = new Uint8Array(h * (w * 3 + 1));
+          for (let y = 0, o = 0; y < h; y++) {
+            rows[o++] = 0;
+            for (let x = 0; x < w; x++) {
+              const i = (y * w + x) * 4;
+              rows[o++] = rgba[i]!;
+              rows[o++] = rgba[i + 1]!;
+              rows[o++] = rgba[i + 2]!;
+            }
+          }
+          let bin = '';
+          for (let i = 0; i < rows.length; i += 0x8000) bin += String.fromCharCode(...rows.subarray(i, i + 0x8000));
+          return btoa(bin);
+        },
+        { src: shot, w, h },
+      );
+      const file = `${OUT}/${dir}/${s.name}.png`;
+      // Opaque RGB: App Store Connect can refuse images with an alpha channel.
+      writeFileSync(file, rgbPng(w, h, Buffer.from(exact, 'base64')));
+      await out.close();
+      const png = readFileSync(file);
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)], file).toEqual([w, h]);
     }
   }
-  await out.close();
 });
