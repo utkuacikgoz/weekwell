@@ -103,6 +103,8 @@ The pilot has no Weekwell server (D-039). Only the RevenueCat SDK sends data off
   - **Purchases → Purchase history.** Used for app functionality. Not linked to the user's identity. Not used for tracking.
   - **Identifiers → User ID** (RevenueCat's random app user id). Used for app functionality. Not linked to identity. Not used for tracking.
 - **Not collected:** meal plans, preferences and foods left out stay on the device. No analytics leave the phone.
+- **Location: not collected (D-047).** "Find my nearest store" asks for When In Use location once. The position is used on the phone for an Apple Maps (MapKit) search, and only the store found is saved on the phone. Weekwell never receives it, so the label stays "Data Not Linked to You: Purchases, Identifiers". If a server or analytics is ever added, revisit this.
+- **Notifications:** the shopping-day reminder is a local notification. No push, and no push entitlement.
 - **Tracking:** none, so there's no App Tracking Transparency prompt.
 
 Source: `docs/legal/us-legal-review.md` (legal review completed 2026-09-27).
@@ -116,6 +118,10 @@ Answer **"None of the algorithms mentioned above"**: the app only uses the OS's 
 > Weekwell plans five weeknight dinners and two lunch preps from a built-in recipe catalog, with estimated grocery prices. No account or sign-in is needed.
 >
 > To test: tap Get started → tap the store blank and choose Trader Joe's → Continue → Continue → Continue → Plan my week. Open any dinner to see the recipe, swap it, or start cooking mode. The grocery list is at the bottom of the week.
+>
+> Location (optional): on the first setup step, "Find my nearest …" asks for location while using the app, once, and shows the nearest Trader Joe's or Walmart with a Directions link. Setup works without it.
+>
+> Shopping-day reminder (optional): "When do you shop?" on the week screen schedules one weekly local notification with the list size, estimated total and store.
 >
 > Subscriptions: the first week is free, then weekly, monthly or yearly. Use a Sandbox Apple ID to test purchases. "Restore purchases" is on the plans screen (Settings → Subscription).
 >

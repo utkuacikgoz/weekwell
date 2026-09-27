@@ -5,6 +5,7 @@ import { BudgetControl, budgetExplainer, dollars } from '../../components/Budget
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { ChoiceGroup } from '../../components/Segmented';
+import { NearbyStore } from '../../components/NearbyStore';
 import { Sheet } from '../../components/Sheet';
 import { StepScreen } from '../../components/StepScreen';
 import { Text } from '../../components/Text';
@@ -39,6 +40,9 @@ export default function StoreAndBudget() {
           {STORE_COPY[selected].detail}
         </Text>
       ) : null}
+      <View style={{ marginTop: space.l }}>
+        <NearbyStore retailer={selected} onRetailer={(retailer) => setDraft({ retailer })} />
+      </View>
 
       <Sheet visible={open === 'store'} title="Where do you shop?" onClose={() => setOpen(null)} testID="store-sheet">
         <ChoiceGroup

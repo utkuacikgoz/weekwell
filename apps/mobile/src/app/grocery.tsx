@@ -12,6 +12,7 @@ import { Animated, Platform, Pressable, Share, StyleSheet, View } from 'react-na
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Layout';
+import { NearbyStore } from '../components/NearbyStore';
 import { NavBar } from '../components/NavBar';
 import { AboutEstimateSheet } from '../components/PriceSheets';
 import { PriceChip, PriceNotice } from '../components/PriceStatus';
@@ -219,6 +220,12 @@ export default function Grocery() {
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${groceryItems.length ? (checkedCount / groceryItems.length) * 100 : 0}%` }]} />
         </View>
+      </View>
+
+      {/* D-047: where to shop, one tap to directions, and the reminder if it isn't on yet. */}
+      <View style={{ marginTop: space.m, gap: space.xs }}>
+        <NearbyStore retailer={plan.preferences.retailer} map />
+        {!data.shopping.remind ? <Button kind="quiet" label="Remind me on shopping day" onPress={() => router.push('/shopping')} testID="grocery-remind" /> : null}
       </View>
 
       {/* Over budget is handled on the week, where the rebuild happens; here only data problems show. */}

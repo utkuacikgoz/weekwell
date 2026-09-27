@@ -7,6 +7,7 @@
 <li>Weekwell plans your meals and builds a grocery list. To do that it needs your store, budget, cooking time, household size, and the foods you want to leave out.</li>
 <!--device--><li>All of that stays on your phone. Weekwell has no accounts, and we don’t run a server that receives your meal information.</li>
 <li>If you subscribe, Apple handles the payment, and our subscription provider RevenueCat keeps your subscription status under a random app id, without your name or email.</li><!--/device-->
+<li>If you tap “Find my nearest store”, your phone uses your location once to search Apple Maps. Only the store it finds is saved, on your phone. We never receive or store your location.</li>
 <!--server--><li>If you use the app without an account, that information stays on your phone.</li>
 <li>If you sign in, we keep it on our servers so it’s on all your devices. We store a keyed hash of your email address, not the address itself.</li><!--/server-->
 <li>We don’t sell your personal information, share it for targeted advertising, or track you across other apps and websites.</li>
@@ -23,6 +24,8 @@
 <tr><td>Plans and lists</td><td>Your meal plans, swaps, grocery checks, cooking progress</td><td>To show your week</td><td>Only on your device</td></tr>
 <tr><td>Subscription records</td><td>A random app id, your App Store purchases and subscription status</td><td>To give you access you’ve paid for</td><td>RevenueCat and Apple</td></tr>
 <tr><td>Usage events</td><td>For example “grocery list opened”</td><td>To improve the app</td><td>Only on your device; not sent to us</td></tr><!--/device-->
+<tr><td>Nearest store</td><td>The store found with “Find my nearest store” and how far it is</td><td>To show directions and your shopping-day reminder</td><td>Only on your device</td></tr>
+<tr><td>Shopping-day reminder</td><td>The day and time you picked</td><td>To remind you with your list</td><td>Only on your device; iOS delivers the reminder</td></tr>
 <!--server--><tr><td>Meal preferences</td><td>Store, weekly budget, goal, cooking time, household size</td><td>To plan your week</td><td>Your device; our servers if you sign in</td></tr>
 <tr><td>Foods you leave out</td><td>Allergies or foods you avoid, such as dairy or peanuts</td><td>To keep them out of your meals</td><td>Your device; our servers if you sign in. See our <a href="health-data.html">consumer health data policy</a>.</td></tr>
 <tr><td>Plans and lists</td><td>Your meal plans, swaps, grocery checks</td><td>To show and sync your week</td><td>Your device; our servers if you sign in</td></tr>
@@ -32,7 +35,7 @@
 <tr><td>Security logs</td><td>Request time, request id, error type</td><td>To keep the service working and secure</td><td>Our servers. Logs never include your email, codes, tokens, or foods you leave out.</td></tr><!--/server-->
 </tbody>
 </table>
-<p>We don’t collect your precise location, contacts, photos, microphone, or payment card details. Apple handles payments; we never see your card.</p>
+<p>We don’t collect or store your location. When you tap “Find my nearest store”, your phone sends its approximate position to Apple Maps to search for stores, under Apple’s privacy policy; it isn’t sent to us. We don’t collect your contacts, photos, microphone, or payment card details. Apple handles payments; we never see your card.</p>
 
 <h2>How we use information</h2>
 <p>We use it to provide the service: planning meals, building your grocery list, estimating prices, <!--server-->syncing your devices, <!--/server-->managing your subscription, answering support requests, and keeping the service secure and working. We don’t use your information for advertising, and we don’t build profiles to make decisions that have legal or similarly significant effects on you.</p>
@@ -42,7 +45,7 @@
 <ul>
 <!--server--><li><strong>Resend</strong>: delivers your sign-in code email (your email address and the code).</li><!--/server-->
 <li><strong>RevenueCat</strong>: manages subscriptions (<!--device-->a random app id<!--/device--><!--server-->your account id<!--/server--> and purchase and subscription records from the App Store).</li>
-<li><strong>Apple</strong>: processes payments and subscriptions under Apple’s own privacy policy.</li>
+<li><strong>Apple</strong>: processes payments and subscriptions, and runs the Apple Maps search when you ask for your nearest store, under Apple’s own privacy policy.</li>
 <!--server--><li><strong>{{hostingProvider}}</strong>: hosts our servers and database.</li><!--/server-->
 </ul>
 <p>We may also disclose information when the law requires it, to protect the safety or rights of people or the service, or as part of a merger or sale of the business (in which case this policy continues to apply to your information).</p>

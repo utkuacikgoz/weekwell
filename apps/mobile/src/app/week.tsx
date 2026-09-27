@@ -9,6 +9,7 @@ import { LockedSheet } from '../components/LockedSheet';
 import { AboutEstimateSheet, RebuildSheet } from '../components/PriceSheets';
 import { PriceChip, PriceNotice } from '../components/PriceStatus';
 import { Text } from '../components/Text';
+import { ShoppingPrompt } from '../components/ShoppingPrompt';
 import { TonightCard, WeekRow } from '../components/WeekParts';
 import { Wordmark } from '../components/Wordmark';
 import { GOAL_COPY, householdCopy, timeCopy } from '../copy';
@@ -209,6 +210,7 @@ export default function Week() {
         {shares ? 'A meal’s cost is its share of the estimated total. ' : ''}Protein is an estimate · check package labels for exact values
       </Text>
 
+
       <Button
         kind="secondary"
         label="Plan a new week"
@@ -247,6 +249,8 @@ export default function Week() {
           <Button kind="quiet" label="Manage subscription" onPress={() => router.push('/trial?trigger=plan_header')} testID="open-trial" />
         </View>
       )}
+
+      <ShoppingPrompt />
 
       <AboutEstimateSheet
         visible={sheet === 'about'}
