@@ -1,45 +1,99 @@
 <section class="hero">
   <div class="hero-copy">
-    <p class="kicker">For people who cook on weeknights</p>
+    <p class="kicker">Weeknight dinners, sorted</p>
     <h1>Five dinners. <span class="sun">One grocery list.</span> Done.</h1>
-    <p class="lede">Weekwell plans your week’s dinners and work lunches around the store you shop at, your budget and your time. Then it builds one grocery list, sorted by aisle.</p>
+    <p class="lede">Tell Weekwell where you shop, what you spend and how long you want to cook. It plans your dinners and work lunches, then builds one grocery list with estimated prices for your store.</p>
     <div class="ctas">
-      <span class="cta">Coming soon on iPhone</span>
-      <a class="cta ghost" href="mailto:{{supportEmail}}?subject=Weekwell%20beta">Join the beta</a>
+      <a class="cta" href="mailto:{{supportEmail}}?subject=Weekwell%20beta">Join the iPhone beta</a>
+      <a class="cta ghost" href="#how">See how it works</a>
     </div>
-    <p class="fine">First week free. Then $49.99 a year, $9.99 a month or $4.99 a week. Cancel any time in your iPhone settings.</p>
+    <ul class="trust" aria-label="Promises">
+      <li>First week free</li>
+      <li>No account needed</li>
+      <li>No ads, ever</li>
+    </ul>
   </div>
-  <div class="phone" aria-label="Example week in Weekwell" role="img">
-    <div class="phone-top"><span class="wm">Week<em>well</em></span><span class="meta-sm">Trader Joe’s · $80 · High protein</span></div>
-    <div class="dband b1"><small>Monday</small><b>Beef and broccoli over rice</b><span>25 min · 38g protein</span></div>
-    <div class="dband b2"><small>Tuesday</small><b>Garlic chicken rice bowls</b><span>25 min · 41g protein</span></div>
-    <div class="dband b3"><small>Wednesday</small><b>Lemon salmon with quinoa</b><span>25 min · 36g protein</span></div>
-    <div class="dband b4"><small>Thursday</small><b>Egg and edamame fried rice</b><span>15 min · 27g protein</span></div>
-    <div class="dband b5"><small>Friday</small><b>Turkey chili</b><span>30 min · 35g protein</span></div>
-    <div class="phone-foot"><span>$76 est.<small>estimated prices</small></span><span class="btn">Grocery list</span></div>
+  <div class="hero-art">
+    <div class="sunspot" aria-hidden="true"></div>
+    <figure class="device back"><img src="/img/grocery.jpg" width="390" height="844" alt="The grocery list: items grouped by aisle, each with how much to buy and an estimated price." fetchpriority="high"></figure>
+    <figure class="device front"><img src="/img/week.jpg" width="390" height="844" alt="Your week in Weekwell: tonight’s dinner on top, then each weekday’s dinner with its time, protein and cost." fetchpriority="high"></figure>
   </div>
 </section>
 
-<section class="steps" aria-labelledby="how">
-  <h2 id="how">How it works</h2>
+<section class="strip" aria-label="What a week looks like">
+  <p><b>5</b> dinners</p>
+  <p><b>2</b> lunch preps</p>
+  <p><b>1</b> grocery list</p>
+  <p><b>0</b> spreadsheets</p>
+</section>
+
+<section class="steps" id="how" aria-labelledby="how-title">
+  <h2 id="how-title">How it works</h2>
   <ol>
-    <li><b>Tell us three things</b><span>Where you shop, what you spend in a week, and how long you want to cook.</span></li>
-    <li><b>Get your week</b><span>Five dinners and two lunch preps that share ingredients, so less goes to waste.</span></li>
-    <li><b>Shop one list</b><span>Everything in one list, grouped by aisle, with estimated prices for your store.</span></li>
+    <li>
+      <figure class="device small"><img src="/img/setup.jpg" width="390" height="844" alt="Setup reads as one sentence: I shop at Trader Joe’s and spend about $80 a week." loading="lazy"></figure>
+      <div><span class="num">1</span><b>Say it in one sentence</b><p>“I shop at Trader Joe’s and spend about $80 a week.” Add how long you want to cook, who’s eating and what to leave out.</p></div>
+    </li>
+    <li>
+      <figure class="device small"><img src="/img/week.jpg" width="390" height="844" alt="The planned week, one colour band per day." loading="lazy"></figure>
+      <div><span class="num">2</span><b>Get your week</b><p>Five dinners and two lunch preps that share ingredients, so less goes to waste. Every dinner shows its time, protein and cost.</p></div>
+    </li>
+    <li>
+      <figure class="device small"><img src="/img/grocery.jpg" width="390" height="844" alt="One grocery list, grouped by aisle." loading="lazy"></figure>
+      <div><span class="num">3</span><b>Shop once</b><p>One list, grouped by aisle, with how much to buy and an estimated price for each item. Tick things off as you go.</p></div>
+    </li>
   </ol>
 </section>
 
-<section class="features" aria-labelledby="what">
-  <h2 id="what">What’s in it</h2>
-  <div class="grid">
-    <div class="feat"><b>Swap any meal</b><p>Not feeling Tuesday? Choose from three alternatives, see the time and price difference, and undo if you change your mind.</p></div>
-    <div class="feat"><b>Built around your budget</b><p>Each week is planned to your weekly target. If the estimate comes in over, Weekwell shows where the money goes and how to save.</p></div>
-    <div class="feat"><b>Foods you leave out</b><p>Switch off dairy, gluten, nuts or anything else, and those recipes never show up. Always check package labels too.</p></div>
-    <div class="feat"><b>Cooking mode</b><p>Every step on one screen, the current one large, with timers that keep running while you prep.</p></div>
+<section class="feature" aria-labelledby="f-swap">
+  <figure class="device"><img src="/img/swap.jpg" width="390" height="844" alt="Choosing a swap: three alternative dinners, each with its cooking time and price difference." loading="lazy"></figure>
+  <div>
+    <p class="kicker">Swap any meal</p>
+    <h2 id="f-swap">Not feeling Tuesday? Pick from three.</h2>
+    <p>Each alternative shows how long it takes and how the price changes. Only that one meal changes, your grocery list updates, and you can undo.</p>
   </div>
 </section>
 
-<section class="promise">
-  <h2>Your plan stays yours</h2>
-  <p><!--device-->Your plans, preferences and the foods you leave out stay on your phone. <!--/device-->No ads, and we never sell your data. <a href="/privacy">Read the privacy policy</a>.</p>
+<section class="feature flip" aria-labelledby="f-cook">
+  <figure class="device"><img src="/img/cook.jpg" width="390" height="844" alt="Cooking mode: every step on one screen, the current step large and highlighted." loading="lazy"></figure>
+  <div>
+    <p class="kicker">Cooking mode</p>
+    <h2 id="f-cook">Every step on one screen.</h2>
+    <p>The step you’re on is big enough to read from across the counter. Timers keep running while you prep the next thing, and the screen stays awake.</p>
+  </div>
+</section>
+
+<section class="feature" aria-labelledby="f-out">
+  <figure class="device"><img src="/img/exclusions.jpg" width="390" height="844" alt="Foods to leave out: switches for dairy, gluten and nuts." loading="lazy"></figure>
+  <div>
+    <p class="kicker">Foods you leave out</p>
+    <h2 id="f-out">Switch it off. It stays off.</h2>
+    <p>Turn off dairy, gluten or nuts, or add any food you don’t eat, and those recipes never show up. Weekwell checks every ingredient, and you should still read package labels.</p>
+  </div>
+</section>
+
+<section class="pricing" id="pricing" aria-labelledby="pricing-title">
+  <h2 id="pricing-title">Simple pricing</h2>
+  <p class="sub">Your first week is free. Pick a plan when you start; cancel any time in your iPhone settings.</p>
+  <div class="plans">
+    <div class="plan best"><span class="tag">Best value</span><b>Yearly</b><p class="price">$49.99<small> a year</small></p><p class="per">About $0.96 a week</p></div>
+    <div class="plan"><b>Monthly</b><p class="price">$9.99<small> a month</small></p><p class="per">About $2.31 a week</p></div>
+    <div class="plan"><b>Weekly</b><p class="price">$4.99<small> a week</small></p><p class="per">Pay as you go</p></div>
+  </div>
+  <p class="fine">Prices in US dollars. Subscriptions renew automatically unless cancelled at least 24 hours before the period ends. See the <a href="terms.html">terms</a>.</p>
+</section>
+
+<section class="faq" aria-labelledby="faq-title">
+  <h2 id="faq-title">Questions</h2>
+  <details><summary>Which stores does Weekwell work with?</summary><p>Trader Joe’s and Walmart today. Prices are estimates for your store and can differ at the register. Weekwell isn’t affiliated with either.</p></details>
+  <details><summary>Are the prices exact?</summary><p>No. They’re estimates, labelled as such, and each dinner shows its share of the week’s estimated total so you can see where the money goes.</p></details>
+  <details><summary>I have a food allergy. Can I rely on it?</summary><p>Leaving a food out removes every recipe that uses it, but products and factories change, so always read package labels. Weekwell isn’t medical advice.</p></details>
+  <details><summary>Do I need an account?</summary><p>No. <!--device-->Your plan, preferences and the foods you leave out stay on your phone. <!--/device-->Subscriptions go through your Apple ID.</p></details>
+  <details><summary>How do I cancel?</summary><p>On your iPhone: Settings → your name → Subscriptions → Weekwell → Cancel Subscription. You keep access until the end of the period.</p></details>
+</section>
+
+<section class="final">
+  <h2>Plan this week in two minutes.</h2>
+  <p>Weekwell is in beta on iPhone. Want in?</p>
+  <a class="cta dark" href="mailto:{{supportEmail}}?subject=Weekwell%20beta">Join the iPhone beta</a>
 </section>
