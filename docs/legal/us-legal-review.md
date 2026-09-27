@@ -2,6 +2,8 @@
 
 > **Pilot scope (D-039):** no Weekwell server. Meal data, including foods left out, stays on the phone, and only Apple and RevenueCat receive subscription data under a random app id. The site is built with `"server": false`, which removes the account, email, hosting and log sections. The server-mode rows below apply once a server runs.
 
+> **2026-09-27:** the product owner confirmed the lawyer review is done and hello@weekwell.pro receives mail. The postal address is optional and not yet on the pages.
+
 **This is not legal advice.** It's an engineering self-review against US laws and App Store rules, written so a lawyer can review quickly. Have a US lawyer review the texts in `site/src/` before public release. A friends-and-family TestFlight is lower risk, but it still needs the privacy policy URL.
 
 Status key: ✅ addressed in the texts or code · ⚠️ needs a decision or confirmation · 🔎 needs a lawyer
