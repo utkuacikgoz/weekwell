@@ -66,7 +66,17 @@ export async function rcBuy(productId: ProductId): Promise<'ok' | 'cancelled' | 
   }
 }
 
-export async function rcRestore(): Promise<'restored' | 'nothing_to_restore' | 'failed'> {
+/** Apple's own manage-or-cancel sheet, shown inside the app (iOS 15+). */
+export async function rcManage(): Promise<boolean> {
+  try {
+    await Purchases.showManageSubscriptions();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function rcRestore():Promise<'restored' | 'nothing_to_restore' | 'failed'> {
   try {
     const info = (await Purchases.restorePurchases()) as unknown as RcCustomerInfo;
     const view = viewFromCustomerInfo(info, false, new Date());

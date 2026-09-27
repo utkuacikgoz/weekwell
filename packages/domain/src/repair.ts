@@ -4,9 +4,9 @@
  * Everything not targeted stays the same.
  */
 import { getRecipe, type Recipe } from './catalog/recipes';
-import { exclusionLabel, recipeIsAllowed } from './exclusions';
+import { recipeIsAllowed } from './exclusions';
 import { buildGroceryList, diffGroceryLists, proteinPerServing, withReuse, type GroceryDiff } from './grocery';
-import { eligibleRecipes, generateFixturePlan, placeDinner, placeLunch, recipeFitsTime, rescalePlan, sampleWeekCostCents, type PlanContext } from './planner';
+import { checkFeasibility, constraintPhrase, eligibleRecipes, generateFixturePlan, placeDinner, placeLunch, recipeFitsTime, rescalePlan, sampleWeekCostCents, type PlanContext } from './planner';
 import { sampleCostCents } from './pricing';
 import { PlanSchema, RETAILER_LABEL, servingsFor, type Meal, type Plan, type UserPreferences } from './schemas';
 
@@ -162,9 +162,11 @@ export function previewPreferenceChange(plan: Plan, next: UserPreferences, ctx: 
   const lowerBudgetNowOver = next.weeklyBudget < prev.weeklyBudget && overBudget(plan, next);
   if (next.proteinGoal !== prev.proteinGoal || lowerBudgetNowOver) {
     const result = generateFixturePlan(next, { ...ctx, planId: plan.id, ownerId: plan.ownerId });
-    if (!result.ok) return blockedPreview(plan, result.feasibility.message);
+    if (!result.ok) return blockedPreview(plan, `${result.feasibility.message} Your plan hasn’t changed.`);
     candidate = result.plan;
   } else {
+    const feasibility = checkFeasibility(next);
+    if (!feasibility.ok) return blockedPreview(plan, `${feasibility.message} Your plan hasn’t changed.`);
     candidate = rescalePlan(plan, next, getRecipe);
     // Replace meals that no longer fit the exclusions or time limit.
     for (const meal of allMeals(candidate)) {
@@ -172,8 +174,7 @@ export function previewPreferenceChange(plan: Plan, next: UserPreferences, ctx: 
       if (recipeIsAllowed(recipe, next.exclusions) && recipeFitsTime(recipe, next.maxMinutes)) continue;
       const replacement = findReplacement(candidate, meal.id, 'swap');
       if (!replacement) {
-        const reason = next.exclusions.length > 0 ? `“${next.exclusions.map(exclusionLabel).join('”, “')}”` : 'this cooking time';
-        return blockedPreview(plan, `We don’t have enough meals that fit ${reason}. Your current plan is unchanged.`);
+        return blockedPreview(plan, `Not enough meals fit ${constraintPhrase(next)}. Your plan hasn’t changed.`);
       }
       candidate = replaceMeal(candidate, meal.id, replacement).plan;
     }

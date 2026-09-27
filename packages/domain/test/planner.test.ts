@@ -65,14 +65,15 @@ describe('generateFixturePlan', () => {
     const feasibility = checkFeasibility(prefs);
     expect(feasibility.ok).toBe(false);
     if (feasibility.ok) return;
-    expect(feasibility.message).toMatch(/we can only plan/u);
-    expect(feasibility.suggestions.length).toBeGreaterThan(0);
+    expect(feasibility.message).toBe('With 7 foods left out and 20 minutes, only 3 dinners fit.');
+    expect(feasibility.suggestions[0]).toBe('Try 30 minutes.');
+    expect(feasibility.suggestions.length).toBeLessThanOrEqual(3);
     const result = generateFixturePlan(prefs, CTX);
     expect(result.ok).toBe(false);
   });
 
   it('handles every exclusion selected without crashing', () => {
-    const prefs: UserPreferences = { ...FIXTURE_USERS.valid!.preferences, exclusions: ['dairy', 'gluten', 'nuts', 'fish', 'shellfish', 'egg', 'soy', 'sesame', 'chicken', 'turkey', 'beef'] };
+    const prefs: UserPreferences = { ...FIXTURE_USERS.valid!.preferences, exclusions: ['dairy', 'gluten', 'nuts', 'fish', 'shellfish', 'egg', 'soy', 'sesame', 'chicken', 'turkey', 'beef', 'pork', 'beans', 'lentils'] };
     const result = generateFixturePlan(prefs, CTX);
     expect(result.ok).toBe(false);
   });

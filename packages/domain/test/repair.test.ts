@@ -109,8 +109,8 @@ describe('preference changes', () => {
   });
 
   it('blocks a change that leaves too few meals and keeps the plan', () => {
-    const preview = previewPreferenceChange(plan, { ...plan.preferences, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'fish'] }, CTX);
-    expect(preview.blocked).toBeDefined();
+    const preview = previewPreferenceChange(plan, { ...plan.preferences, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'egg', 'soy', 'meat', 'seafood'] }, CTX);
+    expect(preview.blocked).toBe('With 7 foods left out and 20 minutes, only 3 dinners fit. Your plan hasn’t changed.');
     expect(preview.plan).toBe(plan);
   });
 

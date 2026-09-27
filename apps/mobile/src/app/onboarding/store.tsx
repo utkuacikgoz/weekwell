@@ -1,7 +1,7 @@
 import { RETAILERS, RETAILER_LABEL } from '@weekwell/domain';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { BudgetControl, budgetExplainer } from '../../components/BudgetControl';
+import { BudgetControl, budgetExplainer, dollars } from '../../components/BudgetControl';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { ChoiceGroup } from '../../components/Segmented';
@@ -24,11 +24,11 @@ export default function StoreAndBudget() {
 
   return (
     <StepScreen step="store" canContinue={selected !== null} onContinue={() => selected && analytics?.track('store_selected', { retailer: selected })}>
-      <View style={styles.sentence} accessibilityRole="header" accessibilityLabel={`I shop at ${selected ? RETAILER_LABEL[selected] : 'a store you choose'} and spend about $${budget} a week.`}>
+      <View style={styles.sentence} accessibilityRole="header" accessibilityLabel={`I shop at ${selected ? RETAILER_LABEL[selected] : 'a store you choose'} and spend about ${dollars(budget)} a week.`}>
         <Words text="I shop at" />
         <Blank label={selected ? RETAILER_LABEL[selected] : 'your store'} empty={!selected} a11y={selected ? `Store: ${RETAILER_LABEL[selected]}. Change` : 'Choose your store'} onPress={() => setOpen('store')} testID="store-pick" />
         <Words text="and spend about" />
-        <Blank label={`$${budget}`} a11y={`Weekly budget: $${budget}. Change`} onPress={() => setOpen('budget')} testID="budget-pick" />
+        <Blank label={dollars(budget)} a11y={`Weekly budget: ${dollars(budget)}. Change`} onPress={() => setOpen('budget')} testID="budget-pick" />
         <Words text="a week." />
       </View>
       <Text tone="muted" testID="budget-explainer">
@@ -59,7 +59,7 @@ export default function StoreAndBudget() {
         testID="budget-sheet"
         footer={<Button label="Done" onPress={() => setOpen(null)} testID="budget-done" />}
       >
-        <BudgetControl value={budget} householdSize={data.draft.householdSize} householdKnown={false} onChange={(weeklyBudget) => setDraft({ weeklyBudget })} />
+        <BudgetControl value={budget} householdSize={data.draft.householdSize} householdKnown={false} hideLabel onChange={(weeklyBudget) => setDraft({ weeklyBudget })} />
       </Sheet>
     </StepScreen>
   );

@@ -14,7 +14,7 @@ describe('UserPreferences', () => {
 
   it('enforces budget bounds and whole dollars', () => {
     expect(UserPreferencesSchema.safeParse({ ...validPrefs, weeklyBudget: 29 }).success).toBe(false);
-    expect(UserPreferencesSchema.safeParse({ ...validPrefs, weeklyBudget: 401 }).success).toBe(false);
+    expect(UserPreferencesSchema.safeParse({ ...validPrefs, weeklyBudget: 2001 }).success).toBe(false);
     expect(UserPreferencesSchema.safeParse({ ...validPrefs, weeklyBudget: 75.5 }).success).toBe(false);
   });
 

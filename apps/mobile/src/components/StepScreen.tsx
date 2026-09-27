@@ -11,13 +11,13 @@ export const ONBOARDING_STEPS = ['store', 'week', 'exclusions', 'review'] as con
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 export const STEP_NAME: Record<OnboardingStep, string> = { store: 'Store and budget', week: 'Your week', exclusions: 'Foods to leave out', review: 'Review' };
 
-/** Plain-language progress: "Step 2 of 4 · Your week" with a thin bar. */
+/** Plain-language progress: "Step 2 of 4" with a thin bar; the headline below says what the step is. */
 export function StepProgress({ step }: { step: OnboardingStep }) {
   const i = ONBOARDING_STEPS.indexOf(step);
   return (
     <View accessible accessibilityLabel={`Step ${i + 1} of ${ONBOARDING_STEPS.length}: ${STEP_NAME[step]}`} style={{ gap: space.s, marginBottom: space.m }}>
       <Text variant="meta" tone="muted">
-        Step {i + 1} of {ONBOARDING_STEPS.length} · {STEP_NAME[step]}
+        Step {i + 1} of {ONBOARDING_STEPS.length}
       </Text>
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${((i + 1) / ONBOARDING_STEPS.length) * 100}%` }]} />

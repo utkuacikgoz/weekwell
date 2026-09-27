@@ -95,7 +95,7 @@ export function ExclusionsEditor({ value, onChange, maxMinutes }: { value: strin
         </Banner>
       ) : null}
       <Text variant="meta" tone="muted" style={{ marginTop: space.m }}>
-        We check every ingredient against these words. If you have an allergy, always read package labels.
+        We screen every ingredient for these. With an allergy, still check the label.
       </Text>
     </View>
   );

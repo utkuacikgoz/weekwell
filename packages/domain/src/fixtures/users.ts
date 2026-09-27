@@ -23,8 +23,8 @@ export const FIXTURE_USERS: Record<string, FixtureUser> = {
   },
   allergyConflict: {
     id: 'user_fixture_conflict',
-    label: 'Allergy conflict: 20 min with dairy, gluten, nuts, fish excluded',
-    preferences: { retailer: 'walmart', weeklyBudget: 90, proteinGoal: 'low_carb', maxMinutes: 20, householdSize: 2, exclusions: ['dairy', 'gluten', 'nuts', 'fish'] },
+    label: 'Allergy conflict: 20 min, no meat or seafood, with dairy, gluten, nuts, egg, and soy excluded',
+    preferences: { retailer: 'walmart', weeklyBudget: 90, proteinGoal: 'low_carb', maxMinutes: 20, householdSize: 2, exclusions: ['dairy', 'gluten', 'nuts', 'egg', 'soy', 'meat', 'seafood'] },
     priceScenario: 'sample',
     generation: 'ok',
   },
