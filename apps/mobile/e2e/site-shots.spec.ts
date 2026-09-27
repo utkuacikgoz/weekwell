@@ -120,3 +120,72 @@ test('app icons', async ({ browser }) => {
   }
   await ctx.close();
 });
+
+/**
+ * App Store screenshots (D-045): real screens at 3×, then captioned in the Bold blocks
+ * style at Apple's 6.9" (1320×2868) and 6.5" (1284×2778) sizes.
+ */
+const STORE = 'docs/release/screenshots/app-store';
+const STORE_SCREENS: [string, string, string][] = [
+  ['01-week', 'Five dinners.', 'One grocery list.'],
+  ['02-setup', 'Plan it in', 'one sentence.'],
+  ['03-grocery', 'Shop once,', 'by aisle, with prices.'],
+  ['04-swap', 'Not feeling it?', 'Pick from three.'],
+  ['05-cook', 'Every step', 'on one screen.'],
+  ['06-exclusions', 'Leave out', 'what you don’t eat.'],
+];
+
+test('app store screenshots', async ({ browser }) => {
+  test.setTimeout(180_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  const raw = async (name: string) => {
+    await page.waitForTimeout(700);
+    await page.screenshot({ path: `${STORE}/raw/${name}.png` });
+  };
+  await page.goto('/onboarding');
+  await $(page, 'start').click();
+  await pickStore(page);
+  await raw('02-setup');
+  await $(page, 'continue').click();
+  await $(page, 'continue').click();
+  await $(page, 'exclusion-dairy').click();
+  await $(page, 'exclusion-nuts').click();
+  await raw('06-exclusions');
+  await buildWeek(page, { budget: 100, household: '2', query: 'today=wed' });
+  await raw('01-week');
+  await $(page, 'meal-dinner_wed').click();
+  await $(page, 'repair-swap').click();
+  await expect($(page, 'swap-option-0')).toBeVisible();
+  await raw('04-swap');
+  await page.goto('/cook/dinner_wed?today=wed');
+  await $(page, 'cook-timer-start').click();
+  await page.waitForTimeout(2200);
+  await raw('05-cook');
+  await page.goto('/week?today=wed');
+  await $(page, 'open-grocery').click();
+  await expect($(page, 'grocery-screen')).toBeVisible();
+  await raw('03-grocery');
+
+  const frame = await ctx.browser()!.newContext({ deviceScaleFactor: 1 });
+  const fp = await frame.newPage();
+  for (const [w, h, dir] of [[1320, 2868, '6.9'], [1284, 2778, '6.5']] as const) {
+    await fp.setViewportSize({ width: w, height: h });
+    for (const [i, [name, a, b]] of STORE_SCREENS.entries()) {
+      const img = readFileSync(`${STORE}/raw/${name}.png`).toString('base64');
+      const bands = ['#A83E28', '#1B6480', '#735400', '#6B3F8E', '#26704F', '#A83E28'];
+      const phoneW = w * 0.78;
+      await fp.setContent(`<!doctype html><html><head><style>${FONT}
+        body{margin:0;width:${w}px;height:${h}px;background:#1F5C40;overflow:hidden;position:relative;font-family:B}
+        .band{position:absolute;left:0;right:0;top:0;height:${h * 0.2}px;background:${bands[i]}}
+        h1{position:absolute;left:${w * 0.07}px;right:${w * 0.07}px;top:${h * 0.045}px;margin:0;color:#fff;font-size:${w * 0.092}px;line-height:1;text-transform:uppercase;letter-spacing:-${w * 0.002}px}
+        h1 span{display:block;color:#F6C453}
+        .phone{position:absolute;left:${(w - phoneW) / 2}px;top:${h * 0.235}px;width:${phoneW}px;border:${w * 0.022}px solid #0B2217;border-radius:${w * 0.1}px;overflow:hidden;box-shadow:0 ${w * 0.03}px ${w * 0.08}px rgba(0,0,0,.45);background:#0B2217}
+        .phone img{display:block;width:100%}
+      </style></head><body><div class="band"></div><h1>${a}<span>${b}</span></h1><div class="phone"><img src="data:image/png;base64,${img}"></div></body></html>`);
+      await fp.screenshot({ path: `${STORE}/${dir}/${name}.png` });
+    }
+  }
+  await frame.close();
+  await ctx.close();
+});

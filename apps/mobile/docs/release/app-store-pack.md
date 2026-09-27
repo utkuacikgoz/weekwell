@@ -1,93 +1,128 @@
-# App Store submission pack (draft)
+# App Store submission pack
 
-**Status: NOT ready to submit.** Every field below is a draft. App Store requirements must be re-checked against Apple's current documentation at submission time (D-017); nothing here was verified against live Apple docs, which this environment can't reach. Submission also needs product-owner approval of every screen, QA and security sign-off, and the open items at the bottom.
+Everything to paste into App Store Connect for **Weekwell** (app 6815542789, bundle `com.belevate.weekwell`, team 9D78WTZAD8). Updated 2026-09-27 for the pilot build: no Weekwell server (D-039), RevenueCat purchases (D-014), and the site at weekwell.pro (D-042).
 
-## Identity
+The step-by-step order is in [`submission-checklist.md`](submission-checklist.md). Field limits below are Apple's as generally documented; re-check anything App Store Connect rejects.
 
-| Field | Draft | Status |
-|---|---|---|
-| App name | Weekwell | needs trademark/name-availability check |
-| Subtitle (≤30) | Five dinners, one grocery list | draft |
-| Bundle ID | com.belevate.weekwell (team 9D78WTZAD8, ASC app 6815542789) | set (D-030) |
-| Primary category | Food & Drink | draft |
-| Secondary category | Health & Fitness | draft; confirm this doesn't imply medical claims |
-| Age rating | 4+ (no objectionable content) | answer the current questionnaire at submission |
-| Price | Free with in-app subscriptions | per D-008 |
+## App information
 
-## Description (draft)
+| Field | Value |
+|---|---|
+| Name (≤30) | Weekwell |
+| Subtitle (≤30) | Five dinners, one grocery list |
+| Primary category | Food & Drink |
+| Secondary category | (none: Health & Fitness could read as a health claim) |
+| Age rating | 4+ (answer "None" to every content question) |
+| Price | Free, with in-app subscriptions |
+| Support URL | https://weekwell.pro/support |
+| Marketing URL | https://weekwell.pro |
+| Privacy Policy URL | https://weekwell.pro/privacy |
+| Terms of use (EULA) | https://weekwell.pro/terms. Add this link to the end of the description, or set a custom EULA under App Information → License Agreement. |
+| Copyright | 2026 Belevate LLC |
 
-> Plan your five weeknight dinners, plus practical work lunches, around the store you use, your budget, and your time.
+## Promotional text (≤170, can change without a new build)
+
+> Plan five weeknight dinners and two lunch preps around your store, budget and time. Get one grocery list, by aisle, with estimated prices. First week free.
+
+## Description (≤4000)
+
+> Five dinners. One grocery list. Done.
 >
-> Pick Trader Joe's or Walmart, set a weekly budget, choose what matters most (high protein, low effort, low carb, or family friendly), and leave out any foods you don't eat. Weekwell plans five dinners and two lunch preps, then combines everything into one grocery list grouped by aisle, with estimated prices.
+> Tell Weekwell where you shop, what you spend in a week and how long you want to cook. It plans five weeknight dinners and two lunch preps that share ingredients, then builds one grocery list, grouped by aisle, with estimated prices for your store.
 >
-> • Swap any meal. Only that meal changes, and you can undo.
-> • Check items off as you shop.
-> • Step-by-step cooking mode.
-> • Clear price labels: estimates are always called estimates.
+> PLAN IN ONE SENTENCE
+> "I shop at Trader Joe's and spend about $80 a week." Add your goal (high protein, low effort, low carb or family friendly), how long you want to cook, and who's eating.
 >
-> Prices are estimates and can change in store. Protein values are estimates from typical ingredient values and aren't medical or dietary advice. Weekwell isn't affiliated with Trader Joe's or Walmart.
+> SEE WHERE THE MONEY GOES
+> Every dinner shows its share of the week's estimated total. If the week comes in over your budget, Weekwell shows the priciest dinners and how much a swap would save.
+>
+> SWAP ANY MEAL
+> Not feeling Tuesday? Pick from three alternatives, each with its cooking time and price difference. Only that meal changes, your grocery list updates, and you can undo.
+>
+> SHOP ONCE
+> One list, grouped by aisle, with how much to buy and an estimated price for each item. Tick things off as you go, or share the list.
+>
+> COOK WITHOUT SCROLLING
+> Cooking mode shows every step on one screen, with the current step large enough to read across the counter. Timers keep running while you prep, and the screen stays awake.
+>
+> LEAVE OUT WHAT YOU DON'T EAT
+> Switch off dairy, gluten or nuts, or add any food you don't eat, and those recipes never appear.
+>
+> YOUR PLAN STAYS YOURS
+> No account needed. Your plans, preferences and the foods you leave out stay on your phone. No ads.
+>
+> SUBSCRIPTION
+> Your first week is free. Then $49.99 a year, $9.99 a month or $4.99 a week. Payment is charged to your Apple ID when the free week ends. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings.
+>
+> Prices are estimates and can differ in store. Protein values are estimates from typical ingredient values, not medical or dietary advice. If you have an allergy, always read package labels. Weekwell isn't affiliated with Trader Joe's or Walmart.
+>
+> Terms of use: https://weekwell.pro/terms
+> Privacy policy: https://weekwell.pro/privacy
 
-**Keywords (≤100 chars, draft):** meal plan,weekly dinners,grocery list,high protein,meal prep,budget meals,work lunches
+## Keywords (≤100, comma-separated, no spaces)
+
+```
+meal plan,weekly dinners,grocery list,meal prep,high protein,budget,dinner ideas,lunch prep,recipes
+```
+
+99 characters. Retailer names are left out on purpose: they're trademarks, and the name and description already cover search.
 
 ## Screenshots
 
-Drafts at 6.9" (1320×2868) in `screenshots/`, rendered from the web build. **Replace them with captures from a real device before submission** (native fonts, status bar, controls). Confirm which display sizes Apple currently requires.
+Captured from the real app and captioned in the Bold blocks look by `apps/mobile/e2e/site-shots.spec.ts` (test "app store screenshots", run with `SITE_SHOTS=1`).
 
-| File | Caption (draft) |
-|---|---|
-| 01-plan-my-five-dinners.png | Plan my five dinners |
-| 02-your-week.png | Tonight first, the whole week below |
-| 03-recipe.png | Everything you need to cook it |
-| 04-grocery-list.png | One list, grouped by aisle |
-| 05-cooking-mode.png | One step at a time |
-
-## Subscriptions (D-008)
-
-| Product | Price | Trial | Status |
+| Order | 6.9" (1320×2868) | 6.5" (1284×2778) | Caption |
 |---|---|---|---|
-| Weekly | $4.99 / week | 1 week free (introductory offer) | create in App Store Connect |
-| Monthly | $9.99 / month | 1 week free | create in App Store Connect |
-| Yearly | $49.99 / year | 1 week free | create in App Store Connect |
+| 1 | `screenshots/app-store/6.9/01-week.png` | `…/6.5/01-week.png` | Five dinners. One grocery list. |
+| 2 | `…/6.9/02-setup.png` | `…/6.5/02-setup.png` | Plan it in one sentence. |
+| 3 | `…/6.9/03-grocery.png` | `…/6.5/03-grocery.png` | Shop once, by aisle, with prices. |
+| 4 | `…/6.9/04-swap.png` | `…/6.5/04-swap.png` | Not feeling it? Pick from three. |
+| 5 | `…/6.9/05-cook.png` | `…/6.5/05-cook.png` | Every step on one screen. |
+| 6 | `…/6.9/06-exclusions.png` | `…/6.5/06-exclusions.png` | Leave out what you don't eat. |
 
-- One subscription group. Restore purchases is visible on the paywall.
-- The paywall states: free for 7 days, then the price, charged when the free week ends unless cancelled, with cancellation through App Store settings at least 24 hours before the end. **Verify this wording against current App Store guidance.**
-- The in-app purchase is currently a **mock** (D-014 open). Real StoreKit/RevenueCat integration and server-side receipt/webhook verification (the API already verifies signed webhooks) are required before submission.
+App Store Connect usually asks only for the 6.9" set and scales it for smaller phones. Upload the 6.5" set if it's requested. iPad isn't supported (`supportsTablet: false`).
 
-## Privacy
+## In-app purchases (D-008, D-014)
 
-- Privacy policy: draft in `privacy-policy-draft.md`. It needs legal review and a hosted URL (**open**).
-- Support URL: **open** (needs a hosted page and contact address).
-- App Privacy details (draft answers, verify against the current questionnaire):
-  - **On-device build:** no data collected. Everything stays on the device, and analytics events are buffered on-device only (D-024).
-  - **API-connected build:** email address (account; stored only as a keyed hash), user content (meal plans and preferences, including foods to leave out, linked to the account), identifiers (account id). Not used for tracking, not sold, not shared with third parties.
-- Account deletion: in-app, Preferences → Delete my account (API build) / Delete my data (on-device build). Deletes the account and all owned rows server-side (tested).
-- Data export: `GET /v1/export` exists. An in-app entry point is **open**.
+One subscription group named "Weekwell", with 3 auto-renewable subscriptions. Each has an introductory offer of 1 week free for new subscribers.
 
-## Review notes (draft)
+| Reference name | Product ID | Duration | Price |
+|---|---|---|---|
+| Weekly | `com.belevate.weekwell.weekly` | 1 week | $4.99 |
+| Monthly | `com.belevate.weekwell.monthly` | 1 month | $9.99 |
+| Yearly | `com.belevate.weekwell.yearly` | 1 year | $49.99 |
 
-> Weekwell plans five dinners and two lunch preps from a fixed recipe catalog, with estimated grocery prices. To test: tap Get started, choose Trader Joe's, keep the defaults, and tap Plan my five dinners. [API build: sign in with the demo email below; the code arrives by email.] Prices shown are estimates. No account is needed in the on-device build.
+Each subscription needs a display name, a description (for example, "Plan a new week every week, with swaps and grocery lists") and a review screenshot. A screenshot of the paywall works; use `docs/review` captures or take one on your phone. RevenueCat setup: `revenuecat-setup.md`.
 
-Demo account: **open** (needed only for the API build).
+## App Privacy (the "nutrition label")
+
+The pilot has no Weekwell server (D-039). Only the RevenueCat SDK sends data off the phone.
+
+- **Data collected:**
+  - **Purchases → Purchase history.** Used for app functionality. Not linked to the user's identity. Not used for tracking.
+  - **Identifiers → User ID** (RevenueCat's random app user id). Used for app functionality. Not linked to identity. Not used for tracking.
+- **Not collected:** meal plans, preferences and foods left out stay on the device. No analytics leave the phone.
+- **Tracking:** none, so there's no App Tracking Transparency prompt.
+
+Source: `docs/legal/us-legal-review.md` (legal review completed 2026-09-27).
 
 ## Export compliance
 
-`ios.usesNonExemptEncryption: false` in `app.json`: the app only uses encryption provided by the OS (HTTPS). **Confirm the current export-compliance questionnaire answers at submission.**
+Answer **"None of the algorithms mentioned above"**: the app only uses the OS's own HTTPS. `app.json` already sets `usesNonExemptEncryption: false`, so TestFlight builds don't ask.
 
-## Permissions
+## App Review notes
 
-The app requests no device permissions (no camera, location, contacts, notifications, or tracking), so no permission rationale strings are needed. `expo-secure-store` would add a Face ID usage string by default; it's disabled (`faceIDPermission: false`) because the app doesn't use Face ID. Re-check the generated Info.plist before submission.
+> Weekwell plans five weeknight dinners and two lunch preps from a built-in recipe catalog, with estimated grocery prices. No account or sign-in is needed.
+>
+> To test: tap Get started → tap the store blank and choose Trader Joe's → Continue → Continue → Continue → Plan my week. Open any dinner to see the recipe, swap it, or start cooking mode. The grocery list is at the bottom of the week.
+>
+> Subscriptions: the first week is free, then weekly, monthly or yearly. Use a Sandbox Apple ID to test purchases. "Restore purchases" is on the plans screen (Settings → Subscription).
+>
+> Prices are labelled estimates. Weekwell isn't affiliated with Trader Joe's or Walmart; the store names describe where the user shops.
+
+Demo account: none needed.
 
 ## Accessibility evidence
 
-- Automated: every control labelled; touch targets ≥44 pt; no clipped text at 320–430 pt widths and 100–150% text; WCAG AA contrast for both light and dark palettes (see the E2E and contrast tests).
-- **Open:** a manual VoiceOver pass, Dynamic Type at the largest sizes, and Reduce Motion on a real device.
-
-## Open before submission
-
-1. Product-owner approval of every screen and sensory state (D-016, D-018).
-2. D-041: add the App Store Connect API key as three GitHub secrets, then set `TESTFLIGHT_ENABLED` (see `testflight-setup.md`; no Expo account needed).
-3. D-014 real purchases (StoreKit/RevenueCat) and store webhooks.
-4. D-013 auth provider and email delivery (API build), plus a hosted API.
-5. D-011 price source, or explicit acceptance of labelled sample prices.
-6. Hosted privacy policy and support URL; legal review.
-7. Device screenshots; manual accessibility pass; current Apple requirements check.
+- **Automated:** every control is labelled; touch targets are at least 44 pt; no text clips at 320–430 pt widths or 100–150% text size; text meets WCAG AA contrast, including on every day band (contrast and E2E tests).
+- **Manual on a real phone:** VoiceOver, the largest Dynamic Type size and Reduce Motion. These are on the checklist.
