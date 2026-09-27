@@ -44,6 +44,13 @@ export async function buildWeek(page: Page, opts: Parameters<typeof onboard>[1] 
   await onboard(page, opts);
   await $(page, 'generate').click();
   await expect($(page, 'tonight-card')).toBeVisible({ timeout: 15_000 });
+  await closeShoppingPrompt(page);
+}
+
+/** The one-time "When do you shop?" sheet (D-047 NU3) shows after the first plan; "Not now" closes it for good. */
+export async function closeShoppingPrompt(page: Page) {
+  await $(page, 'shopping-later').click();
+  await expect($(page, 'shopping-sheet')).toHaveCount(0);
 }
 
 export async function visibleText(page: Page): Promise<string> {

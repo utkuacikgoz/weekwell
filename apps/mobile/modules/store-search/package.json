@@ -1,0 +1,8 @@
+{
+  "name": "store-search",
+  "version": "1.0.0",
+  "description": "Nearest-store search with Apple Maps (MKLocalSearch), on device",
+  "private": true,
+  "main": "index.ts",
+  "license": "UNLICENSED"
+}

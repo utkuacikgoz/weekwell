@@ -3,13 +3,14 @@ import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, Appearance, Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { FontScaleProvider } from '../components/Text';
 import { useReducedMotion } from '../services/motion';
+import { configureReminderDisplay, onReminderTap } from '../services/reminders';
 import { StoreProvider, useStore } from '../state/store';
 import { color, scheme } from '../theme/tokens';
 
@@ -23,6 +24,12 @@ function Navigator() {
     return () => sub.remove();
   }, []);
   const { scenarios, hydrated } = useStore();
+  // Shopping-day reminder (D-047): shown while the app is open; a tap opens the grocery list.
+  useEffect(() => {
+    configureReminderDisplay();
+    if (!hydrated) return;
+    return onReminderTap((url) => router.push(url as Href));
+  }, [hydrated]);
   const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, BricolageGrotesque_800ExtraBold });
   // If fonts fail to load, continue with system fonts rather than blocking the app.
   const fontsReady = fontsLoaded || !!fontError;

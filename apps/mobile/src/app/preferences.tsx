@@ -14,6 +14,7 @@ import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { BudgetControl, dollars } from '../components/BudgetControl';
+import { REMINDER_HOURS, WEEKDAYS } from '../services/reminders';
 import { Button } from '../components/Button';
 import { ExclusionsEditor } from '../components/ExclusionsEditor';
 import { Icon } from '../components/Icon';
@@ -165,6 +166,12 @@ export default function Preferences() {
                 <View style={[styles.thumb, data.hapticsEnabled && styles.thumbOn]} />
               </View>
             </Pressable>
+            <SettingRow
+              label="Shopping day"
+              value={data.shopping.remind && data.shopping.day !== null ? `${WEEKDAYS[data.shopping.day] ?? ''}, ${REMINDER_HOURS.find((h) => h.hour === data.shopping.hour)?.time ?? ''}` : 'Off'}
+              onPress={() => router.push('/shopping')}
+              testID="pref-row-shopping"
+            />
             <SettingRow label="Subscription" value={subscriptionValue(entitlementView)} onPress={() => router.push('/trial?trigger=settings')} testID="pref-row-subscription" />
             {remote && signedIn ? (
               <Pressable
