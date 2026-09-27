@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion } from '../services/motion';
 import { color, radius, space } from '../theme/tokens';
@@ -8,26 +8,27 @@ import { Text } from './Text';
 /**
  * Bottom sheet for detail and confirmation. Rises from the bottom (explains
  * where it came from); fades instead under reduced motion. Tapping the scrim
- * or the close action dismisses it.
+ * or the close action dismisses it. The sheet rides up above the keyboard, and
+ * taps inside it land while the keyboard is up (so Done works first time).
  */
 export function Sheet({ visible, title, onClose, children, footer, testID }: { visible: boolean; title: string; onClose: () => void; children: ReactNode; footer?: ReactNode; testID?: string }) {
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType={reduced ? 'fade' : 'slide'} onRequestClose={onClose}>
-      <View style={styles.root}>
+      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" />
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.m) }]} testID={testID} accessibilityViewIsModal>
           <View style={styles.grabber} importantForAccessibility="no" />
           <Text variant="heading" accessibilityRole="header" style={{ marginBottom: space.s }}>
             {title}
           </Text>
-          <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={{ gap: space.m, paddingBottom: space.s }}>
+          <ScrollView style={{ maxHeight: 480 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ gap: space.m, paddingBottom: space.s, overflow: 'hidden' }}>
             {children}
           </ScrollView>
           {footer ? <View style={styles.footer}>{footer}</View> : null}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

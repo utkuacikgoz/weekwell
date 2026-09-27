@@ -44,7 +44,6 @@ test.describe('paywall · 390×844', () => {
     await buildWeek(page, { query: 'today=wed' });
     await $(page, 'open-trial').click();
     await shot(page, '05-paywall-idle', 'start-trial');
-    await $(page, 'see-other-plans').click();
     await $(page, 'product-monthly').click();
     await shot(page, '06-paywall-selected', 'start-trial');
     await $(page, 'start-trial').click();

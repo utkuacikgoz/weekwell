@@ -24,8 +24,9 @@ test('tonight’s meal, total, budget fit, and store are visible without scrolli
 
 test('the review screen reflects every choice and edits return to review', async ({ page }) => {
   await onboard(page, { store: 'walmart', budget: 120, time: '20', household: '2', exclusions: ['dairy'] });
-  const text = await visibleText(page);
-  for (const s of ['Walmart', '$120', 'High protein', '20 minutes', '2 people', 'Dairy-free']) expect(text).toContain(s);
+  // Values are set in the display face, which is uppercase.
+  const text = (await visibleText(page)).toLowerCase();
+  for (const s of ['Walmart', '$120', 'High protein', '20 minutes', '2 people', 'Dairy-free']) expect(text).toContain(s.toLowerCase());
   await $(page, 'review-week').click();
   await $(page, 'household-3_4').click();
   await $(page, 'continue').click();
@@ -44,10 +45,10 @@ test('budget input is bounded and explains corrections', async ({ page }) => {
   const input = $(page, 'budget-input');
   await input.fill('5');
   await input.blur();
-  await expect(page.getByText('Budgets start at $30. We set it to $30.')).toBeVisible();
+  await expect(page.getByText('Weekwell plans from $30 a week, so we set $30.')).toBeVisible();
   await input.fill('9999');
   await input.blur();
-  await expect(page.getByText('Budgets go up to $400. We set it to $400.')).toBeVisible();
+  await expect(page.getByText('Weekwell plans up to $2,000 a week, so we set $2,000.')).toBeVisible();
 });
 
 test('an allergy conflict is shown before generation and blocks it', async ({ page }) => {

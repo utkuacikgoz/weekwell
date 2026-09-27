@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH, color, space } from '../theme/tokens';
@@ -15,6 +15,8 @@ import { Text } from './Text';
 export function Screen({ children, footer, footerRow, overlay, testID, scrollToTopKey, scrollToY }: { children: ReactNode; footer?: ReactNode; footerRow?: boolean; overlay?: ReactNode; testID?: string; scrollToTopKey?: unknown; scrollToY?: number }) {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollView>(null);
+  // Measured bar height: toasts sit just above it. (A percentage offset isn't honoured on iOS and put the toast behind the action.)
+  const [footerH, setFooterH] = useState(0);
   // Bring a result (e.g. a swap confirmation at the top) into view after an action lower on the page.
   useEffect(() => {
     if (scrollToTopKey) scroll.current?.scrollTo({ y: 0, animated: false });
@@ -33,12 +35,14 @@ export function Screen({ children, footer, footerRow, overlay, testID, scrollToT
         {children}
       </ScrollView>
       {footer ? (
-        <View style={[styles.footer, footerRow && styles.footerRow, { paddingBottom: Math.max(insets.bottom, space.s + 4) }]} testID="screen-footer">
-          {/* Transient messages (e.g. undo toasts) float just above the action bar. */}
-          {overlay ? <View style={styles.overlay} pointerEvents="box-none">{overlay}</View> : null}
+        <View style={[styles.footer, footerRow && styles.footerRow, { paddingBottom: Math.max(insets.bottom, space.s + 4) }]} onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} testID="screen-footer">
           {footer}
         </View>
-      ) : overlay ? (
+      ) : null}
+      {/* Transient messages (e.g. undo toasts) float just above the action bar. */}
+      {footer && overlay && footerH > 0 ? (
+        <View style={[styles.overlay, { bottom: footerH + space.s }]} pointerEvents="box-none">{overlay}</View>
+      ) : !footer && overlay ? (
         <View style={[styles.overlay, { bottom: Math.max(insets.bottom, space.m) }]} pointerEvents="box-none">{overlay}</View>
       ) : null}
     </KeyboardAvoidingView>
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
   },
   footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   action: { flexGrow: 1, flexBasis: 176 },
-  overlay: { position: 'absolute', left: space.m, right: space.m, bottom: '100%', marginBottom: space.s },
+  overlay: { position: 'absolute', left: space.m, right: space.m },
   topBar: { minHeight: MIN_TOUCH + 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' },
   back: { minHeight: MIN_TOUCH, justifyContent: 'center', paddingRight: space.m },
   divider: { height: StyleSheet.hairlineWidth * 2, backgroundColor: color.divider },

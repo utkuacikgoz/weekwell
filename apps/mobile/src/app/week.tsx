@@ -17,6 +17,10 @@ import { resumable } from '../services/cooking';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
 
+/** Sun yellow with deep-green text (palette.ts): the offer card. */
+const SUN = '#F6C453';
+const ON_SUN = '#173F2D';
+
 const WEEKDAYS: (Day | null)[] = [null, 'mon', 'tue', 'wed', 'thu', 'fri', null];
 
 function subscriptionLine(view: EntitlementView): string | null {
@@ -220,15 +224,29 @@ export default function Week() {
         }}
       />
 
-      <View style={styles.sub}>
-        {sub ? <Text variant="meta" tone="muted" testID="subscription-status" style={{ flex: 1 }}>{sub}</Text> : <View style={{ flex: 1 }} />}
-        <Button
-          kind="quiet"
-          label={entitlementView.state === 'trial' || entitlementView.state === 'active' ? 'Manage subscription' : 'Try a free week'}
+      {entitlementView.state === 'none' || entitlementView.state === 'expired' ? (
+        // The offer as a card of its own (sun yellow = attention), not a link at the bottom of the page.
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={entitlementView.state === 'expired' ? 'Your free week is over. Keep planning. See plans' : 'First week free. Plan every week like this one. Start free week'}
           onPress={() => router.push('/trial?trigger=plan_header')}
+          style={({ pressed }) => [styles.offer, pressed && { opacity: 0.9 }]}
           testID="open-trial"
-        />
-      </View>
+        >
+          <Text variant="label" style={styles.offerKicker}>{entitlementView.state === 'expired' ? 'Your free week is over' : 'First week free'}</Text>
+          <Text variant="dish" style={styles.onSun}>{entitlementView.state === 'expired' ? 'Keep every week this easy.' : 'Plan every week like this one.'}</Text>
+          <Text style={styles.onSun}>{entitlementView.state === 'expired' ? 'Your plan is saved. Pick a plan to swap meals and build next week.' : 'New weeks, unlimited swaps and your grocery list. $0 today, cancel anytime.'}</Text>
+          <View style={styles.offerCta}>
+            <Text variant="bodyStrong" style={{ color: '#FFFFFF' }}>{entitlementView.state === 'expired' ? 'See plans' : 'Start free week'}</Text>
+            <Icon name="chevron-right" size={18} color="#FFFFFF" />
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.sub}>
+          {sub ? <Text variant="meta" tone="muted" testID="subscription-status" style={{ flex: 1 }}>{sub}</Text> : <View style={{ flex: 1 }} />}
+          <Button kind="quiet" label="Manage subscription" onPress={() => router.push('/trial?trigger=plan_header')} testID="open-trial" />
+        </View>
+      )}
 
       <AboutEstimateSheet
         visible={sheet === 'about'}
@@ -262,6 +280,10 @@ const styles = StyleSheet.create({
   resumeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH + 8, paddingLeft: space.m - 4 },
   budgetLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space.s, marginBottom: space.xs },
   sub: { marginTop: space.l, flexDirection: 'row', alignItems: 'center', gap: space.m },
+  offer: { marginTop: space.l, backgroundColor: SUN, padding: space.m + 4, gap: space.xs },
+  offerKicker: { color: ON_SUN, textTransform: 'uppercase', letterSpacing: 1.4 },
+  onSun: { color: ON_SUN },
+  offerCta: { marginTop: space.s, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, backgroundColor: ON_SUN, minHeight: MIN_TOUCH, paddingHorizontal: space.m },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.s, backgroundColor: color.accentTint, borderRadius: radius.control, paddingLeft: space.m - 4, marginTop: space.s },
   undoBtn: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s },
 });

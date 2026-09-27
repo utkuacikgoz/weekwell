@@ -39,7 +39,7 @@ import { ApiRequestError, api } from '../services/api';
 import { MockEntitlementServer } from '../services/entitlement';
 import { generatePlan } from '../services/generation';
 import { haptic, setHapticsEnabled } from '../services/haptics';
-import { configureRevenueCat, rcBuy, rcLogIn, rcLogOut, rcRestore, rcView, revenueCatEnabled } from '../services/purchases';
+import { configureRevenueCat, rcBuy, rcLogIn, rcLogOut, rcManage, rcRestore, rcView, revenueCatEnabled } from '../services/purchases';
 import { DEFAULT_SCENARIOS, scenariosFromUrl, type Scenarios } from '../services/scenarios';
 
 const STORAGE_KEY = 'weekwell:v1';
@@ -135,6 +135,7 @@ type Ctx = {
   startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'cancelled' | 'failed'>;
   purchase: (productId: ProductId) => Promise<'ok' | 'cancelled' | 'failed'>;
   restorePurchases: () => Promise<'restored' | 'nothing_to_restore' | 'failed'>;
+  manageSubscription: () => Promise<'shown' | 'cancelled' | 'failed'>;
   deleteAllData: () => Promise<'ok' | 'failed'>;
   /** True when this build talks to the Weekwell API (EXPO_PUBLIC_API_URL). */
   remote: boolean;
@@ -629,6 +630,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return result;
   }, [analytics, refreshEntitlement, remote, scenarios.restore]);
 
+  /** Manage or cancel: Apple's sheet in store builds; the test build cancels renewal directly. */
+  const manageSubscription = useCallback(async (): Promise<'shown' | 'cancelled' | 'failed'> => {
+    if (revenueCatEnabled) {
+      const ok = await rcManage();
+      await refreshEntitlement();
+      return ok ? 'shown' : 'failed';
+    }
+    if (remote || !server.current) return 'failed';
+    const view = await server.current.cancel().catch(() => null);
+    if (!view) return 'failed';
+    setEntitlementView(view);
+    setData((d) => ({ ...d, entitlement: server.current?.snapshot() ?? null }));
+    if (view.state === 'trial' || view.state === 'active') analytics?.track('subscription_cancelled', { productId: view.productId });
+    return 'cancelled';
+  }, [analytics, refreshEntitlement, remote]);
+
   const deleteAllData = useCallback(async (): Promise<'ok' | 'failed'> => {
     if (remote && signedIn) {
       try {
@@ -709,6 +726,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     startTrial,
     purchase,
     restorePurchases,
+    manageSubscription,
     deleteAllData,
     remote,
     signedIn,

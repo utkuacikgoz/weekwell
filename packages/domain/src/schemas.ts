@@ -81,7 +81,7 @@ export type HouseholdSize = z.infer<typeof HouseholdSizeSchema>;
 
 /** Weekly budget bounds in whole dollars. See decision log D-020. */
 export const BUDGET_MIN = 30;
-export const BUDGET_MAX = 400;
+export const BUDGET_MAX = 2000;
 export const BUDGET_STEP = 5;
 export const BUDGET_DEFAULT = 80;
 
