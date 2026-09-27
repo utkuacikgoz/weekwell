@@ -1,10 +1,11 @@
 import { RETAILER_LABEL, RETAILERS, type Retailer } from '@weekwell/domain';
 import { useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
-import { directionsUrl, findNearestStore, formatMiles, nearbyAvailable, storeLabel } from '../services/nearbyStore';
+import { directionsUrl, driveText, findNearestStore, formatMiles, nearbyAvailable, storeLabel } from '../services/nearbyStore';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, space } from '../theme/tokens';
 import { Icon } from './Icon';
+import { StoreMap } from './StoreMap';
 import { Text } from './Text';
 
 type State = 'idle' | 'busy' | 'denied' | 'none' | 'failed';
@@ -14,7 +15,8 @@ type State = 'idle' | 'busy' | 'denied' | 'none' | 'failed';
  * either chain when none is chosen yet, and calls `onRetailer` with the chain
  * it found so the setup sentence can fill itself in.
  */
-export function NearbyStore({ retailer, onRetailer }: { retailer: Retailer | null; onRetailer?: (r: Retailer) => void }) {
+/** `map`: the grocery list's map strip (GR3) once a store is known; otherwise the card (ST1). */
+export function NearbyStore({ retailer, onRetailer, map = false }: { retailer: Retailer | null; onRetailer?: (r: Retailer) => void; map?: boolean }) {
   const { data, scenarios, setShopping } = useStore();
   const [state, setState] = useState<State>('idle');
   if (!nearbyAvailable(scenarios.nearby)) return null;
@@ -30,6 +32,7 @@ export function NearbyStore({ retailer, onRetailer }: { retailer: Retailer | nul
     } else setState(r.status);
   };
 
+  if (store && map) return <StoreMap store={store} />;
   if (store) {
     return (
       <View style={styles.card} testID="nearby-store">
@@ -39,7 +42,7 @@ export function NearbyStore({ retailer, onRetailer }: { retailer: Retailer | nul
         <View style={{ flex: 1 }}>
           <Text variant="label" tone="muted">YOUR NEAREST STORE</Text>
           <Text variant="bodyStrong">{storeLabel(store)}</Text>
-          <Text variant="meta" tone="muted">{`${formatMiles(store.miles)}${store.city ? ` · ${store.city}` : ''}`}</Text>
+          <Text variant="meta" tone="muted">{[formatMiles(store.miles), driveText(store) ?? store.city].filter(Boolean).join(' · ')}</Text>
         </View>
         <Pressable accessibilityRole="link" accessibilityLabel={`Directions to ${storeLabel(store)}`} onPress={() => void Linking.openURL(directionsUrl(store))} style={styles.go} testID="nearby-directions">
           <Text variant="label" tone="accent" style={{ textDecorationLine: 'underline' }}>Directions</Text>

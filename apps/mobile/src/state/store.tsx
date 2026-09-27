@@ -41,7 +41,7 @@ import { ApiRequestError, api } from '../services/api';
 import { MockEntitlementServer } from '../services/entitlement';
 import { generatePlan } from '../services/generation';
 import { haptic, setHapticsEnabled } from '../services/haptics';
-import { formatMiles, storeLabel, type HomeStore } from '../services/nearbyStore';
+import { formatMiles, type HomeStore } from '../services/nearbyStore';
 import { cancelShoppingReminder, scheduleShoppingReminder } from '../services/reminders';
 import { configureRevenueCat, rcBuy, rcLogIn, rcLogOut, rcManage, rcRestore, rcView, revenueCatEnabled } from '../services/purchases';
 import { DEFAULT_SCENARIOS, scenariosFromUrl, type Scenarios } from '../services/scenarios';
@@ -79,11 +79,29 @@ export type SwapRecord = { previous: Meal; next: Meal; action: RepairAction; dif
 
 export type { CookingSession };
 
-/** The reminder a person sees on shopping day. */
-export function reminderText(storeName: string, items: number, totalCents: number | null, store: HomeStore | null): { title: string; body: string } {
-  const list = `${items} item${items === 1 ? '' : 's'} to buy${totalCents !== null ? `, about ${formatMoney(totalCents, { whole: true })}` : ''}`;
-  const where = store ? ` ${storeLabel(store)} is ${formatMiles(store.miles)}${store.miles < 0.2 ? '' : ' away'}.` : '';
-  return { title: 'It’s shopping day', body: `Your ${storeName} list is ready: ${list}.${where}` };
+// Cuisine words keep their capital when a dish name sits mid-sentence.
+const PROPER = /^(Greek|Thai|Italian|Mexican|Cajun|Korean|Cuban|Indian|Tuscan|Buffalo|Caesar|Mediterranean|Moroccan|Japanese|Chinese|Hawaiian|Southwest|Tex-Mex|Dijon|Parmesan)\b/u;
+const midSentence = (name: string) => (PROPER.test(name) ? name : name.charAt(0).toLowerCase() + name.slice(1));
+
+/**
+ * The shopping-day reminder, food first (D-047 NT3). `nextDinner` is the first
+ * dinner after shopping day.
+ */
+export function reminderText(storeName: string, items: number, totalCents: number | null, store: HomeStore | null, nextDinner: string | null): { title: string; body: string } {
+  const where = store ? `${storeName} (${formatMiles(store.miles)})` : storeName;
+  const cost = totalCents !== null ? `, about ${formatMoney(totalCents, { whole: true })},` : '';
+  return {
+    title: nextDinner ? `This week starts with ${midSentence(nextDinner)}` : 'It’s shopping day',
+    body: `Grab ${items} item${items === 1 ? '' : 's'} at ${where}${cost} and dinner’s sorted till Friday.`,
+  };
+}
+
+const DAY_INDEX: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+/** The first dinner after shopping day (0 = Sunday), wrapping to Monday's. */
+export function dinnerAfter(plan: Plan | null, shoppingDay: number): string | null {
+  if (!plan?.dinners.length) return null;
+  const next = plan.dinners.find((d) => (DAY_INDEX[d.day] ?? 0) > shoppingDay) ?? plan.dinners[0];
+  return next?.name ?? null;
 }
 
 type Persisted = {
@@ -101,9 +119,9 @@ type Persisted = {
   shopping: Shopping;
 };
 
-/** `day`: 0 = Sunday … 6 = Saturday; null until the person picks one. */
-export type Shopping = { store: HomeStore | null; day: number | null; hour: number; remind: boolean };
-const NO_SHOPPING: Shopping = { store: null, day: null, hour: 9, remind: false };
+/** `day`: 0 = Sunday … 6 = Saturday; null until the person picks one. `prompted`: the one-time "When do you shop?" sheet was shown. */
+export type Shopping = { store: HomeStore | null; day: number | null; hour: number; remind: boolean; prompted: boolean };
+const NO_SHOPPING: Shopping = { store: null, day: null, hour: 9, remind: false, prompted: false };
 
 const EMPTY: Persisted = {
   anonId: '',
@@ -558,7 +576,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       void cancelShoppingReminder();
       return;
     }
-    const { title, body } = reminderText(RETAILER_LABEL[data.plan.preferences.retailer], itemCount, totalCents, store);
+    const { title, body } = reminderText(RETAILER_LABEL[data.plan.preferences.retailer], itemCount, totalCents, store, dinnerAfter(data.plan, day));
     void scheduleShoppingReminder(day, hour, title, body).catch(() => undefined);
   }, [hydrated, data.shopping, data.plan, itemCount, totalCents]);
 

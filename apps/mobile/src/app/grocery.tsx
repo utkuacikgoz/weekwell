@@ -224,7 +224,7 @@ export default function Grocery() {
 
       {/* D-047: where to shop, one tap to directions, and the reminder if it isn't on yet. */}
       <View style={{ marginTop: space.m, gap: space.xs }}>
-        <NearbyStore retailer={plan.preferences.retailer} />
+        <NearbyStore retailer={plan.preferences.retailer} map />
         {!data.shopping.remind ? <Button kind="quiet" label="Remind me on shopping day" onPress={() => router.push('/shopping')} testID="grocery-remind" /> : null}
       </View>
 
