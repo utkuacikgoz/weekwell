@@ -454,6 +454,27 @@ The product owner's design audit asked for a correction pass before any further 
   - **TestFlight, cache and trim:** CocoaPods are cached, and Xcode's index store is turned off for the archive.
 - Owner: Product owner
 
+### D-044 — Landing page redesign and brand mark
+
+- Status: Accepted (product owner, 2026-09-27: "works but it is not AAA class; also there's no favicon")
+- Date: 2026-09-27
+- Workstream: shared
+- Decision:
+  - **Brand mark:** a white "W" in Bricolage Grotesque ExtraBold on Weekwell green, with a sun-yellow bar. It's rendered to `favicon.ico` (16, 32 and 48 px), the PNG favicons, a 180 px Apple touch icon, 192 and 512 px icons and a web manifest. The old favicon was the app icon's plate art shrunk to 48 px, which was unreadable in a browser tab.
+  - **Share image:** a 1200×630 card (`og.jpg`) with the headline and a real app screen, used for link previews.
+  - **Landing page:** built from real screens of the app, captured from the web build by `apps/mobile/e2e/site-shots.spec.ts` (run with `SITE_SHOTS=1`). The sections are:
+    - a hero with two phones;
+    - a numbers strip;
+    - how it works in three steps, each with its screen;
+    - three feature sections (swap, cooking mode, foods left out);
+    - pricing;
+    - an FAQ that works without JavaScript (`details`);
+    - a closing call to action.
+  - **No JavaScript,** so the strict content security policy stays. On phones the header shows only the wordmark and "Join the beta".
+- Follow-up: re-run the screenshot spec when the app's screens change, so the site shows the current app.
+- Open: the app icon is still the cream plate art from before the Bold blocks look. The new mark could replace it (owner to decide).
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
