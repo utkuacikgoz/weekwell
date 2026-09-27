@@ -506,6 +506,21 @@ The product owner's design audit asked for a correction pass before any further 
 - Rollback: Restore the build-web job and the full matrix.
 - Owner: Product owner
 
+### D-047 — Nearest store and shopping-day reminder
+
+- Status: Accepted
+- Date: 2026-09-27
+- Workstream: mobile
+- Question: The owner's original idea: share your location, Weekwell finds your store and nudges you to go shopping.
+- Decision:
+  - **Find my nearest store.** On the store step and on the shopping-day screen, the person taps it. The app asks for When In Use location once, and searches Apple Maps (MKLocalSearch, in a local Expo module `modules/store-search`) for Trader Joe's and/or Walmart within about 25 miles. It saves only the nearest store's name, street and distance on the phone. If no chain was picked yet, the chain it found fills the sentence. A Directions link opens Apple Maps.
+  - **Shopping day.** "When do you shop?" (a card on the week screen, a row in Settings, and a link on the grocery list). The person picks a day and a time: morning, midday or evening. One weekly local notification says "It’s shopping day. Your Walmart list is ready: 23 items, about $86. Walmart Supercenter on Main St is 1.2 mi away." It is rescheduled whenever the list, total or store changes, and tapping it opens the grocery list.
+  - **Not done:** an arrival alert near the store. It needs Always location, draws App Review scrutiny, and costs battery.
+- Privacy: The location stays on the phone and goes to Apple Maps for the search; Weekwell never stores or receives it. The privacy policy says so. App Privacy doesn't change (location isn't collected). No push entitlement: a config plugin strips the one expo-notifications adds.
+- Testing: The web preview has no Apple Maps search. `?nearby=found|denied|none` fakes the search result in tests; everything else is real. The Swift module compiles only in the TestFlight build.
+- Rollback: Remove the plugins and module; the stored `shopping` field is ignored.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
