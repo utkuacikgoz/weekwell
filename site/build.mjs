@@ -9,6 +9,7 @@
  *   node site/build.mjs --preview  # build anyway, marking TODOs, for local review
  */
 import { copyFileSync, cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 const here = import.meta.dirname;
@@ -58,6 +59,12 @@ copyFileSync(join(here, 'src/style.css'), join(out, 'style.css'));
 cpSync(join(here, 'src/img'), join(out, 'img'), { recursive: true });
 for (const f of readdirSync(join(here, 'src/brand'))) copyFileSync(join(here, 'src/brand', f), join(out, f));
 const site = String(config.siteUrl ?? '').replace(/\/$/, '');
+// Content-hashed URLs (?v=…): a changed file always gets a new URL, so a browser can never pair
+// new HTML with an old cached stylesheet or screenshot, and these files can be cached for a year.
+const version = (file) => createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 10);
+const cssVersion = version(join(here, 'src/style.css'));
+const withAssetVersions = (html) =>
+  html.replace(/(src|href)="\/img\/([\w.-]+)"/g, (_, attr, name) => `${attr}="/img/${name}?v=${version(join(here, 'src/img', name))}"`);
 for (const page of PAGES) {
   const body = fill(readFileSync(join(here, 'src', page.file), 'utf8'));
   const nav = PAGES.filter((p) => p.nav)
@@ -87,7 +94,7 @@ ${page.file === '404.html' ? '<meta name="robots" content="noindex">' : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Inter:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.css?v=${cssVersion}">
 </head>
 <body>
 <header class="site"><a class="wordmark" href="index.html" aria-label="Weekwell home">Week<em>well</em></a><nav aria-label="Site">${page.landing ? SITE_NAV : nav}</nav></header>
@@ -98,7 +105,7 @@ ${body}
 </body>
 </html>
 `;
-  writeFileSync(join(out, page.file), cleanLinks(html).replace(/\n{2,}/g, '\n'));
+  writeFileSync(join(out, page.file), withAssetVersions(cleanLinks(html)).replace(/\n{2,}/g, '\n'));
 }
 if (site) {
   const urls = PAGES.filter((p) => p.file !== '404.html').map((p) => `<url><loc>${site}${p.file === 'index.html' ? '/' : `/${p.file.replace(/\.html$/, '')}`}</loc></url>`);
