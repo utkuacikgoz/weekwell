@@ -36,7 +36,7 @@ Tick these off in order. The text to paste is in [`app-store-pack.md`](app-store
 
 ## 5. Listing (App Store Connect → your app → the iOS version)
 - [ ] Name, subtitle, promotional text, description and keywords pasted.
-- [ ] 6.9" screenshots uploaded (6 images, in order). Add the 6.5" set if asked.
+- [ ] 6.9" screenshots uploaded (7 images, in order). Add the 6.5" set if asked.
 - [ ] Support, marketing and privacy policy URLs set. Terms link included in the description.
 - [ ] Category Food & Drink. Age rating questionnaire answered (4+).
 - [ ] App Privacy questionnaire answered: Purchases and User ID, not linked, no tracking.
