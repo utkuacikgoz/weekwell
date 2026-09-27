@@ -4,7 +4,7 @@
  * swap + undo via the API, account deletion.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { $, onboard } from './helpers';
+import { $, onboard, closeShoppingPrompt } from './helpers';
 
 async function signInAndPlan(page: Page, email: string) {
   await onboard(page, { query: 'today=wed' });
@@ -15,6 +15,7 @@ async function signInAndPlan(page: Page, email: string) {
   await $(page, 'code-input').fill(dev.replace(/\D/gu, ''));
   await $(page, 'verify-code').click();
   await expect($(page, 'tonight-card')).toBeVisible({ timeout: 20_000 });
+  await closeShoppingPrompt(page);
 }
 
 test('sign in, plan, and the server keeps the plan and grocery checks', async ({ page }) => {

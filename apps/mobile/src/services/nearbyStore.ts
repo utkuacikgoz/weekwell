@@ -9,7 +9,8 @@ import * as Location from 'expo-location';
 import { StoreSearch, type RawStore } from '../../modules/store-search';
 import type { NearbyScenario } from './scenarios';
 
-export type HomeStore = { retailer: Retailer; name: string; street: string; city: string; latitude: number; longitude: number; miles: number };
+/** `driveMinutes`: worked out once when found; the person's position isn't kept to redo it. */
+export type HomeStore = { retailer: Retailer; name: string; street: string; city: string; latitude: number; longitude: number; miles: number; driveMinutes?: number };
 export type NearbyResult = { status: 'found'; store: HomeStore } | { status: 'denied' | 'none' | 'failed' };
 
 const QUERY: Record<Retailer, string> = { trader_joes: 'Trader Joe’s', walmart: 'Walmart' };
@@ -28,6 +29,7 @@ const SAMPLE: Record<Retailer, RawStore> = {
   trader_joes: { name: 'Trader Joe’s', street: '1820 Market St', city: 'Springfield', latitude: 0, longitude: 0, distanceMeters: 2_897 },
   walmart: { name: 'Walmart Supercenter', street: '4500 Main St', city: 'Springfield', latitude: 0, longitude: 0, distanceMeters: 1_931 },
 };
+const SAMPLE_DRIVE: Record<Retailer, number> = { trader_joes: 7, walmart: 5 };
 
 function toStore(retailer: Retailer, s: RawStore): HomeStore {
   return { retailer, name: s.name, street: s.street, city: s.city, latitude: s.latitude, longitude: s.longitude, miles: Math.round((s.distanceMeters / METERS_PER_MILE) * 10) / 10 };
@@ -37,7 +39,7 @@ function toStore(retailer: Retailer, s: RawStore): HomeStore {
 export async function findNearestStore(retailers: readonly Retailer[] = RETAILERS, scenario?: NearbyScenario): Promise<NearbyResult> {
   if (scenario === 'denied' || scenario === 'none') return { status: scenario };
   if (scenario === 'found') {
-    const best = retailers.map((r) => toStore(r, SAMPLE[r])).sort((a, b) => a.miles - b.miles)[0];
+    const best = retailers.map((r) => ({ ...toStore(r, SAMPLE[r]), driveMinutes: SAMPLE_DRIVE[r] })).sort((a, b) => a.miles - b.miles)[0];
     return best ? { status: 'found', store: best } : { status: 'none' };
   }
   if (!StoreSearch) return { status: 'failed' };
@@ -52,7 +54,11 @@ export async function findNearestStore(retailers: readonly Retailer[] = RETAILER
       for (const r of results) if (MATCH[retailer].test(r.name)) found.push(toStore(retailer, r));
     }
     found.sort((a, b) => a.miles - b.miles);
-    return found[0] ? { status: 'found', store: found[0] } : { status: 'none' };
+    const best = found[0];
+    if (!best) return { status: 'none' };
+    // Drive time is a nice-to-have: the store is still found without it.
+    const minutes = await StoreSearch.driveMinutesAsync(latitude, longitude, best.latitude, best.longitude).catch(() => null);
+    return { status: 'found', store: minutes === null ? best : { ...best, driveMinutes: Math.max(1, Math.round(minutes)) } };
   } catch {
     return { status: 'failed' };
   }
@@ -72,4 +78,9 @@ export function storeLabel(s: HomeStore): string {
 export function directionsUrl(s: HomeStore): string {
   const q = encodeURIComponent(`${s.name}, ${s.street}, ${s.city}`);
   return s.latitude || s.longitude ? `https://maps.apple.com/?daddr=${s.latitude},${s.longitude}&q=${q}` : `https://maps.apple.com/?daddr=${q}`;
+}
+
+/** "about 6 min drive", or nothing when it isn't known. */
+export function driveText(s: HomeStore): string | null {
+  return s.driveMinutes ? `about ${s.driveMinutes} min drive` : null;
 }

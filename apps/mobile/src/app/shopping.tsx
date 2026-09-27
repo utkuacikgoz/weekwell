@@ -6,13 +6,34 @@ import { Button } from '../components/Button';
 import { Screen } from '../components/Layout';
 import { NavBar } from '../components/NavBar';
 import { NearbyStore } from '../components/NearbyStore';
-import { ChoiceGroup } from '../components/Segmented';
+import { DayStrip, TimeBar } from '../components/ShoppingPickers';
 import { Text } from '../components/Text';
 import { REMINDER_HOURS, WEEKDAYS, allowReminders } from '../services/reminders';
-import { reminderText, useStore } from '../state/store';
-import { color, space } from '../theme/tokens';
+import { dinnerAfter, reminderText, useStore } from '../state/store';
+import { space } from '../theme/tokens';
 
-/** Shopping day (D-047): pick a day and time; Weekwell sends this week's list, total and nearest store then. */
+/** The reminder as it lands on the lock screen (D-047 SD2). Fixed colours: it depicts iOS, not the app. */
+export function LockPreview({ day, hour, title, body }: { day: number; hour: number; title: string; body: string }) {
+  const clock = `${hour > 12 ? hour - 12 : hour}:00`;
+  return (
+    <View style={styles.lock} testID="shopping-preview" accessible accessibilityLabel={`Preview of your reminder on ${WEEKDAYS[day] ?? ''} at ${REMINDER_HOURS.find((h) => h.hour === hour)?.time ?? ''}: ${title}. ${body}`}>
+      <Text variant="bodyStrong" style={styles.lockDate}>{WEEKDAYS[day] ?? ''}</Text>
+      <Text style={styles.clock}>{clock}</Text>
+      <View style={styles.notice}>
+        <View style={styles.noticeHead}>
+          <View style={styles.appIcon}>
+            <Text variant="caption" style={{ color: '#FFFFFF' }}>W</Text>
+          </View>
+          <Text variant="caption" style={[styles.noticeMeta, { flex: 1 }]}>WEEKWELL</Text>
+          <Text variant="caption" style={styles.noticeMeta}>now</Text>
+        </View>
+        <Text variant="bodyStrong" style={styles.noticeText}>{title}</Text>
+        <Text style={styles.noticeText}>{body}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function ShoppingDay() {
   const { data, groceryItems, priceCheck, setShopping } = useStore();
   const saved = data.shopping;
@@ -21,9 +42,9 @@ export default function ShoppingDay() {
   const [note, setNote] = useState<string | null>(null);
   const retailer = data.plan?.preferences.retailer ?? data.draft.retailer;
   const total = priceCheck.status === 'done' && priceCheck.prices.total.status === 'available' ? priceCheck.prices.total.totalCents : null;
-  const preview = reminderText(retailer ? RETAILER_LABEL[retailer] : 'grocery', groceryItems.filter((i) => !i.staple).length, total, saved.store);
-  const time = REMINDER_HOURS.find((h) => h.hour === hour)?.time ?? '';
+  const preview = reminderText(retailer ? RETAILER_LABEL[retailer] : 'your store', groceryItems.filter((i) => !i.staple).length, total, saved.store, dinnerAfter(data.plan, day));
   const dayName = WEEKDAYS[day] ?? 'Sunday';
+  const time = REMINDER_HOURS.find((h) => h.hour === hour)?.time ?? '';
   const on = saved.remind && saved.day === day && saved.hour === hour;
 
   const save = async () => {
@@ -32,7 +53,7 @@ export default function ShoppingDay() {
       return;
     }
     setNote(null);
-    setShopping({ day, hour, remind: true });
+    setShopping({ day, hour, remind: true, prompted: true });
     router.back();
   };
 
@@ -46,29 +67,14 @@ export default function ShoppingDay() {
       }
     >
       <NavBar backLabel="Back" />
-      <Text variant="title" accessibilityRole="header">When do you shop?</Text>
-      <Text tone="muted" style={{ marginTop: space.s, marginBottom: space.l }}>
-        We’ll nudge you that day with your list, what it should cost, and the way to your store.
-      </Text>
-
-      <ChoiceGroup label="Day" columns={4} value={day} onChange={setDay} options={WEEKDAYS.map((d, i) => ({ value: i, label: d.slice(0, 3), testID: `shopping-day-${i}` }))} />
-      <ChoiceGroup label="Time" columns={3} value={hour} onChange={setHour} options={REMINDER_HOURS.map((h) => ({ value: h.hour, label: h.label, detail: h.time, testID: `shopping-hour-${h.hour}` }))} />
-
-      <Text variant="label" style={{ marginBottom: space.s }}>Your store</Text>
-      <NearbyStore retailer={retailer} />
-
-      <Text variant="label" style={{ marginTop: space.l, marginBottom: space.s }}>What you’ll get</Text>
-      <View style={styles.notice} testID="shopping-preview" accessible accessibilityLabel={`Preview: ${preview.title}. ${preview.body}`}>
-        <View style={styles.noticeHead}>
-          <View style={styles.appIcon}>
-            <Text variant="label" style={{ color: '#FFFFFF' }}>W</Text>
-          </View>
-          <Text variant="caption" tone="muted" style={{ flex: 1 }}>WEEKWELL</Text>
-          <Text variant="caption" tone="muted">{`${dayName.slice(0, 3)} ${time}`}</Text>
-        </View>
-        <Text variant="bodyStrong">{preview.title}</Text>
-        <Text>{preview.body}</Text>
+      <Text variant="title" accessibilityRole="header" style={{ marginBottom: space.m }}>When do you shop?</Text>
+      <LockPreview day={day} hour={hour} title={preview.title} body={preview.body} />
+      <View style={{ gap: space.m, marginTop: space.l }}>
+        <DayStrip value={day} onChange={setDay} />
+        <TimeBar value={hour} onChange={setHour} showTimes />
       </View>
+      <Text variant="label" style={{ marginTop: space.l, marginBottom: space.s }}>Your store</Text>
+      <NearbyStore retailer={retailer} />
       {note ? (
         <Text variant="meta" tone="warning" style={{ marginTop: space.m }} accessibilityLiveRegion="polite" testID="shopping-note">
           {note}
@@ -79,7 +85,13 @@ export default function ShoppingDay() {
 }
 
 const styles = StyleSheet.create({
-  notice: { backgroundColor: color.raised, padding: space.m - 4, gap: 2, borderRadius: 14 },
-  noticeHead: { flexDirection: 'row', alignItems: 'center', gap: space.s, marginBottom: space.xs },
+  // A dusk-blue lock screen, like iOS's default wallpaper.
+  lock: { backgroundColor: '#22405F', paddingHorizontal: space.m, paddingTop: space.m, paddingBottom: space.m + 4, borderRadius: 18, gap: space.s },
+  lockDate: { color: '#FFFFFF', textAlign: 'center', opacity: 0.9 },
+  clock: { color: '#FFFFFF', textAlign: 'center', fontSize: 64, lineHeight: 70, fontWeight: '300', letterSpacing: -1 },
+  notice: { backgroundColor: 'rgba(245,245,245,0.94)', borderRadius: 16, padding: space.m - 4, gap: 2 },
+  noticeHead: { flexDirection: 'row', alignItems: 'center', gap: space.s, marginBottom: 2 },
+  noticeMeta: { color: '#555555' },
+  noticeText: { color: '#111111' },
   appIcon: { width: 20, height: 20, borderRadius: 5, backgroundColor: '#1F5C40', alignItems: 'center', justifyContent: 'center' },
 });

@@ -4,7 +4,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { audit } from './audit';
-import { $, buildWeek } from './helpers';
+import { $, buildWeek, onboard } from './helpers';
 
 test('use my location fills in the nearest store', async ({ page }) => {
   await page.goto('/onboarding?nearby=found');
@@ -32,21 +32,43 @@ test('without Apple Maps search (web), the option is hidden', async ({ page }) =
   await expect($(page, 'nearby-find')).toHaveCount(0);
 });
 
-test('pick a shopping day: preview shows the real list, then the reminder is on', async ({ page }) => {
-  await buildWeek(page, { query: 'nearby=found' });
-  await $(page, 'shopping-nudge').click();
+test('after the first plan, one sheet asks when you shop; it never comes back', async ({ page }) => {
+  await onboard(page);
+  await $(page, 'generate').click();
+  await expect($(page, 'shopping-sheet')).toBeVisible({ timeout: 15_000 });
   await $(page, 'shopping-day-3').click();
   await $(page, 'shopping-hour-17').click();
+  await expect($(page, 'shopping-sheet-save')).toHaveText('Remind me Wednesdays');
+  await $(page, 'shopping-sheet-save').click();
+  await expect($(page, 'shopping-sheet')).toHaveCount(0);
+  await page.reload();
+  await expect($(page, 'tonight-card')).toBeVisible();
+  await expect($(page, 'shopping-sheet')).toHaveCount(0);
+  await page.goto('/preferences');
+  await expect($(page, 'pref-row-shopping')).toContainText('Wednesday, 5 PM');
+});
+
+test('shopping day screen: lock-screen preview of the real reminder, then it’s on', async ({ page }) => {
+  await buildWeek(page, { query: 'nearby=found' });
+  await $(page, 'open-grocery').click();
+  await $(page, 'grocery-remind').click();
+  await $(page, 'shopping-day-0').click();
+  await $(page, 'shopping-hour-9').click();
   await $(page, 'nearby-find').click();
-  await expect($(page, 'shopping-preview')).toContainText('It’s shopping day');
-  await expect($(page, 'shopping-preview')).toContainText(/Your Trader Joe’s list is ready: \d+ items to buy/u);
-  await expect($(page, 'shopping-preview')).toContainText('Trader Joe’s on Market St is 1.8 mi away.');
-  await expect($(page, 'shopping-preview')).toContainText('Wed 5 PM');
+  const preview = $(page, 'shopping-preview');
+  await expect(preview).toContainText('Sunday');
+  await expect(preview).toContainText('9:00');
+  // Food first (NT3): Monday's dinner leads, then the list, the store and the total.
+  await expect(preview).toContainText(/This week starts with /u);
+  await expect(preview).toContainText(/Grab \d+ items at Trader Joe’s \(1\.8 mi\), about \$\d+, and dinner’s sorted till Friday\./u);
   // Same bar as every screen: nothing clipped, 44 pt targets, the action in view.
   await audit(page, 'tmp-shopping', { primary: 'shopping-save' });
   await $(page, 'shopping-save').click();
-  await expect($(page, 'tonight-card')).toBeVisible();
-  await expect($(page, 'shopping-nudge')).toHaveCount(0);
+  await expect($(page, 'grocery-remind')).toHaveCount(0);
+  // The grocery list's map strip (GR3): store, distance, drive time, Go.
+  await expect($(page, 'store-map')).toContainText('Trader Joe’s on Market St');
+  await expect($(page, 'store-map')).toContainText('1.8 mi · about 7 min drive');
+  await expect($(page, 'nearby-directions')).toBeVisible();
   await page.goto('/preferences');
-  await expect($(page, 'pref-row-shopping')).toContainText('Wednesday, 5 PM');
+  await expect($(page, 'pref-row-shopping')).toContainText('Sunday, 9 AM');
 });

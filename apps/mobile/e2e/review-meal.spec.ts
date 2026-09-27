@@ -2,7 +2,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, buildWeek, onboard, findTimerStep, addFoods } from './helpers';
+import { $, buildWeek, onboard, findTimerStep, addFoods, closeShoppingPrompt } from './helpers';
 
 const OUT = 'docs/review/v3/meal';
 const REVIEW = process.env.REVIEW === '1';
@@ -70,6 +70,7 @@ test.describe('meal · 390×844', () => {
     await $(page, 'continue').click();
     await $(page, 'generate').click();
     await expect($(page, 'tonight-card')).toBeVisible({ timeout: 15_000 });
+    await closeShoppingPrompt(page);
     await $(page, 'meal-dinner_wed').click();
     await scrollDown(page);
     await expect($(page, 'repair-swap')).toHaveAttribute('aria-disabled', 'true');
