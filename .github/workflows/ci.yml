@@ -1,7 +1,8 @@
 # CI (D-043): run only what a change touches, and split the browser tests across machines.
 # - `changes` decides which parts changed; docs-only changes run nothing else.
 # - A newer push to the same PR cancels the older run.
-# - The web app is exported once and shared with 3 E2E shards.
+# - Each E2E shard exports the web app itself, in parallel with installing
+#   Chromium (D-046): faster than one shared build job the shards wait on.
 # - Push to main runs the fast checks only: the E2E suite already ran on the PR.
 name: CI
 
@@ -92,31 +93,9 @@ jobs:
       # The same strict build Vercel runs: fails on any TODO value.
       - run: node site/build.mjs
 
-  build-web:
+  e2e:
     needs: changes
     if: github.event_name == 'pull_request' && (needs.changes.outputs.app == 'true' || needs.changes.outputs.api == 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --prefer-offline --no-audit --no-fund
-      - name: Web exports (on-device build and API-connected build)
-        working-directory: apps/mobile
-        run: npm run export:web
-      - uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: |
-            apps/mobile/dist
-            apps/mobile/dist-remote
-          retention-days: 1
-
-  e2e:
-    needs: build-web
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -130,24 +109,27 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --prefer-offline --no-audit --no-fund
-      - uses: actions/download-artifact@v4
-        with:
-          name: web-dist
-          path: apps/mobile
-      - name: Cache Playwright browsers
-        id: pw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - name: Install Chromium
-        if: steps.pw-cache.outputs.cache-hit != 'true'
+      # Chromium installs while both web builds export side by side: three waits become one.
+      - name: Web exports and Chromium, in parallel
         working-directory: apps/mobile
-        run: npx playwright install --with-deps chromium
-      - name: Chromium system libraries
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        working-directory: apps/mobile
-        run: npx playwright install-deps chromium
+        run: |
+          npx playwright install --with-deps chromium > /tmp/pw-install.log 2>&1 &
+          PW=$!
+          # Each build gets its own Metro cache (it lives under TMPDIR): the cache
+          # doesn't key on EXPO_PUBLIC_API_URL, so a shared one can mix the builds up.
+          mkdir -p "$RUNNER_TEMP/metro-local" "$RUNNER_TEMP/metro-remote"
+          TMPDIR="$RUNNER_TEMP/metro-local" npx expo export --platform web --output-dir dist > /tmp/export-local.log 2>&1 &
+          LOCAL=$!
+          TMPDIR="$RUNNER_TEMP/metro-remote" EXPO_PUBLIC_API_URL=http://127.0.0.1:8799 npx expo export --platform web --output-dir dist-remote > /tmp/export-remote.log 2>&1 &
+          REMOTE=$!
+          status=0
+          for job in "$PW:pw-install" "$LOCAL:export-local" "$REMOTE:export-remote"; do
+            if ! wait "${job%%:*}"; then echo "::error::${job#*:} failed"; cat "/tmp/${job#*:}.log"; status=1; fi
+          done
+          [ $status -eq 0 ] || exit $status
+          # Guard: only the API-connected build may point at the API.
+          if grep -rq "127.0.0.1:8799" dist; then echo "::error::on-device build points at the API"; exit 1; fi
+          grep -rq "127.0.0.1:8799" dist-remote || { echo "::error::API build is missing the API URL"; exit 1; }
       - name: E2E, visual, and accessibility checks (shard ${{ matrix.shard }} of 3)
         working-directory: apps/mobile
         run: npx playwright test --shard=${{ matrix.shard }}/3

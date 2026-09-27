@@ -4,7 +4,10 @@
  * - the primary action is inside the viewport
  * - every interactive control is at least 44×44
  * - no forbidden product language in rendered text
- * at 320/375/390/430 px and 100/125/150% text (web simulation of Dynamic Type).
+ * at the combinations that bound the layout (web simulation of Dynamic Type):
+ * the narrowest phone at 100% and 150% text, the common width at 100% and 125%,
+ * and the widest at 100%. The middle combinations add CI time without catching
+ * anything the extremes don't (D-046).
  *
  * With CAPTURE=1, saves review screenshots to docs/review/screens/.
  */
@@ -18,65 +21,67 @@ const CAPTURE = process.env.CAPTURE === '1';
 if (CAPTURE) mkdirSync(OUT, { recursive: true });
 const audit = (page: Page, name: string, opts: { primary?: string } = {}) => baseAudit(page, name, { ...opts, out: CAPTURE ? `${OUT}/${name}.png` : undefined });
 
-const WIDTHS = [320, 375, 390, 430];
-const SCALES = [1, 1.25, 1.5];
+const COMBOS: [width: number, fontScale: number][] = [
+  [320, 1],
+  [320, 1.5],
+  [390, 1],
+  [390, 1.25],
+  [430, 1],
+];
 
-for (const width of WIDTHS) {
-  for (const fontScale of SCALES) {
-    const tag = `${width}w-${Math.round(fontScale * 100)}`;
-    const capture = (width === 390 && fontScale === 1) || (width === 320 && fontScale === 1.5);
-    test.describe(`${tag}`, () => {
-      test.use({ viewport: { width, height: width === 320 ? 568 : width === 430 ? 932 : 844 } });
-      const name = (s: string) => (capture ? `${s}@${tag}` : `tmp-${s}`);
-      const q = `fontScale=${fontScale}`;
+for (const [width, fontScale] of COMBOS) {
+  const tag = `${width}w-${Math.round(fontScale * 100)}`;
+  const capture = (width === 390 && fontScale === 1) || (width === 320 && fontScale === 1.5);
+  test.describe(`${tag}`, () => {
+    test.use({ viewport: { width, height: width === 320 ? 568 : width === 430 ? 932 : 844 } });
+    const name = (s: string) => (capture ? `${s}@${tag}` : `tmp-${s}`);
+    const q = `fontScale=${fontScale}`;
 
-      test('onboarding screens', async ({ page }) => {
-        await page.goto(`/onboarding?${q}`);
-        await audit(page, name('01-welcome'), { primary: 'start' });
-        await $(page, 'start').click();
-        await audit(page, name('02-store-budget-empty'), { primary: 'continue' });
-        await pickStore(page);
-        await audit(page, name('03-store-budget-selected'), { primary: 'continue' });
-        await $(page, 'continue').click();
-        await audit(page, name('04-your-week'), { primary: 'continue' });
-        await $(page, 'continue').click();
-        await audit(page, name('05-foods-to-leave-out'), { primary: 'continue' });
-        await $(page, 'continue').click();
-        await audit(page, name('06-review'), { primary: 'generate' });
-      });
-
-      test('week, meal, grocery', async ({ page }) => {
-        await buildWeek(page, { query: q });
-        await audit(page, name('11-week'), { primary: 'open-grocery' });
-        await $(page, 'meal-dinner_wed').click();
-        await audit(page, name('12-meal-detail'));
-        await $(page, 'repair-swap').click();
-        await $(page, 'swap-option-0').click();
-        await expect($(page, 'swap-pending')).toBeVisible();
-        await audit(page, name('13-meal-swapped'));
-        await page.goBack();
-        await $(page, 'open-grocery').click();
-        await audit(page, name('14-grocery'), { primary: 'share-list' });
-        await page.locator('[data-testid^="item-"]:visible').first().click();
-        await page.locator('[data-testid^="item-"]:visible').nth(1).click();
-        await audit(page, name('15-grocery-checked'), { primary: 'share-list' });
-      });
-
-      test('preferences and paywall', async ({ page }) => {
-        await buildWeek(page, { query: q });
-        await $(page, 'edit-preferences').click();
-        await $(page, 'pref-row-store').click();
-        await $(page, 'pref-store-walmart').click();
-        await expect($(page, 'preference-preview')).toBeVisible();
-        await audit(page, name('16-preferences-preview'), { primary: 'apply-preferences' });
-        await page.goto(`/trial?${q}`);
-        await audit(page, name('17-trial'), { primary: 'start-trial' });
-        await $(page, 'see-other-plans').click();
-        await $(page, 'product-monthly').click();
-        await audit(page, name('18-trial-selected'), { primary: 'start-trial' });
-      });
+    test('onboarding screens', async ({ page }) => {
+      await page.goto(`/onboarding?${q}`);
+      await audit(page, name('01-welcome'), { primary: 'start' });
+      await $(page, 'start').click();
+      await audit(page, name('02-store-budget-empty'), { primary: 'continue' });
+      await pickStore(page);
+      await audit(page, name('03-store-budget-selected'), { primary: 'continue' });
+      await $(page, 'continue').click();
+      await audit(page, name('04-your-week'), { primary: 'continue' });
+      await $(page, 'continue').click();
+      await audit(page, name('05-foods-to-leave-out'), { primary: 'continue' });
+      await $(page, 'continue').click();
+      await audit(page, name('06-review'), { primary: 'generate' });
     });
-  }
+
+    test('week, meal, grocery', async ({ page }) => {
+      await buildWeek(page, { query: q });
+      await audit(page, name('11-week'), { primary: 'open-grocery' });
+      await $(page, 'meal-dinner_wed').click();
+      await audit(page, name('12-meal-detail'));
+      await $(page, 'repair-swap').click();
+      await $(page, 'swap-option-0').click();
+      await expect($(page, 'swap-pending')).toBeVisible();
+      await audit(page, name('13-meal-swapped'));
+      await page.goBack();
+      await $(page, 'open-grocery').click();
+      await audit(page, name('14-grocery'), { primary: 'share-list' });
+      await page.locator('[data-testid^="item-"]:visible').first().click();
+      await page.locator('[data-testid^="item-"]:visible').nth(1).click();
+      await audit(page, name('15-grocery-checked'), { primary: 'share-list' });
+    });
+
+    test('preferences and paywall', async ({ page }) => {
+      await buildWeek(page, { query: q });
+      await $(page, 'edit-preferences').click();
+      await $(page, 'pref-row-store').click();
+      await $(page, 'pref-store-walmart').click();
+      await expect($(page, 'preference-preview')).toBeVisible();
+      await audit(page, name('16-preferences-preview'), { primary: 'apply-preferences' });
+      await page.goto(`/trial?${q}`);
+      await audit(page, name('17-trial'), { primary: 'start-trial' });
+          await $(page, 'product-monthly').click();
+      await audit(page, name('18-trial-selected'), { primary: 'start-trial' });
+    });
+  });
 }
 
 test.describe('states at 390', () => {

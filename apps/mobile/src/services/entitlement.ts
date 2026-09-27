@@ -65,6 +65,13 @@ export class MockEntitlementServer {
     return { ok: true, view: deriveEntitlement(this.record, now) };
   }
 
+  /** Turns off renewal, like cancelling in the App Store: access continues to the end of the period. */
+  async cancel(): Promise<EntitlementView> {
+    await wait();
+    this.record = applyStoreEvent(this.record, { type: 'cancelled', at: serverNow().toISOString() });
+    return deriveEntitlement(this.record, serverNow());
+  }
+
   async restore(scenario: RestoreScenario): Promise<'restored' | 'nothing_to_restore' | 'failed'> {
     await wait();
     if (scenario === 'error') return 'failed';

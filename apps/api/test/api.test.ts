@@ -114,7 +114,7 @@ describe('plans', () => {
   });
 
   it('reports an exclusion conflict', async () => {
-    const res = await t.call('POST', '/v1/plans', { token, body: { preferences: { ...PREFS, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'fish'] }, weekOf: '2026-09-28' } });
+    const res = await t.call('POST', '/v1/plans', { token, body: { preferences: { ...PREFS, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'egg', 'soy', 'meat', 'seafood'] }, weekOf: '2026-09-28' } });
     expect(res.status).toBe(422);
     expect(await res.json()).toMatchObject({ error: 'exclusion_conflict' });
   });
@@ -175,7 +175,7 @@ describe('plans', () => {
     expect((await (await t.call('GET', '/v1/plans/current', { token })).json()).plan.id).toBe(changed.plan.id);
     await t.call('POST', `/v1/plans/${created.plan.id}/make-current`, { token });
     expect((await (await t.call('GET', '/v1/plans/current', { token })).json()).plan.id).toBe(created.plan.id);
-    const blocked = await t.call('POST', `/v1/plans/${created.plan.id}/preferences`, { token, body: { preferences: { ...PREFS, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'fish'] } } });
+    const blocked = await t.call('POST', `/v1/plans/${created.plan.id}/preferences`, { token, body: { preferences: { ...PREFS, maxMinutes: 20, exclusions: ['dairy', 'gluten', 'nuts', 'egg', 'soy', 'meat', 'seafood'] } } });
     expect(blocked.status).toBe(422);
     const other = (await t.signIn('b@example.com')).token;
     expect((await t.call('POST', `/v1/plans/${created.plan.id}/make-current`, { token: other })).status).toBe(404);

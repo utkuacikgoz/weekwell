@@ -7,6 +7,8 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
   retries: 0,
+  // CI runners have 4 cores; 3 browsers keep them busy without starving the static servers.
+  workers: process.env.CI ? 3 : undefined,
   forbidOnly: !!process.env.CI,
   reporter: [['list'], ['html', { outputFolder: '../../qa-artifacts/tmp/playwright-report', open: 'never' }]],
   projects: [

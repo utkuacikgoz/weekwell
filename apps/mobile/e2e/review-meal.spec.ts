@@ -2,7 +2,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, buildWeek, onboard, findTimerStep } from './helpers';
+import { $, buildWeek, onboard, findTimerStep, addFoods } from './helpers';
 
 const OUT = 'docs/review/v3/meal';
 const REVIEW = process.env.REVIEW === '1';
@@ -63,10 +63,10 @@ test.describe('meal · 390×844', () => {
   });
 
   test('error: no other meal fits', async ({ page }) => {
-    await onboard(page, { time: '20', query: 'today=wed' });
+    // Exactly 5 dinners fit, so every one is in the week and none is left to swap in.
+    await onboard(page, { time: '20', exclusions: ['dairy'], query: 'today=wed' });
     await $(page, 'review-exclusions').click();
-    await $(page, 'exclusion-input').fill('egg');
-    await $(page, 'exclusion-add').click();
+    await addFoods(page, ['soy', 'meat', 'seafood']);
     await $(page, 'continue').click();
     await $(page, 'generate').click();
     await expect($(page, 'tonight-card')).toBeVisible({ timeout: 15_000 });

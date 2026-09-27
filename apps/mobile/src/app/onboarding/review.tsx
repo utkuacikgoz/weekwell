@@ -6,10 +6,13 @@ import { Button } from '../../components/Button';
 import { Screen } from '../../components/Layout';
 import { NavBar } from '../../components/NavBar';
 import { StepProgress, STEP_NAME, type OnboardingStep } from '../../components/StepScreen';
+import { Icon } from '../../components/Icon';
 import { Text } from '../../components/Text';
+import { BANDS } from '../../components/WeekParts';
+import { dollars } from '../../components/BudgetControl';
 import { GOAL_COPY, householdCopy, timeCopy } from '../../copy';
 import { isCompleteDraft, useStore } from '../../state/store';
-import { MIN_TOUCH, color, radius, space } from '../../theme/tokens';
+import { MIN_TOUCH, radius, space } from '../../theme/tokens';
 
 export default function Review() {
   const { data, remote, signedIn } = useStore();
@@ -18,34 +21,36 @@ export default function Review() {
   const ready = isCompleteDraft(d) && feasibility.ok;
 
   const rows: [string, string, OnboardingStep, string][] = [
-    ['Store and budget', `${d.retailer ? RETAILER_LABEL[d.retailer] : 'No store chosen'} · $${d.weeklyBudget} a week`, 'store', 'review-store'],
-    ['Goal and time', `${GOAL_COPY[d.proteinGoal].label} · ${timeCopy(d.maxMinutes).label}`, 'week', 'review-week'],
-    ['Who’s eating', householdCopy(d.householdSize).label, 'week', 'review-household'],
-    ['Foods to leave out', d.exclusions.length ? d.exclusions.map(exclusionLabel).join(', ') : 'Nothing left out', 'exclusions', 'review-exclusions'],
+    ['You shop at', `${d.retailer ? RETAILER_LABEL[d.retailer] : 'Pick a store'} · ${dollars(d.weeklyBudget)} a week`, 'store', 'review-store'],
+    ['You want', `${GOAL_COPY[d.proteinGoal].label} · ${timeCopy(d.maxMinutes).label}`, 'week', 'review-week'],
+    ['Cooking for', householdCopy(d.householdSize).label, 'week', 'review-household'],
+    ['Your rules', d.exclusions.length ? d.exclusions.map(exclusionLabel).join(', ') : 'Anything goes', 'exclusions', 'review-exclusions'],
   ];
 
   return (
     <Screen footer={<Button label="Plan my week" onPress={() => router.push(remote && !signedIn ? '/sign-in' : '/generating')} disabled={!ready} testID="generate" />}>
       <NavBar backLabel={STEP_NAME.exclusions} />
       <StepProgress step="review" />
-      <Text variant="title" accessibilityRole="header">Ready to plan your week?</Text>
+      <Text variant="title" accessibilityRole="header">Here’s your week.</Text>
       <Text tone="muted" style={{ marginTop: space.s, marginBottom: space.l }}>
-        Five dinners and two lunch preps, with one grocery list. Tap Edit to change anything.
+        Five dinners, two lunch preps, one grocery list. Tap a card to change it.
       </Text>
-      {rows.map(([label, value, step, testID]) => (
+      {rows.map(([label, value, step, testID], i) => (
         <Pressable
           key={label}
           testID={testID}
           accessibilityRole="button"
           accessibilityLabel={`${label}: ${value}. Edit`}
           onPress={() => router.push(`/onboarding/${step}?edit=1` as Href)}
-          style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.placeholder }]}
+          style={({ pressed }) => [styles.row, { backgroundColor: BANDS[i % BANDS.length] }, pressed && { opacity: 0.85 }]}
         >
-          <View style={{ flex: 1 }}>
-            <Text variant="meta" tone="muted">{label}</Text>
-            <Text variant="bodyStrong">{value}</Text>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="caption" style={styles.kicker}>{label}</Text>
+            <Text variant="dish" style={styles.onBand}>{value}</Text>
           </View>
-          <Text variant="label" tone="accent">Edit</Text>
+          <View style={styles.edit}>
+            <Icon name="edit" size={18} color={ON_BAND} />
+          </View>
         </Pressable>
       ))}
       {!isCompleteDraft(d) ? <Banner tone="warning" title="Choose a store to continue." /> : null}
@@ -61,6 +66,13 @@ export default function Review() {
   );
 }
 
+/** White passes 4.5:1 on every day band (palette.ts). */
+const ON_BAND = '#FFFFFF';
+
 const styles = StyleSheet.create({
-  row: { minHeight: MIN_TOUCH + 24, flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingVertical: space.s, paddingHorizontal: space.m - 4, marginBottom: space.s, backgroundColor: color.raised, borderRadius: radius.control },
+  // Full-bleed colour blocks, one per answer, like the days on the week screen.
+  row: { minHeight: MIN_TOUCH + 40, flexDirection: 'row', alignItems: 'center', gap: space.m, paddingVertical: space.m, paddingHorizontal: space.m + 4, marginHorizontal: -(space.m + 4), borderRadius: radius.card },
+  kicker: { color: ON_BAND, opacity: 0.85, textTransform: 'uppercase', letterSpacing: 1.2 },
+  onBand: { color: ON_BAND },
+  edit: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: MIN_TOUCH / 2, backgroundColor: 'rgba(0,0,0,0.22)', alignItems: 'center', justifyContent: 'center' },
 });
