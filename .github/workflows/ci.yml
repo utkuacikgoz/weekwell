@@ -115,15 +115,21 @@ jobs:
         run: |
           npx playwright install --with-deps chromium > /tmp/pw-install.log 2>&1 &
           PW=$!
-          npx expo export --platform web --output-dir dist > /tmp/export-local.log 2>&1 &
+          # Each build gets its own Metro cache (it lives under TMPDIR): the cache
+          # doesn't key on EXPO_PUBLIC_API_URL, so a shared one can mix the builds up.
+          mkdir -p "$RUNNER_TEMP/metro-local" "$RUNNER_TEMP/metro-remote"
+          TMPDIR="$RUNNER_TEMP/metro-local" npx expo export --platform web --output-dir dist > /tmp/export-local.log 2>&1 &
           LOCAL=$!
-          EXPO_PUBLIC_API_URL=http://127.0.0.1:8799 npx expo export --platform web --output-dir dist-remote > /tmp/export-remote.log 2>&1 &
+          TMPDIR="$RUNNER_TEMP/metro-remote" EXPO_PUBLIC_API_URL=http://127.0.0.1:8799 npx expo export --platform web --output-dir dist-remote > /tmp/export-remote.log 2>&1 &
           REMOTE=$!
           status=0
           for job in "$PW:pw-install" "$LOCAL:export-local" "$REMOTE:export-remote"; do
             if ! wait "${job%%:*}"; then echo "::error::${job#*:} failed"; cat "/tmp/${job#*:}.log"; status=1; fi
           done
-          exit $status
+          [ $status -eq 0 ] || exit $status
+          # Guard: only the API-connected build may point at the API.
+          if grep -rq "127.0.0.1:8799" dist; then echo "::error::on-device build points at the API"; exit 1; fi
+          grep -rq "127.0.0.1:8799" dist-remote || { echo "::error::API build is missing the API URL"; exit 1; }
       - name: E2E, visual, and accessibility checks (shard ${{ matrix.shard }} of 3)
         working-directory: apps/mobile
         run: npx playwright test --shard=${{ matrix.shard }}/3

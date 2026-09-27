@@ -2,7 +2,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { audit } from './audit';
-import { $, onboard, pickStore } from './helpers';
+import { $, onboard, pickStore, addFoods, CONFLICT_FOODS } from './helpers';
 
 const OUT = 'docs/review/v3/onboarding';
 const REVIEW = process.env.REVIEW === '1';
@@ -42,8 +42,7 @@ test.describe('onboarding · 390×844', () => {
   test('conflict: not enough meals', async ({ page }) => {
     await onboard(page, { time: '20', exclusions: ['dairy', 'gluten', 'nuts'] });
     await $(page, 'review-exclusions').click();
-    await $(page, 'exclusion-input').fill('fish');
-    await $(page, 'exclusion-add').click();
+    await addFoods(page, CONFLICT_FOODS);
     await shot(page, '08-foods-conflict', 'continue');
     await $(page, 'continue').click();
     await shot(page, '09-review-conflict');

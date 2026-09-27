@@ -52,7 +52,8 @@ const styles = StyleSheet.create({
   base: { minHeight: MIN_TOUCH + 8, borderRadius: radius.control, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.m },
   primary: { backgroundColor: color.accent },
   secondary: { borderWidth: 1.5, borderColor: color.ink, backgroundColor: 'transparent' },
-  quiet: { minHeight: MIN_TOUCH, paddingHorizontal: space.xs, alignSelf: 'flex-start' },
+  // Text-style: flush with the text around it, still a full-height touch target.
+  quiet: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, paddingHorizontal: 0, alignSelf: 'flex-start' },
   quietText: { textDecorationLine: 'underline' },
   disabled: { backgroundColor: color.divider, borderColor: color.divider },
   pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
