@@ -7,7 +7,8 @@
  *
  * Writes docs/release/screenshots/app-store/{6.9,6.5}/NN-name.png (raw captures are git-ignored).
  */
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import pngjs from 'pngjs';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { $, buildWeek, pickStore } from './helpers';
 
@@ -189,15 +190,34 @@ test('app store screenshots', async ({ browser }) => {
   await ctx.close();
   expect(plates.length).toBeGreaterThan(4);
 
-  const out = await browser.newContext({ deviceScaleFactor: 1 });
-  const p = await out.newPage();
   for (const [w, h, dir] of [[1320, 2868, '6.9'], [1284, 2778, '6.5']] as const) {
     mkdirSync(`${OUT}/${dir}`, { recursive: true });
-    await p.setViewportSize({ width: w, height: h });
     for (const s of SLIDES) {
+      // Chromium sometimes returns a slide one row short, and App Store Connect rejects even a 1-pixel
+      // difference, so each capture is redrawn onto a canvas of the exact size.
+      const out = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+      const p = await out.newPage();
       await p.setContent(page_(s, w, h, plates));
-      await p.screenshot({ path: `${OUT}/${dir}/${s.name}.png` });
+      const shot = (await p.screenshot()).toString('base64');
+      const exact = await p.evaluate(
+        async ({ src, w, h }) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${src}`;
+          await img.decode();
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+          return c.toDataURL('image/png').split(',')[1];
+        },
+        { src: shot, w, h },
+      );
+      const file = `${OUT}/${dir}/${s.name}.png`;
+      // Opaque RGB: App Store Connect can refuse images with an alpha channel.
+      writeFileSync(file, pngjs.PNG.sync.write(pngjs.PNG.sync.read(Buffer.from(exact, 'base64')), { colorType: 2 }));
+      await out.close();
+      const png = readFileSync(file);
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)], file).toEqual([w, h]);
     }
   }
-  await out.close();
 });
