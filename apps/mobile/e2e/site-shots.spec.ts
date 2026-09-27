@@ -84,3 +84,39 @@ test('brand mark and share image', async ({ browser }) => {
   await page.screenshot({ path: `${OUT}/../brand/og.jpg`, type: 'jpeg', quality: 86 });
   await ctx.close();
 });
+
+/**
+ * App icons from the same mark (D-045). `scale` shrinks the W and bar inside the canvas
+ * (Android adaptive icons keep art in the middle 66%); `bg` null means transparent.
+ */
+const glyph = (size: number, { bg, scale = 1, bar = '#F6C453' }: { bg: string | null; scale?: number; bar?: string }) => {
+  const s = size * scale;
+  const off = (size - s) / 2;
+  return `<!doctype html><html><head><style>${FONT}
+  html,body{margin:0;background:transparent}
+  .m{width:${size}px;height:${size}px;background:${bg ?? 'transparent'};position:relative;overflow:hidden}
+  .w{position:absolute;left:${off}px;width:${s}px;top:${off + s * 0.1}px;text-align:center;font:800 ${s * 0.74}px/1 B;color:#fff;letter-spacing:-${s * 0.02}px}
+  .bar{position:absolute;left:${off + s * 0.2}px;width:${s * 0.6}px;top:${off + s * 0.76}px;height:${s * 0.1}px;background:${bar}}
+</style></head><body><div class="m"><div class="w">W</div><div class="bar"></div></div></body></html>`;
+};
+
+test('app icons', async ({ browser }) => {
+  const ctx = await browser.newContext({ deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const A = '../../apps/mobile/assets';
+  const jobs: [number, Parameters<typeof glyph>[1], string, boolean][] = [
+    // iOS rounds the corners itself; the icon must be square and opaque.
+    [1024, { bg: '#1F5C40' }, 'icon', false],
+    // Shown centred on the green splash background.
+    [1024, { bg: null, scale: 0.7 }, 'splash-icon', true],
+    [1024, { bg: null, scale: 0.62 }, 'android-icon-foreground', true],
+    [1024, { bg: null, scale: 0.62, bar: '#FFFFFF' }, 'android-icon-monochrome', true],
+    [48, { bg: '#1F5C40' }, 'favicon', false],
+  ];
+  for (const [size, opts, name, transparent] of jobs) {
+    await page.setViewportSize({ width: size, height: size });
+    await page.setContent(glyph(size, opts));
+    await page.locator('.m').screenshot({ path: `${A}/${name}.png`, omitBackground: transparent });
+  }
+  await ctx.close();
+});
