@@ -20,10 +20,10 @@ export function Sheet({ visible, title, onClose, children, footer, testID }: { v
         <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" />
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.m) }]} testID={testID} accessibilityViewIsModal>
           <View style={styles.grabber} importantForAccessibility="no" />
-          <Text variant="heading" accessibilityRole="header" style={{ marginBottom: space.s }}>
+          <Text variant="heading" accessibilityRole="header" style={{ marginBottom: space.s, paddingHorizontal: space.xs }}>
             {title}
           </Text>
-          <ScrollView style={{ maxHeight: 480 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ gap: space.m, paddingBottom: space.s, overflow: 'hidden' }}>
+          <ScrollView style={{ maxHeight: 480 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ gap: space.m, paddingBottom: space.s, paddingHorizontal: space.xs }}>
             {children}
           </ScrollView>
           {footer ? <View style={styles.footer}>{footer}</View> : null}
@@ -36,7 +36,7 @@ export function Sheet({ visible, title, onClose, children, footer, testID }: { v
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: color.scrim },
-  sheet: { backgroundColor: color.raised, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, paddingHorizontal: space.l - 4, paddingTop: space.s, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  sheet: { backgroundColor: color.raised, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, paddingHorizontal: space.l - 4 - space.xs, paddingTop: space.s, width: '100%', maxWidth: 560, alignSelf: 'center' },
   grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: color.divider, marginBottom: space.m },
-  footer: { gap: space.s, paddingTop: space.m },
+  footer: { gap: space.s, paddingTop: space.m, paddingHorizontal: space.xs },
 });

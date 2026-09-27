@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { $, buildWeek, onboard, visibleText, findTimerStep } from './helpers';
+import { $, buildWeek, onboard, visibleText, findTimerStep, addFoods, CONFLICT_FOODS } from './helpers';
 
 test('a new user builds a plan in under two minutes', async ({ page }) => {
   const start = Date.now();
@@ -54,8 +54,7 @@ test('budget input is bounded and explains corrections', async ({ page }) => {
 test('an allergy conflict is shown before generation and blocks it', async ({ page }) => {
   await onboard(page, { store: 'walmart', time: '20', exclusions: ['dairy', 'gluten', 'nuts'] });
   await $(page, 'review-exclusions').click();
-  await $(page, 'exclusion-input').fill('fish');
-  await $(page, 'exclusion-add').click();
+  await addFoods(page, CONFLICT_FOODS);
   await expect($(page, 'feasibility-warning')).toBeVisible();
   await $(page, 'continue').click();
   await expect($(page, 'review-conflict')).toBeVisible();

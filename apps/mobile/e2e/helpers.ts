@@ -58,3 +58,14 @@ export async function findTimerStep(page: Page) {
     await $(page, 'cook-next').click();
   }
 }
+
+/** Add custom foods to leave out (on a screen showing the exclusions editor). */
+export async function addFoods(page: Page, foods: string[]) {
+  for (const f of foods) {
+    await $(page, 'exclusion-input').fill(f);
+    await $(page, 'exclusion-add').click();
+  }
+}
+
+/** Leaves no full week at 20 minutes with dairy, gluten and nuts off (3 dinners fit). */
+export const CONFLICT_FOODS = ['egg', 'soy', 'meat', 'seafood'];

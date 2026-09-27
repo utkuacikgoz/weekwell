@@ -91,7 +91,8 @@ export default function Trial() {
   const showPicker = view.state === 'none' || view.state === 'expired' || lapsing;
   const canStart = known && showPicker && !busy;
   const product = getProduct(selected);
-  const trialEnds = formatShortDate(new Date(Date.now() + 7 * DAY).toISOString());
+  const [openedAt] = useState(() => Date.now());
+  const trialEnds = formatShortDate(new Date(openedAt + 7 * DAY).toISOString());
   const store = data.plan ? RETAILER_LABEL[data.plan.preferences.retailer] : null;
 
   const start = async () => {
