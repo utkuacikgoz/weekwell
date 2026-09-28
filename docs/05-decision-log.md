@@ -521,6 +521,7 @@ The product owner's design audit asked for a correction pass before any further 
     - SD2: the shopping-day screen leads with a lock-screen preview of the exact reminder.
     - GR3: a map strip on the grocery list. MapKit snapshot, store, distance, drive time (worked out once when the store is found) and a Go button.
     - NT3: a food-first reminder, "This week starts with sheet-pan chicken fajitas" / "Grab 24 items at Trader Joe’s (1.8 mi), about $78, and dinner’s sorted till Friday."
+  - **Purpose strings:** Info.plist has `NSLocationWhenInUseUsageDescription`, plus `NSMotionUsageDescription` saying Weekwell never uses motion data. App Store Connect rejected build 9 without the motion string (ITMS-90683), because expo-location's binary references CoreMotion APIs. The "Always" location strings stay off.
   - **Not done:** an arrival alert near the store. It needs Always location, draws App Review scrutiny, and costs battery.
 - Privacy: The location stays on the phone and goes to Apple Maps for the search; Weekwell never stores or receives it. The privacy policy says so. App Privacy doesn't change (location isn't collected). No push entitlement: a config plugin strips the one expo-notifications adds.
 - Testing: The web preview has no Apple Maps search. `?nearby=found|denied|none` fakes the search result in tests; everything else is real. The Swift module compiles only in the TestFlight build.
