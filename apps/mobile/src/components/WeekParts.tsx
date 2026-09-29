@@ -49,7 +49,8 @@ export function TonightCard({ meal, label, onPress, width, compact }: { meal: Me
 /** One day in the week list: image, day, dish, facts, and a clear trailing affordance. */
 /** `band`: the row's position in the week; it becomes a full-width colour band (D-040). */
 /** `cost`: this meal's share of the week's estimate, e.g. "$24"; `swap`: a cheaper-swap link shown under the row (PR5). */
-export function WeekRow({ meal, onPress, tonight, offList, band, cost, swap }: { meal: Meal; onPress: () => void; tonight?: boolean; offList?: boolean; band?: number; cost?: string; swap?: { label: string; onPress: () => void } }) {
+/** `cooked`: finished in cooking mode this week (D-048): ticked, struck through, photo faded. */
+export function WeekRow({ meal, onPress, tonight, offList, band, cost, swap, cooked = false }: { meal: Meal; onPress: () => void; tonight?: boolean; offList?: boolean; band?: number; cost?: string; swap?: { label: string; onPress: () => void }; cooked?: boolean }) {
   const when =
     meal.slot === 'dinner'
       ? DAY_LABEL[meal.day]
@@ -59,17 +60,19 @@ export function WeekRow({ meal, onPress, tonight, offList, band, cost, swap }: {
     <Pressable
       testID={`meal-${meal.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`${when}${tonight ? ', tonight' : ''}: ${meal.name}. ${mealFacts(meal)}.${cost ? ` About ${cost} of this week’s estimate.` : ''}${offList ? ' Not on your grocery list.' : ''}`}
+      accessibilityLabel={`${when}${tonight ? ', tonight' : ''}${cooked ? ', cooked' : ''}: ${meal.name}. ${mealFacts(meal)}.${cost ? ` About ${cost} of this week’s estimate.` : ''}${offList ? ' Not on your grocery list.' : ''}`}
       accessibilityHint="Opens the recipe"
       onPress={onPress}
       style={({ pressed }) => [styles.row, bandStyle, swap && styles.rowWithSwap, pressed && styles.rowPressed]}
     >
-      <MealImage recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={60} radius={radius.thumb} />
+      <View style={cooked ? { opacity: 0.45 } : undefined}>
+        <MealImage recipeId={meal.recipeId} ingredientIds={ingredientIds(meal)} width={60} radius={radius.thumb} />
+      </View>
       <View style={{ flex: 1 }}>
         <Text variant="caption" tone={tonight ? 'accent' : 'muted'} style={band !== undefined ? { color: '#FFFFFF', opacity: 0.9 } : undefined}>
-          {tonight ? `${when} · Tonight` : when}
+          {cooked ? `${when} · ✓ Cooked` : tonight ? `${when} · Tonight` : when}
         </Text>
-        <Text variant="bodyStrong">{meal.name}</Text>
+        <Text variant="bodyStrong" style={cooked ? { textDecorationLine: 'line-through' } : undefined} testID={cooked ? `cooked-${meal.id}` : undefined}>{meal.name}</Text>
         <Text variant="meta" tone="muted" style={band !== undefined ? { color: '#FFFFFF', opacity: 0.9 } : undefined}>{offList ? 'Not on grocery list' : mealFacts(meal)}</Text>
       </View>
       {cost ? (

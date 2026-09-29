@@ -139,6 +139,25 @@ test('cooking mode walks through the steps', async ({ page }) => {
   await expect($(page, 'cook-step-count')).toHaveText(/Step 1 of \d/u);
 });
 
+test('finishing cooking goes to the week with that dinner ticked off (D-048 CD2)', async ({ page }) => {
+  await buildWeek(page, { query: 'today=mon' });
+  await $(page, 'meal-dinner_mon').click();
+  await $(page, 'start-cooking').click();
+  while ((await $(page, 'cook-next').innerText()) !== 'Done') await $(page, 'cook-next').click();
+  await $(page, 'cook-next').click();
+  // Not back on the recipe: on the week, Monday cooked, and what's next.
+  await expect($(page, 'week-screen')).toBeVisible();
+  await expect($(page, 'meal-detail')).toHaveCount(0);
+  await expect($(page, 'cooked-dinner_mon')).toBeVisible();
+  await expect($(page, 'meal-dinner_mon')).toContainText('✓ Cooked');
+  await expect($(page, 'cooked-count')).toContainText('1 of 5 cooked');
+  // Cooked Monday's on Monday: Tuesday's is tomorrow.
+  await expect($(page, 'cooked-toast')).toContainText(/Nice\. Next up: .+ tomorrow\./u);
+  // It sticks.
+  await page.reload();
+  await expect($(page, 'cooked-count')).toContainText('1 of 5 cooked');
+});
+
 test('changing store previews exactly what will change before applying', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'edit-preferences').click();

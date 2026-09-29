@@ -528,6 +528,16 @@ The product owner's design audit asked for a correction pass before any further 
 - Rollback: Remove the plugins and module; the stored `shopping` field is ignored.
 - Owner: Product owner
 
+### D-048 — After cooking: the week, ticked off
+
+- Status: Accepted
+- Date: 2026-09-28
+- Workstream: mobile
+- Question: Done in cooking mode went back to the recipe just cooked, which is a dead end.
+- Decision: The owner picked CD2 of three options. Done returns to the week (`router.dismissTo('/week')`). The dinner is marked cooked (stored per plan and reset with a new plan): "✓ Cooked", struck through, photo faded. "This week · 2 of 5 cooked" appears in the header, and a toast says "Nice. Next up: <dinner> tomorrow." (or "on <day>", or "That’s every dinner this week.").
+- Rollback: Revert; the stored `cooked` field is ignored.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md

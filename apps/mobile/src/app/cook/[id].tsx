@@ -30,7 +30,7 @@ function mmss(ms: number): string {
  */
 export default function Cook() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, setCooking } = useStore();
+  const { data, setCooking, markCooked } = useStore();
   const saved = data.cooking?.mealId === id ? data.cooking : null;
   const [step, setStep] = useState(saved?.step ?? 0);
   const [endsAt, setEndsAt] = useState<number | null>(saved?.timerEndsAt ? Date.parse(saved.timerEndsAt) : null);
@@ -108,7 +108,9 @@ export default function Cook() {
               onPress={() => {
                 if (!last) return go(step + 1);
                 setCooking(null);
-                router.back();
+                // D-048 CD2: back to the week with this dinner ticked off, not to the recipe just cooked.
+                markCooked(meal.id);
+                router.dismissTo('/week');
               }}
               testID="cook-next"
             />

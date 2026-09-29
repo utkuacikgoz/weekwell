@@ -1,6 +1,6 @@
 import { DAY_LABEL, RETAILER_LABEL, formatMoney, getProduct, mealCostShares, swapOptions, type Day, type EntitlementView, type Meal } from '@weekwell/domain';
 import { Redirect, router, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
@@ -9,6 +9,7 @@ import { LockedSheet } from '../components/LockedSheet';
 import { AboutEstimateSheet, RebuildSheet } from '../components/PriceSheets';
 import { PriceChip, PriceNotice } from '../components/PriceStatus';
 import { Text } from '../components/Text';
+import { Toast } from '../components/Toast';
 import { ShoppingPrompt } from '../components/ShoppingPrompt';
 import { TonightCard, WeekRow } from '../components/WeekParts';
 import { Wordmark } from '../components/Wordmark';
@@ -37,13 +38,34 @@ function subscriptionLine(view: EntitlementView): string | null {
   }
 }
 
+const DAY_ORDER: Day[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
+
+/** After cooking (D-048 CD2): the next dinner not yet cooked, said relative to today (0 = Sunday). */
+function nextUpMessage(dinners: Meal[], cooked: string[], just: string, today: number): string {
+  const dayNum = (d: Meal) => DAY_ORDER.indexOf(d.day as Day) + 1; // Monday = 1
+  const from = dinners.find((d) => d.id === just);
+  const after = Math.max(today, from ? dayNum(from) : 0);
+  const left = dinners.filter((d) => !cooked.includes(d.id)).sort((a, b) => dayNum(a) - dayNum(b));
+  const next = left.find((d) => dayNum(d) >= after && d.id !== just) ?? left[0];
+  if (!next) return 'Nice. That’s every dinner this week.';
+  const n = dayNum(next);
+  const when = n === today ? 'tonight' : n === today + 1 ? 'tomorrow' : `on ${DAY_LABEL[next.day as Day]}`;
+  return `Nice. Next up: ${next.name} ${when}.`;
+}
+
 export default function Week() {
-  const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo, setDraft, setCooking } = useStore();
+  const { data, priceCheck, groceryItems, entitlementView, scenarios, refreshPrices, applyPlan, planUndo, undoPlanChange, dismissPlanUndo, setDraft, setCooking, cookedIds, justCooked, clearJustCooked } = useStore();
   const { width, height, fontScale } = useWindowDimensions();
   // Short screens or large text: a shorter hero image so tonight's dish name stays in view.
   const compact = height < 700 || fontScale * scenarios.fontScale > 1.2;
   const [sheet, setSheet] = useState<'about' | 'rebuild' | 'locked' | null>(null);
   const [lockedAction, setLockedAction] = useState('');
+  // The "Next up" message after cooking shows once, briefly.
+  useEffect(() => {
+    if (!justCooked) return;
+    const t = setTimeout(clearJustCooked, 4500);
+    return () => clearTimeout(t);
+  }, [justCooked, clearJustCooked]);
   const plan = data.plan;
   if (!plan) return <Redirect href="/onboarding" />;
 
@@ -64,6 +86,8 @@ export default function Week() {
     } else setSheet(a);
   };
   const cardWidth = Math.min(width, 560) - 2 * (space.m + 4);
+  const cookedDinners = plan.dinners.filter((d) => cookedIds.includes(d.id)).length;
+  const doneMessage = justCooked ? nextUpMessage(plan.dinners, cookedIds, justCooked, weekday) : null;
 
   // D-040 PR5: each meal's share of the displayed estimate, and cheaper-swap links when over budget.
   const listMeals = [...plan.dinners, ...plan.lunches].filter((m) => !data.skippedMealIds.includes(m.id));
@@ -97,6 +121,7 @@ export default function Week() {
   return (
     <Screen
       testID="week-screen"
+      overlay={doneMessage ? <Toast message={doneMessage} testID="cooked-toast" /> : null}
       footerRow
       footer={
         <>
@@ -180,6 +205,7 @@ export default function Week() {
 
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         This week
+        {cookedDinners > 0 ? <Text variant="label" tone="muted" testID="cooked-count">{`  ·  ${cookedDinners} of ${plan.dinners.length} cooked`}</Text> : null}
       </Text>
       {total && shares ? (
         <View style={styles.budgetLine} testID="budget-line" accessibilityLiveRegion="polite">
@@ -196,14 +222,14 @@ export default function Week() {
         </View>
       ) : null}
       {plan.dinners.map((d, i) => (
-        <WeekRow key={d.id} band={i} meal={d} tonight={d.day === tonightDay} offList={data.skippedMealIds.includes(d.id)} onPress={() => open(d.id)} cost={costOf(d)} swap={swapLinks.get(d.id)} />
+        <WeekRow key={d.id} band={i} meal={d} tonight={d.day === tonightDay} cooked={cookedIds.includes(d.id)} offList={data.skippedMealIds.includes(d.id)} onPress={() => open(d.id)} cost={costOf(d)} swap={swapLinks.get(d.id)} />
       ))}
 
       <Text variant="heading" accessibilityRole="header" style={styles.section}>
         Work lunches
       </Text>
       {plan.lunches.map((l, i) => (
-        <WeekRow key={l.id} band={plan.dinners.length + i} meal={l} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} cost={costOf(l)} />
+        <WeekRow key={l.id} band={plan.dinners.length + i} meal={l} cooked={cookedIds.includes(l.id)} offList={data.skippedMealIds.includes(l.id)} onPress={() => open(l.id)} cost={costOf(l)} />
       ))}
 
       <Text variant="meta" tone="muted" style={{ marginTop: space.l, marginBottom: space.l }}>
