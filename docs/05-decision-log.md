@@ -538,6 +538,16 @@ The product owner's design audit asked for a correction pass before any further 
 - Rollback: Revert; the stored `cooked` field is ignored.
 - Owner: Product owner
 
+### D-049 — Paywall: your week is the pitch; food list in three ticks
+
+- Status: Accepted
+- Date: 2026-09-29
+- Workstream: mobile
+- Question: The paywall and the food-list sheet were too wordy. The owner asked for the paywall to lead with visuals.
+- Decision: For the paywall the owner picked PV1 of three visual options. The person's own five dinners appear as colour bands at the top, with a sun badge on Monday's line ("7 days free", "N days left" or "Free week over"). Below them: "Keep weeks like this." and three compact plan rows (name, Save 58% on yearly, billed price). The benefit list, timeline and cancel card are removed. The billed price, trial terms, auto-renew, Restore, Terms and Privacy stay (guideline 3.1.2); the per-week figure moves to the spoken label. For the food-list sheet the owner picked FL1: three ticked lines and no web link.
+- Rollback: Revert the PR.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md

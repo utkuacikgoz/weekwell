@@ -24,5 +24,5 @@ export function LegalLinks({ pages, testID }: { pages: { page: 'privacy' | 'term
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.m },
-  link: { minHeight: MIN_TOUCH, justifyContent: 'center' },
+  link: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: 'center' },
 });

@@ -64,10 +64,13 @@ test('a generation timeout explains what to do', async ({ page }) => {
   await expect($(page, 'generation-error')).toContainText('took too long', { timeout: 15_000 });
 });
 
-test('paywall: every plan visible, yearly recommended, exact prices, truthful saving, cancel path', async ({ page }) => {
+test('paywall: the week is the pitch, every plan visible, yearly recommended, exact prices, truthful saving, cancel path', async ({ page }) => {
   await buildWeek(page);
   await $(page, 'open-trial').click();
-  // D-040 PW2 + D-045: yearly is chosen; all three plans are visible; the charge line states exactly what happens.
+  // D-049 PV1: the person's own dinners lead; yearly is chosen; the charge line states exactly what happens.
+  await expect($(page, 'paywall-week')).toBeVisible();
+  await expect($(page, 'trial-offer')).toBeVisible();
+  await expect(page.getByText('Keep weeks like this.').filter({ visible: true })).toBeVisible();
   await expect($(page, 'product-yearly')).toHaveAttribute('aria-checked', 'true');
   for (const id of ['product-weekly', 'product-monthly']) await expect($(page, id)).toHaveAttribute('aria-checked', 'false');
   await expect($(page, 'charge-line')).toHaveText('Free for 7 days, then $49.99 a year.');
@@ -76,21 +79,22 @@ test('paywall: every plan visible, yearly recommended, exact prices, truthful sa
   expect(text).toContain('$4.99 /week');
   expect(text).toContain('$9.99 /month');
   expect(text).toContain('$49.99 /year');
-  expect(text).toContain('Save 58%');
-  expect(text).toContain('12 months of monthly ($119.88), $69.89 less');
-  expect(text).toContain('About $2.31 a week');
-  expect(text).toContain('About $0.96 a week');
-  await expect($(page, 'trial-timeline')).toContainText('Cancel before then and you pay nothing');
-  await expect($(page, 'cancel-info')).toContainText('Cancel anytime');
-  await expect($(page, 'legal')).toContainText('renew automatically unless cancelled at least 24 hours before');
+  expect(text).toMatch(/Save 58%/iu);
+  await expect($(page, 'product-yearly')).toHaveAttribute('aria-label', /About \$0\.96 a week/u);
+  await expect($(page, 'product-monthly')).toHaveAttribute('aria-label', /About \$2\.31 a week/u);
+  await expect($(page, 'legal')).toContainText('vs. 12 months of monthly ($119.88)');
+  await expect($(page, 'legal')).toContainText('Cancel anytime in Settings');
+  await expect($(page, 'legal')).toContainText('Renews automatically unless cancelled at least 24 hours before');
+  await expect($(page, 'paywall-legal-links')).toBeVisible();
   await $(page, 'product-monthly').click();
   await expect($(page, 'charge-line')).toHaveText('Free for 7 days, then $9.99 a month.');
   await $(page, 'start-trial').click();
-  await expect($(page, 'trial-active')).toContainText('7 days left');
+  await expect($(page, 'trial-active')).toContainText(/7 days left/iu);
+  await expect($(page, 'trial-next')).toContainText('Then Monthly, $9.99 a month');
   // Cancelling keeps the free week and offers plans again.
   await $(page, 'manage-subscription').click();
   await expect($(page, 'manage-note')).toContainText('Cancelled');
-  await expect($(page, 'trial-active')).toContainText('won’t renew');
+  await expect($(page, 'trial-next')).toContainText('Won’t renew');
   await expect($(page, 'product-yearly')).toBeVisible();
 });
 
