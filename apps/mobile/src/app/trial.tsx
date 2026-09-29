@@ -1,9 +1,10 @@
 import {
-  RETAILER_LABEL,
+  DAY_LABEL,
   formatMoney,
   formatShortDate,
   getProduct,
   yearlySavingsVsMonthly,
+  type Meal,
   type ProductId,
   type SubscriptionProduct,
 } from '@weekwell/domain';
@@ -15,8 +16,10 @@ import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { LegalLinks } from '../components/LegalLinks';
 import { Screen } from '../components/Layout';
+import { MealImage } from '../components/MealImage';
 import { NavBar } from '../components/NavBar';
 import { Text } from '../components/Text';
+import { BANDS } from '../components/WeekParts';
 import { revenueCatEnabled } from '../services/purchases';
 import { useStore } from '../state/store';
 import { MIN_TOUCH, color, radius, space } from '../theme/tokens';
@@ -29,17 +32,7 @@ function perWeek(p: SubscriptionProduct): string {
   return formatMoney(Math.round(p.priceCents / WEEKS[p.period]));
 }
 
-/** Outcomes, not features: what the week feels like with Weekwell. */
-const BENEFITS = [
-  ['A new week in two minutes', 'Five dinners and two lunch preps, built around your store, budget and time.'],
-  ['Swap anything', 'Three alternatives for any meal. Your grocery list updates itself.'],
-  ['One trip, one list', 'Every ingredient by aisle, with what it costs at your store.'],
-  ['Cook without scrolling', 'Every step on one screen, with timers built in.'],
-] as const;
-
-const DAY = 86_400_000;
-
-/** One plan as a full-width row: name and badge, billed price, per-week equivalent (same unit for every option). */
+/** One plan per row (D-049 PV1): name, badge, billed price. The per-week figure stays in the spoken label. */
 function PlanRow({ product, selected, onPress, badge }: { product: SubscriptionProduct; selected: boolean; onPress: () => void; badge?: string }) {
   return (
     <Pressable
@@ -51,18 +44,35 @@ function PlanRow({ product, selected, onPress, badge }: { product: SubscriptionP
       style={({ pressed }) => [styles.plan, selected && styles.planOn, pressed && { opacity: 0.85 }]}
     >
       <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <Icon name="check" size={14} color={color.onAccent} strokeWidth={3} /> : null}</View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <View style={styles.planHead}>
-          <Text variant="bodyStrong">{product.label}</Text>
-          {badge ? <Text variant="caption" style={styles.badge}>{badge}</Text> : null}
-        </View>
-        <Text variant="meta" tone="muted">{product.period === 'week' ? 'Pay as you go' : `About ${perWeek(product)} a week`}</Text>
+      <View style={styles.planHead}>
+        <Text variant="bodyStrong">{product.label}</Text>
+        {badge ? <Text variant="caption" style={styles.badge}>{badge}</Text> : null}
       </View>
       <Text variant="bodyStrong" style={styles.tabular}>
         {formatMoney(product.priceCents)}
         <Text variant="meta" tone="muted">{` /${PERIOD[product.period]}`}</Text>
       </Text>
     </Pressable>
+  );
+}
+
+/** The pitch is the person's own week (D-049 PV1): their dinners as colour bands, read-only. The badge rides on Monday's line. */
+function WeekHero({ dinners, badge, badgeTestID }: { dinners: Meal[]; badge: string | null; badgeTestID?: string }) {
+  return (
+    <View style={styles.hero} accessible accessibilityLabel={`Your week: ${dinners.map((d) => `${DAY_LABEL[d.day]}, ${d.name}`).join('. ')}.`} testID="paywall-week">
+      {dinners.map((d, i) => (
+        <View key={d.id} style={[styles.heroRow, { backgroundColor: BANDS[i % BANDS.length] }]}>
+          <MealImage recipeId={d.recipeId} ingredientIds={d.ingredients.map((x) => x.ingredientId)} width={44} radius={radius.thumb} />
+          <View style={{ flex: 1 }}>
+            <View style={styles.heroCaption}>
+              <Text variant="caption" style={styles.onBandSoft}>{DAY_LABEL[d.day]}</Text>
+              {i === 0 && badge ? <Text variant="label" style={styles.badge} testID={badgeTestID}>{badge}</Text> : null}
+            </View>
+            <Text variant="bodyStrong" style={styles.onBand} numberOfLines={1}>{d.name}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -91,9 +101,6 @@ export default function Trial() {
   const showPicker = view.state === 'none' || view.state === 'expired' || lapsing;
   const canStart = known && showPicker && !busy;
   const product = getProduct(selected);
-  const [openedAt] = useState(() => Date.now());
-  const trialEnds = formatShortDate(new Date(openedAt + 7 * DAY).toISOString());
-  const store = data.plan ? RETAILER_LABEL[data.plan.preferences.retailer] : null;
 
   const start = async () => {
     setBusy(true);
@@ -120,7 +127,23 @@ export default function Trial() {
   const price = `${formatMoney(product.priceCents)} a ${PERIOD[product.period]}`;
   const chargeLine = eligible ? `Free for 7 days, then ${price}.` : `${price}, charged today.`;
 
-  const title = view.state === 'expired' ? 'Your free week is over' : view.state === 'trial' ? 'Your free week' : view.state === 'active' ? 'You’re all set' : 'Dinner, handled. Every week.';
+  const dinners = data.plan?.dinners ?? [];
+  const current = view.state === 'trial' || view.state === 'active' ? getProduct(view.productId) : null;
+  const trialLine =
+    view.state === 'trial' && current
+      ? view.willRenew
+        ? `Then ${current.label}, ${formatMoney(current.priceCents)} a ${PERIOD[current.period]}, from ${formatShortDate(view.endsAt)}.`
+        : `Ends ${formatShortDate(view.endsAt)}. Won’t renew.`
+      : null;
+  const badge =
+    view.state === 'trial'
+      ? { text: `${view.daysLeft} day${view.daysLeft === 1 ? '' : 's'} left`, id: 'trial-active' }
+      : view.state === 'expired'
+        ? { text: 'Free week over', id: 'trial-ended' }
+        : eligible
+          ? { text: '7 days free', id: 'trial-offer' }
+          : null;
+  const title = view.state === 'trial' ? 'Your free week' : view.state === 'active' ? 'You’re all set' : dinners.length ? 'Keep weeks like this.' : 'Dinner, handled. Every week.';
 
   return (
     <Screen
@@ -137,49 +160,19 @@ export default function Trial() {
       }
     >
       <NavBar backLabel="Week" />
-      {eligible ? <Text variant="label" style={styles.kicker}>First week free</Text> : null}
-      <Text variant="title" accessibilityRole="header">{title}</Text>
-      {view.state === 'expired' ? (
-        <Text tone="muted" style={{ marginTop: space.s }} testID="trial-ended">
-          Your last plan and grocery list are still here. Pick a plan to get next week sorted.
-        </Text>
-      ) : view.state === 'none' ? (
-        <Text tone="muted" style={{ marginTop: space.s }}>
-          {store ? `Your ${store} week is planned. Keep every week this easy.` : 'Plan the week once. Shop once. Stop thinking about dinner.'}
+      {dinners.length ? (
+        <WeekHero dinners={dinners} badge={badge?.text ?? null} badgeTestID={badge?.id} />
+      ) : badge ? (
+        <Text variant="label" style={[styles.badge, { alignSelf: 'flex-start', marginBottom: space.s }]} testID={badge.id}>
+          {badge.text}
         </Text>
       ) : null}
-
-      {view.state === 'trial' ? (
-        <View style={styles.countdown} testID="trial-active">
-          <Text variant="display" style={styles.onSun}>{`${view.daysLeft} day${view.daysLeft === 1 ? '' : 's'} left`}</Text>
-          <Text style={styles.onSun}>
-            {view.willRenew
-              ? `Everything’s unlocked until ${formatShortDate(view.endsAt)}. Then ${getProduct(view.productId).label}, ${formatMoney(getProduct(view.productId).priceCents)} a ${PERIOD[getProduct(view.productId).period]}.`
-              : `Your free week ends ${formatShortDate(view.endsAt)} and won’t renew. Pick a plan below to keep planning.`}
-          </Text>
-        </View>
-      ) : null}
-      {view.state === 'active' ? (
-        <View style={styles.countdown} testID="plan-active">
-          <Text variant="display" style={styles.onSun}>{`${getProduct(view.productId).label} plan`}</Text>
-          <Text style={styles.onSun}>{view.willRenew ? `Renews ${formatShortDate(view.periodEndsAt)}.` : `Ends ${formatShortDate(view.periodEndsAt)}.`}</Text>
-        </View>
-      ) : null}
-
-      {view.state === 'none' || view.state === 'expired' ? (
-        <View style={styles.value}>
-          {BENEFITS.map(([head, body]) => (
-            <View key={head} style={styles.valueRow}>
-              <View style={styles.tick}>
-                <Icon name="check" size={16} color={color.onAccent} strokeWidth={3} />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text variant="bodyStrong">{head}</Text>
-                <Text variant="meta" tone="muted">{body}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
+      <Text variant="title" accessibilityRole="header" style={{ marginTop: dinners.length ? space.m : 0 }}>{title}</Text>
+      {trialLine ? <Text tone="muted" style={{ marginTop: space.xs }} testID="trial-next">{trialLine}</Text> : null}
+      {view.state === 'active' && current ? (
+        <Text tone="muted" style={{ marginTop: space.xs }} testID="plan-active">
+          {`${current.label} plan. ${view.willRenew ? 'Renews' : 'Ends'} ${formatShortDate(view.periodEndsAt)}.`}
+        </Text>
       ) : null}
 
       {view.state === 'loading' ? (
@@ -197,58 +190,40 @@ export default function Trial() {
       {result ? <Banner tone="warning" title={result} /> : null}
 
       {showPicker ? (
-        <View style={{ marginTop: space.l, gap: space.s }} accessibilityRole="radiogroup" accessibilityLabel={eligible ? 'After the free week' : 'Choose a plan'}>
-          <Text variant="label">{eligible ? `After your free week` : 'Choose a plan'}</Text>
+        <View style={{ marginTop: space.m, gap: space.s }} accessibilityRole="radiogroup" accessibilityLabel={eligible ? 'After the free week' : 'Choose a plan'}>
           <PlanRow product={getProduct('yearly')} selected={selected === 'yearly'} onPress={() => setSelected('yearly')} badge={`Save ${savings.percent}%`} />
           <PlanRow product={getProduct('monthly')} selected={selected === 'monthly'} onPress={() => setSelected('monthly')} />
           <PlanRow product={getProduct('weekly')} selected={selected === 'weekly'} onPress={() => setSelected('weekly')} />
         </View>
       ) : null}
 
-      {eligible ? (
-        <View style={styles.timeline} testID="trial-timeline">
-          <View style={styles.step}>
-            <View style={[styles.dot, styles.dotOn]} />
-            <View style={{ flex: 1 }}>
-              <Text variant="bodyStrong">Today</Text>
-              <Text variant="meta" tone="muted">Everything unlocked. $0.</Text>
-            </View>
-          </View>
-          <View style={styles.step}>
-            <View style={styles.dot} />
-            <View style={{ flex: 1 }}>
-              <Text variant="bodyStrong">{trialEnds}</Text>
-              <Text variant="meta" tone="muted">{`Your ${product.label.toLowerCase()} plan starts at ${price}. Cancel before then and you pay nothing.`}</Text>
-            </View>
-          </View>
+      {view.state === 'trial' || view.state === 'active' ? (
+        <View style={{ marginTop: space.m, gap: space.xs }}>
+          <Button kind="secondary" label="Manage or cancel" onPress={() => void manage()} testID="manage-subscription" />
+          {manageNote ? <Text variant="meta" accessibilityLiveRegion="polite" testID="manage-note">{manageNote}</Text> : null}
         </View>
       ) : null}
 
-      <View style={styles.cancel} testID="cancel-info">
-        <Text variant="bodyStrong">Cancel anytime, in two taps</Text>
-        <Text variant="meta" tone="muted">Settings → your name → Subscriptions → Weekwell. No emails, no calls, no questions.</Text>
-        {view.state === 'trial' || view.state === 'active' ? (
-          <Button kind="secondary" label="Manage or cancel" onPress={() => void manage()} testID="manage-subscription" />
-        ) : null}
-        {manageNote ? <Text variant="meta" accessibilityLiveRegion="polite" testID="manage-note">{manageNote}</Text> : null}
+      {showPicker ? (
+        <Text variant="caption" tone="muted" style={{ marginTop: space.m }} testID="legal">
+          {`${eligible ? 'Charged to your Apple ID when the free week ends.' : 'Charged to your Apple ID when you confirm.'} Renews automatically unless cancelled at least 24 hours before the period ends. Cancel anytime in Settings → Subscriptions. Save ${savings.percent}% vs. 12 months of monthly (${formatMoney(savings.monthlyYearCents)}).`}
+        </Text>
+      ) : null}
+
+      <View style={styles.links}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={restore}
+          disabled={!known || restoreState === 'busy'}
+          aria-disabled={!known || restoreState === 'busy'}
+          style={({ pressed }) => [styles.restore, pressed && { backgroundColor: color.placeholder }]}
+          testID="restore"
+        >
+          {restoreState === 'busy' ? <ActivityIndicator color={color.accent} /> : null}
+          <Text variant="meta" tone="accent" style={{ textDecorationLine: 'underline' }}>Restore</Text>
+        </Pressable>
+        <LegalLinks pages={[{ page: 'terms', label: 'Terms' }, { page: 'privacy', label: 'Privacy' }]} testID="paywall-legal-links" />
       </View>
-
-      <Text variant="caption" tone="muted" style={{ marginTop: space.l }} testID="legal">
-        {`${eligible ? 'Payment is charged to your Apple ID when the free week ends.' : 'Payment is charged to your Apple ID when you confirm.'} Subscriptions renew automatically unless cancelled at least 24 hours before the end of the period. “Save ${savings.percent}%” compares yearly with 12 months of monthly (${formatMoney(savings.monthlyYearCents)}), ${formatMoney(savings.savedCents)} less.`}
-      </Text>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={restore}
-        disabled={!known || restoreState === 'busy'}
-        aria-disabled={!known || restoreState === 'busy'}
-        style={({ pressed }) => [styles.restore, pressed && { backgroundColor: color.placeholder }]}
-        testID="restore"
-      >
-        {restoreState === 'busy' ? <ActivityIndicator color={color.accent} /> : null}
-        <Text variant="meta" tone="accent" style={{ textDecorationLine: 'underline' }}>Restore purchases</Text>
-      </Pressable>
-      <LegalLinks pages={[{ page: 'terms', label: 'Terms of use' }, { page: 'privacy', label: 'Privacy policy' }]} testID="paywall-legal-links" />
       {restoreState === 'restored' ? <Text tone="accent" accessibilityLiveRegion="polite">Welcome back. Your subscription is restored.</Text> : null}
       {restoreState === 'nothing_to_restore' ? <Text accessibilityLiveRegion="polite" testID="restore-nothing">No subscription found for this Apple ID.</Text> : null}
       {restoreState === 'failed' ? (
@@ -271,24 +246,20 @@ const SUN = '#F6C453';
 const ON_SUN = '#173F2D';
 
 const styles = StyleSheet.create({
-  kicker: { color: SUN, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: space.xs },
-  value: { marginTop: space.l, gap: space.m },
-  valueRow: { flexDirection: 'row', gap: space.m - 4, alignItems: 'flex-start' },
-  tick: { width: 26, height: 26, borderRadius: 13, backgroundColor: color.accent, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  countdown: { marginTop: space.m, backgroundColor: SUN, padding: space.m + 4, gap: space.xs },
-  onSun: { color: ON_SUN },
-  plan: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, minHeight: MIN_TOUCH + 20, borderRadius: radius.card, borderWidth: 1.5, borderColor: color.divider, backgroundColor: color.raised, paddingHorizontal: space.m - 4, paddingVertical: space.s + 4 },
+  // Full-bleed bands, like the week screen: cancels the screen's side padding.
+  hero: { marginHorizontal: -(space.m + 4) },
+  heroRow: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, minHeight: 60, paddingHorizontal: space.m + 4, paddingVertical: space.xs + 2 },
+  heroCaption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s },
+  onBand: { color: '#FFFFFF' },
+  onBandSoft: { color: '#FFFFFF', opacity: 0.9 },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: space.m - 4, minHeight: MIN_TOUCH + 8, borderRadius: radius.card, borderWidth: 1.5, borderColor: color.divider, backgroundColor: color.raised, paddingHorizontal: space.m - 4, paddingVertical: space.s },
   planOn: { borderColor: color.accent, borderWidth: 2, backgroundColor: color.accentTint },
-  planHead: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.s },
+  planHead: { flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.s },
   badge: { backgroundColor: SUN, color: ON_SUN, paddingHorizontal: 6, paddingVertical: 2, textTransform: 'uppercase', letterSpacing: 0.6, overflow: 'hidden' },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: color.control, alignItems: 'center', justifyContent: 'center' },
   radioOn: { backgroundColor: color.accent, borderColor: color.accent },
-  timeline: { marginTop: space.l, gap: space.m, borderLeftWidth: 2, borderLeftColor: color.divider, marginLeft: 6, paddingLeft: space.m },
-  step: { flexDirection: 'row', gap: space.s },
-  dot: { position: 'absolute', left: -space.m - 7, top: 4, width: 12, height: 12, borderRadius: 6, backgroundColor: color.divider },
-  dotOn: { backgroundColor: color.accent },
-  cancel: { marginTop: space.l, gap: space.xs, backgroundColor: color.raised, padding: space.m },
   tabular: { fontVariant: ['tabular-nums'] },
   status: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH },
-  restore: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, alignSelf: 'flex-start', marginTop: space.xs, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
+  links: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.m },
+  restore: { flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: MIN_TOUCH, paddingHorizontal: space.s, marginHorizontal: -space.s, borderRadius: radius.control },
 });
