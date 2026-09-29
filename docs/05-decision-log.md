@@ -548,6 +548,18 @@ The product owner's design audit asked for a correction pass before any further 
 - Rollback: Revert the PR.
 - Owner: Product owner
 
+### D-050 — Cancel screen: a half-price month to stay
+
+- Status: Accepted
+- Date: 2026-09-29
+- Workstream: mobile
+- Question: Apple's Confirm Cancellation sheet showed nothing from Weekwell. The owner picked RM3 of three options (the others were an image of the week, and three bullets).
+- Decision: Weekly and monthly subscribers who tap Cancel are offered a promotional offer on the monthly plan: "Special offer: next month for $4.99. Half price on your next month, then $9.99 a month. Cancel anytime." Yearly subscribers see the default text message ("Your week is already planned"). Apple also shows the default whenever our endpoint doesn't answer. The endpoint is a dependency-free Vercel function next to the site (`POST /api/apple/retention`), because the pilot has no API server (D-039). It verifies Apple's JWS against a pinned Apple Root CA G3 fingerprint, rejects requests for other apps and requests older than 5 minutes, signs the offer as a V2 JWS with the In-App Purchase key, and stores nothing. `scripts/retention-setup.mjs` uploads the messages, sets the defaults and URL, and runs Apple's performance test. The privacy policy now says Apple sends us the transaction number and language when someone opens the cancel sheet.
+- Owner setup: Retention Messaging API access, the `stay_half_month` offer, an In-App Purchase key, and five Vercel env vars (`apps/mobile/docs/release/retention-offer.md`).
+- Known limit: without a database, the same person can get the offer again at each cancellation.
+- Rollback: Remove `RETENTION_OFFER_ID` in Vercel; the default message remains.
+- Owner: Product owner
+
 ## Decision entry template
 
 ```md
