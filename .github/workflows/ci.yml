@@ -46,7 +46,7 @@ jobs:
           # App: the mobile app and the domain it uses (its docs don't count).
           if has "$shared" || has '^packages/domain/' || printf '%s\n' "$files" | grep -Ev '^apps/mobile/docs/' | grep -Eq '^apps/mobile/' || [ "$files" = "__all__" ]; then app=true; else app=false; fi
           if has "$shared" || has '^packages/domain/' || has '^apps/api/'; then api=true; else api=false; fi
-          if has "$shared" || has '^site/' || has '^vercel\.json$' || has '^apps/mobile/assets/(icon|favicon)\.png$'; then site=true; else site=false; fi
+          if has "$shared" || has '^site/' || has '^api/' || has '^scripts/retention-setup\.mjs$' || has '^vercel\.json$' || has '^apps/mobile/assets/(icon|favicon)\.png$'; then site=true; else site=false; fi
           echo "app=$app api=$api site=$site"
           { echo "app=$app"; echo "api=$api"; echo "site=$site"; } >> "$GITHUB_OUTPUT"
 
@@ -92,6 +92,8 @@ jobs:
           node-version: 22
       # The same strict build Vercel runs: fails on any TODO value.
       - run: node site/build.mjs
+      # The cancel-screen offer endpoint Vercel serves next to the site (D-050).
+      - run: node --test 'api/_lib/*.test.mjs'
 
   e2e:
     needs: changes
