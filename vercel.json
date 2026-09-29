@@ -4,7 +4,7 @@
   "installCommand": "echo 'site build needs no dependencies'",
   "buildCommand": "node site/build.mjs",
   "outputDirectory": "site/_dist",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- site/ vercel.json",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- site/ api/ vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
