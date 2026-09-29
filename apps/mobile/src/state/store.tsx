@@ -117,6 +117,8 @@ type Persisted = {
   cooking: CookingSession | null;
   /** Nearest store and shopping-day reminder (D-047). */
   shopping: Shopping;
+  /** Dinners finished in cooking mode, for this plan only (D-048). */
+  cooked: { planId: string | null; ids: string[] };
 };
 
 /** `day`: 0 = Sunday … 6 = Saturday; null until the person picks one. `prompted`: the one-time "When do you shop?" sheet was shown. */
@@ -135,6 +137,7 @@ const EMPTY: Persisted = {
   onboardingDone: false,
   cooking: null,
   shopping: NO_SHOPPING,
+  cooked: { planId: null, ids: [] },
 };
 
 export type GenerationState =
@@ -167,6 +170,12 @@ type Ctx = {
   dismissPlanUndo: () => void;
   setHaptics: (on: boolean) => void;
   setShopping: (patch: Partial<Shopping>) => void;
+  /** Meals cooked this week (only the current plan's). */
+  cookedIds: string[];
+  /** Set by finishing cooking mode; the week shows "Next up" once, then clears it. */
+  justCooked: string | null;
+  markCooked: (mealId: string) => void;
+  clearJustCooked: () => void;
   setCooking: (c: CookingSession | null) => void;
   refreshEntitlement: () => Promise<void>;
   startTrial: (productId: ProductId) => Promise<'ok' | 'trial_already_used' | 'cancelled' | 'failed'>;
@@ -561,6 +570,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     void runPriceCheck(previous, buildGroceryList(meals));
   }, [planUndo, remote, runPriceCheck]);
 
+  const [justCooked, setJustCooked] = useState<string | null>(null);
+  const cookedIds = useMemo(() => (data.plan && data.cooked?.planId === data.plan.id ? data.cooked.ids : []), [data.plan, data.cooked]);
+  const markCooked = useCallback((mealId: string) => {
+    setData((d) => {
+      const planId = d.plan?.id ?? null;
+      const ids = d.cooked?.planId === planId ? d.cooked.ids : [];
+      return { ...d, cooked: { planId, ids: ids.includes(mealId) ? ids : [...ids, mealId] } };
+    });
+    setJustCooked(mealId);
+  }, []);
+  const clearJustCooked = useCallback(() => setJustCooked(null), []);
+
   const setShopping = useCallback((patch: Partial<Shopping>) => {
     setData((d) => ({ ...d, shopping: { ...d.shopping, ...patch } }));
   }, []);
@@ -778,6 +799,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     dismissPlanUndo: () => setPlanUndo(null),
     setHaptics,
     setShopping,
+    cookedIds,
+    justCooked,
+    markCooked,
+    clearJustCooked,
     setCooking: (cooking) => setData((d) => ({ ...d, cooking })),
     refreshEntitlement,
     startTrial,
