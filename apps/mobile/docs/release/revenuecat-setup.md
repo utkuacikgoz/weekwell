@@ -21,12 +21,21 @@ The code expects the setup below. The names must match exactly, because they're 
 
 1. Create a project named Weekwell, then add an **App Store** app with bundle id `com.belevate.weekwell`, and upload the In-App Purchase key (`.p8`, Key ID, Issuer ID).
 2. **Products:** import the three products.
-3. **Entitlement:** create one with identifier **`pro`** and attach all three products.
+3. **Entitlement:** create one with identifier **`weekwell_pro_pro`** (D-051) and attach all three products.
 4. **Offering:** create **`default`** and mark it current. Add three packages: Weekly → weekly, Monthly → monthly, Annual → yearly.
-5. **API keys:**
+5. **Paywall (D-051):** open **Paywalls**, create one for the `default` offering, and publish it. The app shows it to anyone without an active plan. Apple requires it to show:
+   - each plan's price and period
+   - the free week and what it costs afterwards
+   - links to the Terms (`https://weekwell.pro/terms`) and the Privacy Policy (`https://weekwell.pro/privacy`)
+   - a Restore Purchases button
+
+   You can change it later without an app update.
+6. **Customer Center (D-051):** open **Customer Center** and turn it on. "Manage or cancel" in the app opens it, with cancel, change plan, refund request and restore. Its own offers are optional; the half-price month on Apple's cancel sheet (D-050) works separately.
+7. **API keys:**
+   - **Test Store key** (starts `test_`): RevenueCat's simulated store, for development builds only. Its products are `weekly`, `monthly` and `yearly`; the app maps them to the same plans. Never use it in TestFlight or App Store builds; set it only in a local `apps/mobile/.env.local` (git-ignored) as `EXPO_PUBLIC_REVENUECAT_IOS_KEY`.
    - **Public iOS SDK key** (starts `appl_`): on expo.dev, under **Environment variables** (production), add it as `EXPO_PUBLIC_REVENUECAT_IOS_KEY`. It's safe to ship in the app, but keep it out of Git.
    - **Secret API key** (starts `sk_`): this goes on the **API server only**, as `REVENUECAT_SECRET_KEY`, and isn't needed for the pilot. Never put it in the app.
-6. **Webhook (only when the Weekwell server runs; skip for the pilot, D-039):** under **Integrations → Webhooks**, add one:
+8. **Webhook (only when the Weekwell server runs; skip for the pilot, D-039):** under **Integrations → Webhooks**, add one:
    - **URL:** `https://<your API host>/v1/webhooks/revenuecat`.
    - **Authorization header:** a long random value, for example `Bearer ` followed by 32+ random characters. Set the same exact value on the server as `REVENUECAT_WEBHOOK_AUTH`.
    - Send a **test event**; the server answers 200 and ignores it.

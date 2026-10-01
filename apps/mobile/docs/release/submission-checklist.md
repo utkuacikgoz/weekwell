@@ -16,7 +16,9 @@ Tick these off in order. The text to paste is in [`app-store-pack.md`](app-store
 ## 3. RevenueCat (app.revenuecat.com; details in `revenuecat-setup.md`)
 - [ ] Project "Weekwell" with an App Store app for `com.belevate.weekwell`, and the In-App Purchase key uploaded.
 - [ ] The three products imported.
-- [ ] Entitlement **`pro`** created, with all three products attached.
+- [ ] Entitlement **`weekwell_pro_pro`** created, with all three products attached.
+- [ ] Paywall designed in RevenueCat (Paywalls) and attached to the `default` offering, showing each price, the free week, and the Terms and Privacy links.
+- [ ] Customer Center turned on (Customer Center in the RevenueCat sidebar).
 - [ ] Offering **`default`** marked current, with Weekly, Monthly and Annual packages.
 - [ ] The public iOS key (`appl_…`) added to GitHub as the secret **`REVENUECAT_IOS_KEY`**.
 - [ ] Run **Actions → TestFlight daily → Run workflow** to build with real purchases.
