@@ -140,7 +140,7 @@ This is the lightweight record of decisions that affect product, architecture, s
 - Status: Accepted (product owner, 2026-09-24): **RevenueCat**.
 - Question: RevenueCat or direct App Store/Google Play entitlement implementation?
 - Decision:
-  - **Purchases:** made through `react-native-purchases`, with entitlement `pro` and offering `default`. The product ids are `com.belevate.weekwell.{weekly,monthly,yearly}`, and the free week is Apple's introductory offer.
+  - **Purchases:** made through `react-native-purchases`, with entitlement `pro` (renamed `weekwell_pro_pro` in D-051) and offering `default`. The product ids are `com.belevate.weekwell.{weekly,monthly,yearly}`, and the free week is Apple's introductory offer.
   - **Server:** it trusts only RevenueCat's REST view of the customer. Webhooks (checked by an Authorization header) and `POST /v1/entitlement/sync` just trigger a re-read.
   - **Mock store:** stays for the web preview and tests, and production refuses `STORE_MODE=mock`.
   - **Setup:** `apps/mobile/docs/release/revenuecat-setup.md`.
@@ -558,6 +558,16 @@ The product owner's design audit asked for a correction pass before any further 
 - Owner setup: Retention Messaging API access, the `stay_half_month` offer, an In-App Purchase key, and five Vercel env vars (`apps/mobile/docs/release/retention-offer.md`).
 - Known limit: without a database, the same person can get the offer again at each cancellation.
 - Rollback: Remove `RETENTION_OFFER_ID` in Vercel; the default message remains.
+- Owner: Product owner
+
+### D-051 — RevenueCat Paywall and Customer Center
+
+- Status: Accepted
+- Date: 2026-10-01
+- Workstream: mobile
+- Question: The owner asked for RevenueCat's Paywall and Customer Center, and set up the entitlement `weekwell_pro_pro` and Test Store products (`weekly`, `monthly`, `yearly`) in RevenueCat.
+- Decision: In builds with a RevenueCat key, `/trial` shows RevenueCat's paywall (`react-native-purchases-ui`, pinned to the same 10.10.2 as `react-native-purchases`) to anyone who needs a plan: no plan, the free week is over, or the free week won't renew. The owner designs it in the RevenueCat dashboard on the `default` offering. After a purchase or restore, the app re-reads access, records the analytics event, and returns to where the person came from. People on the free week or a plan still see the status screen, and its "Manage or cancel" now opens RevenueCat's Customer Center, falling back to Apple's manage sheet if that fails. The web preview and tests keep the built-in PV1 paywall (D-049), because RevenueCat's UI doesn't run there. The entitlement id is now `weekwell_pro_pro`, and Test Store product ids map to the same plans as the App Store ones. Superseded: the PV1 paywall in store builds.
+- Rollback: Revert the PR; RevenueCat's dashboard keeps the paywall and Customer Center unused.
 - Owner: Product owner
 
 ## Decision entry template

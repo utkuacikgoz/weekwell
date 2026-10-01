@@ -8,9 +8,10 @@
  * week" and "Subscribe" are both a purchase of the same package; Apple
  * decides whether the intro offer applies.
  */
-import { STORE_PRODUCT_IDS, viewFromCustomerInfo, type EntitlementView, type ProductId, type RcCustomerInfo } from '@weekwell/domain';
+import { STORE_PRODUCT_IDS, productIdFromStore, viewFromCustomerInfo, type EntitlementView, type ProductId, type RcCustomerInfo } from '@weekwell/domain';
 import { Platform } from 'react-native';
-import Purchases from 'react-native-purchases';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import RevenueCatUI from 'react-native-purchases-ui';
 
 const KEY = Platform.select({ ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY, android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY, default: undefined }) ?? '';
 
@@ -21,6 +22,7 @@ let configured = false;
 /** Call once at launch. `appUserId` is the Weekwell user id when signed in to the API; otherwise RevenueCat uses an anonymous id. */
 export function configureRevenueCat(appUserId: string | null) {
   if (!revenueCatEnabled || configured) return;
+  if (__DEV__) void Purchases.setLogLevel(LOG_LEVEL.DEBUG);
   Purchases.configure({ apiKey: KEY, appUserID: appUserId });
   configured = true;
 }
@@ -38,7 +40,8 @@ export async function rcLogOut() {
 
 async function introEligible(): Promise<boolean> {
   try {
-    const ids = Object.values(STORE_PRODUCT_IDS);
+    // App Store ids, plus the bare ids RevenueCat's Test Store uses (`test_` key).
+    const ids = [...Object.values(STORE_PRODUCT_IDS), ...(Object.keys(STORE_PRODUCT_IDS) as ProductId[])];
     const res = await Purchases.checkTrialOrIntroductoryPriceEligibility(ids);
     return ids.some((id) => res[id]?.status === Purchases.INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE);
   } catch {
@@ -55,7 +58,7 @@ export async function rcView(): Promise<EntitlementView> {
 export async function rcBuy(productId: ProductId): Promise<'ok' | 'cancelled' | 'unavailable' | 'failed'> {
   try {
     const offerings = await Purchases.getOfferings();
-    const pkg = offerings.current?.availablePackages.find((p) => p.product.identifier.split(':')[0] === STORE_PRODUCT_IDS[productId]);
+    const pkg = offerings.current?.availablePackages.find((p) => productIdFromStore(p.product.identifier) === productId);
     if (!pkg) return 'unavailable';
     await Purchases.purchasePackage(pkg);
     return 'ok';
@@ -66,13 +69,21 @@ export async function rcBuy(productId: ProductId): Promise<'ok' | 'cancelled' | 
   }
 }
 
-/** Apple's own manage-or-cancel sheet, shown inside the app (iOS 15+). */
+/**
+ * RevenueCat Customer Center (D-051): cancel, change plan, refund request and restore, configured in
+ * the RevenueCat dashboard. Falls back to Apple's own manage sheet if it can't be shown.
+ */
 export async function rcManage(): Promise<boolean> {
   try {
-    await Purchases.showManageSubscriptions();
+    await RevenueCatUI.presentCustomerCenter();
     return true;
   } catch {
-    return false;
+    try {
+      await Purchases.showManageSubscriptions();
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

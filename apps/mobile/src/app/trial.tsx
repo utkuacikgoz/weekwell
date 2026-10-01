@@ -8,7 +8,7 @@ import {
   type ProductId,
   type SubscriptionProduct,
 } from '@weekwell/domain';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Banner } from '../components/Banner';
@@ -18,6 +18,7 @@ import { LegalLinks } from '../components/LegalLinks';
 import { Screen } from '../components/Layout';
 import { MealImage } from '../components/MealImage';
 import { NavBar } from '../components/NavBar';
+import { RcPaywall } from '../components/RcPaywall';
 import { Text } from '../components/Text';
 import { BANDS } from '../components/WeekParts';
 import { revenueCatEnabled } from '../services/purchases';
@@ -77,7 +78,7 @@ function WeekHero({ dinners, badge, badgeTestID }: { dinners: Meal[]; badge: str
 }
 
 export default function Trial() {
-  const { data, entitlementView: view, startTrial, purchase, restorePurchases, refreshEntitlement, manageSubscription, analytics } = useStore();
+  const { data, entitlementView: view, startTrial, purchase, restorePurchases, refreshEntitlement, manageSubscription, paywallCompleted, analytics } = useStore();
   const { trigger } = useLocalSearchParams<{ trigger?: string }>();
   // D-040 PW2: one recommended plan (yearly), chosen up front; D-045: every plan is visible without a tap.
   const [selected, setSelected] = useState<ProductId>('yearly');
@@ -144,6 +145,20 @@ export default function Trial() {
           ? { text: '7 days free', id: 'trial-offer' }
           : null;
   const title = view.state === 'trial' ? 'Your free week' : view.state === 'active' ? 'You’re all set' : dinners.length ? 'Keep weeks like this.' : 'Dinner, handled. Every week.';
+
+  // D-051: store builds show RevenueCat's paywall to anyone who needs a plan; the screen below
+  // stays for the free week and active plans (status plus Customer Center), and for web and tests.
+  if (revenueCatEnabled && known && showPicker) {
+    const leave = () => (router.canGoBack() ? router.back() : router.replace('/week'));
+    return (
+      <RcPaywall
+        onCompleted={(kind) => {
+          void paywallCompleted(kind).then(leave);
+        }}
+        onClose={leave}
+      />
+    );
+  }
 
   return (
     <Screen

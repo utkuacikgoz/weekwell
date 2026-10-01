@@ -247,7 +247,7 @@ describe('RevenueCat (D-014)', () => {
   }
   const trialFor = (days: number) => ({
     subscriber: {
-      entitlements: { pro: { expires_date: future(days), product_identifier: 'com.belevate.weekwell.monthly' } },
+      entitlements: { weekwell_pro_pro: { expires_date: future(days), product_identifier: 'com.belevate.weekwell.monthly' } },
       subscriptions: { 'com.belevate.weekwell.monthly': { period_type: 'trial', expires_date: future(days), purchase_date: T0.toISOString() } },
     },
   });
