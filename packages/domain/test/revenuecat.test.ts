@@ -4,14 +4,17 @@ import { emptyEntitlement, productIdFromStore, recordFromSubscriber, STORE_PRODU
 const NOW = new Date('2026-09-24T12:00:00Z');
 const inDays = (d: number) => new Date(NOW.getTime() + d * 86_400_000).toISOString();
 const info = (e: Partial<RcCustomerInfo['entitlements']['all'][string]> | null): RcCustomerInfo => ({
-  entitlements: { all: e ? { pro: { isActive: true, willRenew: true, periodType: 'NORMAL', expirationDate: inDays(30), productIdentifier: STORE_PRODUCT_IDS.monthly, ...e } } : {} },
+  entitlements: { all: e ? { weekwell_pro_pro: { isActive: true, willRenew: true, periodType: 'NORMAL', expirationDate: inDays(30), productIdentifier: STORE_PRODUCT_IDS.monthly, ...e } } : {} },
 });
 
 describe('RevenueCat mapping (D-014)', () => {
   it('maps store product ids both ways, including Android base plans', () => {
     expect(productIdFromStore('com.belevate.weekwell.yearly')).toBe('yearly');
     expect(productIdFromStore('com.belevate.weekwell.weekly:weekly-base')).toBe('weekly');
+    // RevenueCat Test Store ids are the bare plan names.
+    expect(productIdFromStore('monthly')).toBe('monthly');
     expect(productIdFromStore('com.other.app.monthly')).toBeUndefined();
+    expect(productIdFromStore('annual')).toBeUndefined();
     expect(productIdFromStore(null)).toBeUndefined();
   });
 
@@ -30,7 +33,7 @@ describe('RevenueCat mapping (D-014)', () => {
   it('REST: trial, then cancelled trial, then expired, and the trial stays used', () => {
     const trial = recordFromSubscriber('u1', {
       subscriber: {
-        entitlements: { pro: { expires_date: inDays(7), product_identifier: STORE_PRODUCT_IDS.yearly } },
+        entitlements: { weekwell_pro_pro: { expires_date: inDays(7), product_identifier: STORE_PRODUCT_IDS.yearly } },
         subscriptions: { [STORE_PRODUCT_IDS.yearly]: { period_type: 'trial', expires_date: inDays(7), purchase_date: NOW.toISOString(), unsubscribe_detected_at: null } },
       },
     }, null, NOW);
@@ -38,7 +41,7 @@ describe('RevenueCat mapping (D-014)', () => {
 
     const cancelled = recordFromSubscriber('u1', {
       subscriber: {
-        entitlements: { pro: { expires_date: inDays(7), product_identifier: STORE_PRODUCT_IDS.yearly } },
+        entitlements: { weekwell_pro_pro: { expires_date: inDays(7), product_identifier: STORE_PRODUCT_IDS.yearly } },
         subscriptions: { [STORE_PRODUCT_IDS.yearly]: { period_type: 'trial', expires_date: inDays(7), unsubscribe_detected_at: NOW.toISOString() } },
       },
     }, trial, NOW);
@@ -47,7 +50,7 @@ describe('RevenueCat mapping (D-014)', () => {
     const later = new Date(NOW.getTime() + 8 * 86_400_000);
     const expired = recordFromSubscriber('u1', {
       subscriber: {
-        entitlements: { pro: { expires_date: inDays(7), product_identifier: STORE_PRODUCT_IDS.yearly } },
+        entitlements: { weekwell_pro_pro: { expires_date: inDays(7), product_identifier: STORE_PRODUCT_IDS.yearly } },
         subscriptions: { [STORE_PRODUCT_IDS.yearly]: { period_type: 'trial', expires_date: inDays(7) } },
       },
     }, cancelled, later);
@@ -57,7 +60,7 @@ describe('RevenueCat mapping (D-014)', () => {
   it('REST: a paid renewal is active; no entitlement leaves a new user at none', () => {
     const paid = recordFromSubscriber('u2', {
       subscriber: {
-        entitlements: { pro: { expires_date: inDays(30), product_identifier: STORE_PRODUCT_IDS.monthly } },
+        entitlements: { weekwell_pro_pro: { expires_date: inDays(30), product_identifier: STORE_PRODUCT_IDS.monthly } },
         subscriptions: { [STORE_PRODUCT_IDS.monthly]: { period_type: 'normal', expires_date: inDays(30) } },
       },
     }, emptyEntitlement('u2', NOW), NOW);

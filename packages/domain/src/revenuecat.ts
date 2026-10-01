@@ -5,11 +5,13 @@
  * App Store Connect setup this assumes (docs/release/revenuecat-setup.md):
  * - one auto-renewable subscription group with these three product ids;
  * - a 1-week free introductory offer on each, which is the "free week";
- * - a RevenueCat entitlement `pro` attached to all three.
+ * - a RevenueCat entitlement `weekwell_pro_pro` attached to all three.
+ * RevenueCat's Test Store (a `test_` SDK key) uses the bare ids `weekly`,
+ * `monthly` and `yearly`; both forms map to the same plan.
  */
 import { emptyEntitlement, type EntitlementRecord, type EntitlementView, type ProductId } from './entitlement';
 
-export const RC_ENTITLEMENT_ID = 'pro';
+export const RC_ENTITLEMENT_ID = 'weekwell_pro_pro';
 
 export const STORE_PRODUCT_IDS: Record<ProductId, string> = {
   weekly: 'com.belevate.weekwell.weekly',
@@ -21,7 +23,7 @@ export function productIdFromStore(storeId: string | null | undefined): ProductI
   if (!storeId) return undefined;
   // Android ids can carry a base plan suffix ("product:base-plan").
   const base = storeId.split(':')[0];
-  return (Object.keys(STORE_PRODUCT_IDS) as ProductId[]).find((k) => STORE_PRODUCT_IDS[k] === base);
+  return (Object.keys(STORE_PRODUCT_IDS) as ProductId[]).find((k) => STORE_PRODUCT_IDS[k] === base || k === base);
 }
 
 // ---------------------------------------------------------------- client SDK

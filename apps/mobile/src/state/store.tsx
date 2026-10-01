@@ -182,6 +182,8 @@ type Ctx = {
   purchase: (productId: ProductId) => Promise<'ok' | 'cancelled' | 'failed'>;
   restorePurchases: () => Promise<'restored' | 'nothing_to_restore' | 'failed'>;
   manageSubscription: () => Promise<'shown' | 'cancelled' | 'failed'>;
+  /** After RevenueCat's own paywall completes a purchase or restore (D-051): re-read access and record it. */
+  paywallCompleted: (kind: 'purchase' | 'restore') => Promise<void>;
   deleteAllData: () => Promise<'ok' | 'failed'>;
   /** True when this build talks to the Weekwell API (EXPO_PUBLIC_API_URL). */
   remote: boolean;
@@ -707,7 +709,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return result;
   }, [analytics, refreshEntitlement, remote, scenarios.restore]);
 
-  /** Manage or cancel: Apple's sheet in store builds; the test build cancels renewal directly. */
+  const paywallCompleted = useCallback(
+    async (kind: 'purchase' | 'restore') => {
+      const view = await rcView().catch(() => null);
+      await refreshEntitlement();
+      if (kind === 'restore') analytics?.track('subscription_restored', { result: view && (view.state === 'trial' || view.state === 'active') ? 'restored' : 'nothing_to_restore' });
+      else if (view && (view.state === 'trial' || view.state === 'active')) analytics?.track(view.state === 'trial' ? 'trial_started' : 'subscription_started', { productId: view.productId });
+      haptic.success();
+    },
+    [analytics, refreshEntitlement],
+  );
+
+  /** Manage or cancel: RevenueCat Customer Center in store builds; the test build cancels renewal directly. */
   const manageSubscription = useCallback(async (): Promise<'shown' | 'cancelled' | 'failed'> => {
     if (revenueCatEnabled) {
       const ok = await rcManage();
@@ -809,6 +822,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     purchase,
     restorePurchases,
     manageSubscription,
+    paywallCompleted,
     deleteAllData,
     remote,
     signedIn,
