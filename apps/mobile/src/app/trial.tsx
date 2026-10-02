@@ -148,7 +148,9 @@ export default function Trial() {
 
   // D-051: store builds show RevenueCat's paywall to anyone who needs a plan; the screen below
   // stays for the free week and active plans (status plus Customer Center), and for web and tests.
-  if (revenueCatEnabled && known && showPicker) {
+  // If the subscription check fails, the paywall still opens: it loads its own offering and shows
+  // RevenueCat's own error (with a code) if the store itself is unreachable.
+  if (revenueCatEnabled && ((known && showPicker) || view.state === 'error')) {
     const leave = () => (router.canGoBack() ? router.back() : router.replace('/week'));
     return (
       <RcPaywall

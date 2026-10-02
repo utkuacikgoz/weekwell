@@ -74,6 +74,19 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --prefer-offline --no-audit --no-fund
+      # Shows the RevenueCat key's type and length only (never the key). TestFlight and the App Store
+      # need RevenueCat's App Store public key (appl_…); a test_ key or a secret sk_ key breaks purchases.
+      - name: RevenueCat key check
+        run: |
+          k="$EXPO_PUBLIC_REVENUECAT_IOS_KEY"
+          trimmed="$(printf '%s' "$k" | tr -d '[:space:]\"'"'"'')"
+          echo "RevenueCat key: prefix=${trimmed:0:5} length=${#trimmed} (raw length ${#k})"
+          [ "$trimmed" = "$k" ] || echo "::warning::REVENUECAT_IOS_KEY has spaces, newlines or quotes around it. Re-save it with only the key."
+          case "$trimmed" in
+            appl_*) ;;
+            "") echo "::warning::REVENUECAT_IOS_KEY is empty: this build uses the test purchase flow." ;;
+            *) echo "::error::REVENUECAT_IOS_KEY must be RevenueCat's App Store public key (starts appl_), found prefix ${trimmed:0:5}."; exit 1 ;;
+          esac
 
       - name: App Store Connect API key
         env:
