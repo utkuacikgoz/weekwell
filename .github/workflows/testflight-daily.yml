@@ -122,6 +122,14 @@ jobs:
         # Each upload needs a new build number; the run number only goes up.
         run: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/Weekwell/Info.plist
 
+      # Each fresh build Mac makes a development certificate; Apple caps how many an account holds.
+      # Revoke the ones earlier runs left (only "Created via API" ones, never a developer's own).
+      - name: Clear build-machine certificates
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node scripts/asc-revoke-ci-certs.mjs
+
       - name: Archive
         working-directory: apps/mobile/ios
         env:
@@ -158,6 +166,13 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
           echo "Uploaded build ${{ github.run_number }}. It appears in TestFlight after Apple finishes processing (usually 5–30 minutes)."
+
+      - name: Revoke this build's certificate
+        if: always()
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node scripts/asc-revoke-ci-certs.mjs
 
       - name: Remove the key
         if: always()
