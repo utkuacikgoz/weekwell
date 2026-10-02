@@ -78,7 +78,8 @@ jobs:
           curl -sf localhost:8798/v1/health
           kill $SERVER_PID
       - name: Dependency audit (production deps, high+)
-        run: npm audit --omit=dev --audit-level=high
+        # Accepted advisories, each with its reason, live in scripts/audit.mjs.
+        run: node scripts/audit.mjs
 
   site:
     needs: changes
