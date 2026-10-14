@@ -44,9 +44,21 @@ export async function findNearestStore(retailers: readonly Retailer[] = RETAILER
   }
   if (!StoreSearch) return { status: 'failed' };
   try {
-    const permission = await Location.requestForegroundPermissionsAsync();
+    let permission;
+    try {
+      permission = await Location.requestForegroundPermissionsAsync();
+    } catch {
+      // Location Services disabled at OS level; permission request fails
+      return { status: 'denied' };
+    }
     if (!permission.granted) return { status: 'denied' };
-    const here = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    let here;
+    try {
+      here = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    } catch {
+      // Location Services disabled or unavailable
+      return { status: 'denied' };
+    }
     const { latitude, longitude } = here.coords;
     const found: HomeStore[] = [];
     for (const retailer of retailers) {
