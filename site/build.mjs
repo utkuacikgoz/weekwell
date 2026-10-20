@@ -95,6 +95,7 @@ ${page.file === '404.html' ? '<meta name="robots" content="noindex">' : ''}
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Inter:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="/style.css?v=${cssVersion}">
+<script defer src="https://cdn.vercel-analytics.com/analytics.js"></script>
 </head>
 <body>
 <header class="site"><a class="wordmark" href="index.html" aria-label="Weekwell home">Week<em>well</em></a><nav aria-label="Site">${page.landing ? SITE_NAV : nav}</nav></header>
